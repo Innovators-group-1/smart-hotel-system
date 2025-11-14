@@ -1,0 +1,21 @@
+<form class="space-y-4" hx-post="{% url 'update_user_settings' %}" hx-target="#users-settings-body" hx-swap="outerHTML">
+  {% csrf_token %}
+  <div>
+    <h3 class="font-semibold text-gray-700">User Roles</h3>
+    <p class="text-gray-500 text-sm mb-2">Manage access for admins, chefs, and staff</p>
+  </div>
+  <div>
+    <label class="block font-medium text-gray-700">Default Role for New Users</label>
+    <select name="default_role" class="w-full border rounded-lg px-3 py-2">
+      <option>Waiter</option>
+      <option>Chef</option>
+      <option>Admin</option>
+      <option>Manager</option>
+    </select>
+  </div>
+  <div>
+    <label class="block font-medium text-gray-700">Enable 2FA</label>
+    <input type="checkbox" name="two_factor" class="mr-2" /> Required for Admins
+  </div>
+  <button class="bg-blue-600 text-white px-5 py-2 rounded-lg hover:bg-blue-700">Save</button>
+</form>

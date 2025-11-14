@@ -1,0 +1,24 @@
+<form class="space-y-4" hx-post="{% url 'update_display_settings' %}" hx-target="#display-settings-body" hx-swap="outerHTML">
+  {% csrf_token %}
+  <div>
+    <label class="block font-medium text-gray-700">Theme Mode</label>
+    <select name="theme" class="w-full border rounded-lg px-3 py-2">
+      <option>Light</option>
+      <option>Dark</option>
+      <option>Auto</option>
+    </select>
+  </div>
+  <div>
+    <label class="block font-medium text-gray-700">Primary Color</label>
+    <input type="color" name="primary_color" class="w-16 h-10 border rounded-lg" />
+  </div>
+  <div>
+    <label class="block font-medium text-gray-700">Language</label>
+    <select name="language" class="w-full border rounded-lg px-3 py-2">
+      <option>English</option>
+      <option>French</option>
+      <option>Swahili</option>
+    </select>
+  </div>
+  <button class="bg-blue-600 text-white px-5 py-2 rounded-lg hover:bg-blue-700">Save</button>
+</form>

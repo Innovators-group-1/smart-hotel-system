@@ -1,0 +1,25 @@
+<form class="space-y-4" hx-post="{% url 'update_payment_settings' %}" hx-target="#payment-settings-body" hx-swap="outerHTML">
+  {% csrf_token %}
+  <div>
+    <label class="block font-medium text-gray-700">Default Currency</label>
+    <input type="text" name="currency" placeholder="USD"
+           class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500" />
+  </div>
+  <div>
+    <label class="block font-medium text-gray-700">Enable Express Payment</label>
+    <input type="checkbox" name="express" class="mr-2" /> Yes
+  </div>
+  <div>
+    <label class="block font-medium text-gray-700">Enable Cash Payment</label>
+    <input type="checkbox" name="cash" class="mr-2" /> Yes
+  </div>
+  <div>
+    <label class="block font-medium text-gray-700">Payment Gateway</label>
+    <select name="gateway" class="w-full border rounded-lg px-3 py-2">
+      <option>Stripe</option>
+      <option>PayPal</option>
+      <option>M-Pesa</option>
+    </select>
+  </div>
+  <button class="bg-blue-600 text-white px-5 py-2 rounded-lg hover:bg-blue-700">Save</button>
+</form>

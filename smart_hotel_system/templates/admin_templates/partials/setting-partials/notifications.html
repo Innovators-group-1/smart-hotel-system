@@ -1,0 +1,16 @@
+<form class="space-y-4" hx-post="{% url 'update_notifications_settings' %}" hx-target="#notifications-settings-body" hx-swap="outerHTML">
+  {% csrf_token %}
+  <div>
+    <label class="block font-medium text-gray-700">Enable Email Notifications</label>
+    <input type="checkbox" name="email_notify" class="mr-2" /> Yes
+  </div>
+  <div>
+    <label class="block font-medium text-gray-700">Enable SMS Alerts</label>
+    <input type="checkbox" name="sms_notify" class="mr-2" /> Yes
+  </div>
+  <div>
+    <label class="block font-medium text-gray-700">Admin Alert Sound</label>
+    <input type="file" name="alert_sound" class="w-full border rounded-lg px-3 py-2" />
+  </div>
+  <button class="bg-blue-600 text-white px-5 py-2 rounded-lg hover:bg-blue-700">Save</button>
+</form>

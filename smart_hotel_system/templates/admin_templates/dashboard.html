@@ -1,0 +1,53 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ hotel_name }}</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/htmx.org@1.9.2"></script>
+</head>
+<body class="bg-gray-50 text-gray-800 flex min-h-screen">
+
+  {% block content %}
+
+  <!-- Sidebar -->
+  <aside class="w-64 bg-white shadow-md p-4 flex flex-col">
+    <div id="sidebar-hotel-name" class="text-2xl font-bold text-blue-600 mb-6" hx-get="{% url 'get_hotel_name' %}" hx-trigger="settingsUpdated,load,every 5s" hx-swap="innerHTML">{{ hotel_name }}</div>
+    <nav class="flex-1 space-y-2">
+      <button hx-get="{% url 'dashboard_partial' %}" hx-target="#content" hx-swap="innerHTML"
+        class="block w-full text-left px-3 py-2 rounded hover:bg-blue-100">🏠 Dashboard</button>
+
+      <button hx-get="{% url 'orders_partial' %}" hx-target="#content" hx-swap="innerHTML"
+        class="block w-full text-left px-3 py-2 rounded hover:bg-blue-100">📦 Orders</button>
+
+      <button hx-get="{% url 'menu_partial' %}" hx-target="#content" hx-swap="innerHTML"
+        class="block w-full text-left px-3 py-2 rounded hover:bg-blue-100">🍽️ Menu Management</button>
+
+      
+      <button hx-get="{% url 'chefs_partial' %}" hx-target="#content" hx-swap="innerHTML"
+        class="block w-full text-left px-3 py-2 rounded hover:bg-blue-100">👨‍🍳 Chef Management</button>
+
+      <button hx-get="{% url 'reports_partial' %}" hx-target="#content" hx-swap="innerHTML"
+        class="block w-full text-left px-3 py-2 rounded hover:bg-blue-100">📊 Reports</button>
+
+      <button hx-get="{% url 'settings_partial' %}" hx-target="#content" hx-swap="innerHTML"
+        class="block w-full text-left px-3 py-2 rounded hover:bg-blue-100">📜 History</button>
+
+      <button hx-get="{% url 'settings_partial' %}" hx-target="#content" hx-swap="innerHTML"
+        class="block w-full text-left px-3 py-2 rounded hover:bg-blue-100">⚙️ Settings</button>
+    </nav>
+    <div class="mt-auto">
+      <a href="#" class="block text-red-500 hover:underline">Logout</a>
+    </div>
+  </aside>
+
+  <!-- Content Area -->
+  <main id="content" class="flex-1 p-6 overflow-y-auto">
+    {% include 'admin_templates/partials/dashboard.html' %}
+  </main>
+  
+  {% endblock %}
+</body>
+</html>

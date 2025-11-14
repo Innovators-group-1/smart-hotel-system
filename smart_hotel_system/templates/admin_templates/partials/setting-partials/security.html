@@ -1,0 +1,17 @@
+<form class="space-y-4" hx-post="{% url 'update_security_settings' %}" hx-target="#security-settings-body" hx-swap="outerHTML">
+  {% csrf_token %}
+  <div>
+    <label class="block font-medium text-gray-700">Password Minimum Length</label>
+    <input type="number" name="min_password" value="8" class="w-24 border rounded-lg px-3 py-2" />
+  </div>
+  <div>
+    <label class="block font-medium text-gray-700">Session Timeout (minutes)</label>
+    <input type="number" name="session_timeout" value="30" class="w-24 border rounded-lg px-3 py-2" />
+  </div>
+  <div>
+    <label class="block font-medium text-gray-700">Allowed IP Addresses</label>
+    <textarea name="allowed_ips" rows="3" placeholder="127.0.0.1, 192.168.1.1"
+              class="w-full border rounded-lg px-3 py-2"></textarea>
+  </div>
+  <button class="bg-blue-600 text-white px-5 py-2 rounded-lg hover:bg-blue-700">Save</button>
+</form>

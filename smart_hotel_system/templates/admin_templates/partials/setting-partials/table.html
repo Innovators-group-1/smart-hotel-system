@@ -1,0 +1,100 @@
+<form class="space-y-4" hx-post="{% url 'update_table_settings' %}" hx-target="#table-settings-body" hx-swap="outerHTML">
+  {% csrf_token %}
+  <div class="flex justify-between items-center">
+    <h3 class="font-semibold text-gray-700">Table Management</h3>
+    <button type="button" onclick="showAddTableModel()" class="bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700">+ Add Table</button>
+  </div>
+  <div id="tables-list" class="mt-4">
+    <h4 class="font-medium text-gray-700 mb-2">Existing Tables</h4>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      {% for table in tables %}
+      <div class="border rounded-lg p-4 bg-gray-50">
+        <div class="flex justify-between items-start">
+          <div>
+            <h5 class="font-semibold">Table {{ table.number }}</h5>
+            <p class="text-sm text-gray-600">{{ table.seats }} seats</p>
+          </div>
+          {% if table.qr_code %}
+          <div class="text-center">
+            <img src="{{ table.qr_code.url }}" alt="QR Code for Table {{ table.number }}" class="w-16 h-16 mx-auto mb-1">
+            <a href="{{ table.qr_code.url }}" download="table_{{ table.number }}_qrcode.png" class="text-xs text-blue-600 hover:text-blue-800">Download</a>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+      {% empty %}
+      <p class="text-gray-500 col-span-full">No tables added yet.</p>
+      {% endfor %}
+    </div>
+  </div>
+  <div>
+    <label class="block font-medium text-gray-700">Auto-Mark Table Available</label>
+    <select name="auto_available" class="w-full border rounded-lg px-3 py-2">
+      <option>Enabled</option>
+      <option>Disabled</option>
+    </select>
+  </div>
+  <div>
+    <label class="block font-medium text-gray-700">Generate QR Codes Automatically</label>
+    <input type="checkbox" name="auto_qr" class="mr-2" /> Enable
+  </div>
+  <div>
+    <label class="block font-medium text-gray-700">Default Section</label>
+    <select name="zone" class="w-full border rounded-lg px-3 py-2">
+      <option>Indoor</option>
+      <option>Outdoor</option>
+      <option>VIP</option>
+      <option>Bar</option>
+    </select>
+  </div>
+  <button class="bg-blue-600 text-white px-5 py-2 rounded-lg hover:bg-blue-700">Save</button>
+</form>
+
+<!-- Add table modal -->
+<div id="add-table-modal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full">
+  <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+    <div class="mt-3">
+      <h3 class="text-lg font-medium text-gray-900">Add New Table</h3>
+      <form id="add-table-form" hx-post="{% url 'add_table' %}" hx-target="#add-table-modal" hx-swap="innerHTML">
+        {% csrf_token %}
+        <div class="mt-4">
+          <label class="block text-sm font-medium text-gray-700">Table Number</label>
+          <input type="number" name="table_number" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
+        </div>
+        <div class="mt-4">
+          <label class="block text-sm font-medium text-gray-700">Number of Seats</label>
+          <input type="number" name="seats" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
+        </div>
+        <div class="mt-6 flex justify-end">
+          <button type="button" onclick="hideAddTableModal()" class="mr-2 px-4 py-2 text-sm font-medium text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300">Cancel</button>
+          <button type="submit" class="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700">Add Table</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+  function showAddTableModel() {
+    document.getElementById('add-table-modal').classList.remove('hidden');
+  }
+
+  function hideAddTableModal() {
+    document.getElementById('add-table-modal').classList.add('hidden');
+  }
+  // Handle successful table addition
+document.addEventListener('htmx:afterRequest', function(evt) {
+  if (evt.detail.target.id === 'add-table-modal') {
+    const response = JSON.parse(evt.detail.xhr.responseText);
+    if (response.status === 'success') {
+      // Reload the table settings partial to show the new table
+      htmx.ajax('GET', '{% url "settings_table_partial" %}', {target: '#table-settings-body', swap: 'outerHTML'});
+      // You could also show a success message here
+      alert(response.message);
+    } else {
+      // Show error message in modal
+      const modalContent = document.querySelector('#add-table-modal .mt-3');
+      modalContent.innerHTML += '<div class="mt-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded"><p>' + response.message + '</p></div>';
+    }
+  }});
+</script>

@@ -1,0 +1,17 @@
+<form class="space-y-4" hx-post="{% url 'update_advanced_settings' %}" hx-target="#advanced-settings-body" hx-swap="outerHTML">
+  {% csrf_token %}
+  <div>
+    <label class="block font-medium text-gray-700">Enable AI Meal Recommendations</label>
+    <input type="checkbox" name="ai_meals" class="mr-2" /> Yes
+  </div>
+  <div>
+    <label class="block font-medium text-gray-700">Supabase API Key</label>
+    <input type="password" name="supabase_key" placeholder="••••••••"
+           class="w-full border rounded-lg px-3 py-2" />
+  </div>
+  <div>
+    <label class="block font-medium text-gray-700">Maintenance Mode</label>
+    <input type="checkbox" name="maintenance" class="mr-2" /> Enabled
+  </div>
+  <button class="bg-blue-600 text-white px-5 py-2 rounded-lg hover:bg-blue-700">Save</button>
+</form>

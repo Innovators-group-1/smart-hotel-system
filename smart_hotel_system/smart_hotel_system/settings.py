@@ -29,22 +29,28 @@ ALLOWED_HOSTS = []
 
 
 # Application definition
-
-INSTALLED_APPS = [
-    'django.contrib.admin',
-    'django.contrib.auth',
-    'django.contrib.contenttypes',
-    'django.contrib.sessions',
-    'django.contrib.messages',
-    'django.contrib.staticfiles',
+TENANT_APPS = [
     'apps.admin_flow',
     'apps.chef_flow',
     'apps.client_flow',
-    'apps.system_flow',
     'apps.common_flow',
+] 
+
+SHARED_APPS = [
+    'django_tenants',
+    'django.contrib.contenttypes',
+    'django.contrib.auth',
+    'django.contrib.sessions',
+    'django.contrib.messages',
+    'django.contrib.staticfiles',
+    'django.contrib.admin',
+    'apps.platform_admin_flow',
 ]
 
+INSTALLED_APPS = SHARED_APPS + TENANT_APPS
+
 MIDDLEWARE = [
+    'django_tenants.middleware.main.TenantMainMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -78,13 +84,27 @@ WSGI_APPLICATION = 'smart_hotel_system.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
-
+# Configure my postgresql with django-tenants settings here
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django_tenants.postgresql_backend',
+        'NAME': 'Smart_Hotel_System_Db',
+        'USER': 'postgres',
+        'PASSWORD': 'Nyansoho@123',
+        'HOST': 'localhost',
+        'PORT': '5432',
     }
+    
 }
+
+# Database router for django-tenants
+DATABASE_ROUTERS = (
+    'django_tenants.routers.TenantSyncRouter',
+)
+
+# Tenant settings for django-tenants
+TENANT_MODEL = "platform_admin_flow.HotelTenant"  # app.Model
+TENANT_DOMAIN_MODEL = "platform_admin_flow.HotelDomain"  # app.Model
 
 
 # Password validation
@@ -127,3 +147,9 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+
+# Handling media configuration
+import os
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+MEDIA_URL = '/media/'

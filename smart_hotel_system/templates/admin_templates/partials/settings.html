@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Settings</title>
+  <script src="https://unpkg.com/htmx.org@1.9.2"></script>
+  <style>
+  .fade-in {
+    animation: fadeIn 0.3s ease-in-out forwards;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-5px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+</style>
+
+</head>
+<body>
+  <div class="space-y-6">
+    <!-- Header -->
+    <div class="flex items-center justify-between">
+      <h2 class="text-2xl font-semibold text-gray-800">⚙️ Settings</h2>
+      <p class="text-gray-500">Manage your hotel’s preferences and system configurations</p>
+    </div>
+
+    <!-- Accordion-style sections -->
+    <div class="space-y-4">
+
+      <!-- 1. General Settings -->
+      <div class="bg-white shadow rounded-lg overflow-hidden">
+        <button 
+          class="w-full flex justify-between items-center px-5 py-3 text-left font-medium text-gray-700 hover:bg-gray-100"
+          hx-get="{% url 'settings_general_partial' %}" 
+          hx-target="#general-settings-body" 
+          hx-swap="innerHTML">
+          <span>🏨 General Settings</span>
+          <span class="text-gray-400">▼</span>
+        </button>
+        <div id="general-settings-body" class="hidden p-5 space-y-4"></div>
+      </div>
+
+      <!-- 2. Display Preferences -->
+      <div class="bg-white shadow rounded-lg overflow-hidden">
+        <button 
+          class="w-full flex justify-between items-center px-5 py-3 text-left font-medium text-gray-700 hover:bg-gray-100"
+          hx-get="{% url 'settings_display_partial' %}" 
+          hx-target="#display-settings-body" 
+          hx-swap="innerHTML">
+          <span>🎨 Display Preferences</span>
+          <span class="text-gray-400">▼</span>
+        </button>
+        <div id="display-settings-body" class="hidden p-5 space-y-4"></div>
+      </div>
+
+      <!-- 3. Table Management -->
+      <div class="bg-white shadow rounded-lg overflow-hidden">
+        <button 
+          class="w-full flex justify-between items-center px-5 py-3 text-left font-medium text-gray-700 hover:bg-gray-100"
+          hx-get="{% url 'settings_table_partial' %}" 
+          hx-target="#table-settings-body" 
+          hx-swap="innerHTML">
+          <span>🍽️ Table Management</span>
+          <span class="text-gray-400">▼</span>
+        </button>
+        <div id="table-settings-body" class="hidden p-5 space-y-4"></div>
+      </div>
+
+      <!-- 4. Payment Settings -->
+      <div class="bg-white shadow rounded-lg overflow-hidden">
+        <button 
+          class="w-full flex justify-between items-center px-5 py-3 text-left font-medium text-gray-700 hover:bg-gray-100"
+          hx-get="{% url 'settings_payment_partial' %}" 
+          hx-target="#payment-settings-body" 
+          hx-swap="innerHTML">
+          <span>💳 Payment Settings</span>
+          <span class="text-gray-400">▼</span>
+        </button>
+        <div id="payment-settings-body" class="hidden p-5 space-y-4"></div>
+      </div>
+
+      <!-- 5. User Management -->
+      <div class="bg-white shadow rounded-lg overflow-hidden">
+        <button 
+          class="w-full flex justify-between items-center px-5 py-3 text-left font-medium text-gray-700 hover:bg-gray-100"
+          hx-get="{% url 'settings_users_partial' %}" 
+          hx-target="#users-settings-body" 
+          hx-swap="innerHTML">
+          <span>👥 User Management</span>
+          <span class="text-gray-400">▼</span>
+        </button>
+        <div id="users-settings-body" class="hidden p-5 space-y-4"></div>
+      </div>
+
+      <!-- 6. Notifications -->
+      <div class="bg-white shadow rounded-lg overflow-hidden">
+        <button 
+          class="w-full flex justify-between items-center px-5 py-3 text-left font-medium text-gray-700 hover:bg-gray-100"
+          hx-get="{% url 'settings_notifications_partial' %}" 
+          hx-target="#notifications-settings-body" 
+          hx-swap="innerHTML">
+          <span>🔔 Notifications</span>
+          <span class="text-gray-400">▼</span>
+        </button>
+        <div id="notifications-settings-body" class="hidden p-5 space-y-4"></div>
+      </div>
+
+      <!-- 7. System Preferences -->
+      <div class="bg-white shadow rounded-lg overflow-hidden">
+        <button 
+          class="w-full flex justify-between items-center px-5 py-3 text-left font-medium text-gray-700 hover:bg-gray-100"
+          hx-get="{% url 'settings_system_partial' %}" 
+          hx-target="#system-settings-body" 
+          hx-swap="innerHTML">
+          <span>🧾 System Preferences</span>
+          <span class="text-gray-400">▼</span>
+        </button>
+        <div id="system-settings-body" class="hidden p-5 space-y-4"></div>
+      </div>
+
+      <!-- 8. Security -->
+      <div class="bg-white shadow rounded-lg overflow-hidden">
+        <button 
+          class="w-full flex justify-between items-center px-5 py-3 text-left font-medium text-gray-700 hover:bg-gray-100"
+          hx-get="{% url 'settings_security_partial' %}" 
+          hx-target="#security-settings-body" 
+          hx-swap="innerHTML">
+          <span>🔒 Security</span>
+          <span class="text-gray-400">▼</span>
+        </button>
+        <div id="security-settings-body" class="hidden p-5 space-y-4"></div>
+      </div>
+
+      <!-- 9. Advanced -->
+      <div class="bg-white shadow rounded-lg overflow-hidden">
+        <button 
+          class="w-full flex justify-between items-center px-5 py-3 text-left font-medium text-gray-700 hover:bg-gray-100"
+          hx-get="{% url 'settings_advanced_partial' %}" 
+          hx-target="#advanced-settings-body" 
+          hx-swap="innerHTML">
+          <span>🧰 Advanced Settings</span>
+          <span class="text-gray-400">▼</span>
+        </button>
+        <div id="advanced-settings-body" class="hidden p-5 space-y-4"></div>
+      </div>
+
+    </div>
+  </div>
+<script>
+  document.body.addEventListener('htmx:afterSwap', (event) => {
+    if (event.detail.target.id && event.detail.target.id.includes('-settings-body')) {
+      event.detail.target.classList.remove('hidden');
+      event.detail.target.classList.add('fade-in');
+    }
+  });
+</script>
+
+
+</body>
+</html>

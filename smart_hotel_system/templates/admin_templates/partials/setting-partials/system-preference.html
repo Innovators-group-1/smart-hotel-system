@@ -1,0 +1,16 @@
+<form class="space-y-4" hx-post="{% url 'update_system_settings' %}" hx-target="#system-settings-body" hx-swap="outerHTML">
+  {% csrf_token %}
+  <div>
+    <label class="block font-medium text-gray-700">Enable Analytics Dashboard</label>
+    <input type="checkbox" name="analytics" class="mr-2" /> Yes
+  </div>
+  <div>
+    <label class="block font-medium text-gray-700">Auto-Clear Completed Orders After (days)</label>
+    <input type="number" name="auto_clear" value="30" class="w-32 border rounded-lg px-3 py-2" />
+  </div>
+  <div>
+    <label class="block font-medium text-gray-700">Data Refresh Interval (seconds)</label>
+    <input type="number" name="refresh_interval" value="15" class="w-32 border rounded-lg px-3 py-2" />
+  </div>
+  <button class="bg-blue-600 text-white px-5 py-2 rounded-lg hover:bg-blue-700">Save</button>
+</form>
