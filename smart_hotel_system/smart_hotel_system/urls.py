@@ -14,13 +14,16 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
+from django.conf import settings
+from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import path,include;
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('client_flow/',include('apps.client_flow.urls')),
+    path('client_flow/',include('apps.client_flow.urls',namespace='client_flow')),
     path('chef_flow/', include('apps.chef_flow.urls')),
     path('admin_flow/', include('apps.admin_flow.urls')),
     path('system_flow/',include('apps.system_flow.urls')),
-]
+    path('', include('apps.client_flow.urls',namespace='client_root')),  # Root URL for client access
+] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
