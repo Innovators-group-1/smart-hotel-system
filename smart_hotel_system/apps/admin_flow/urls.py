@@ -39,4 +39,15 @@ urlpatterns = [
     path('security-settings-form/', views.update_security_settings, name='update_security_settings'),
     path('advanced-settings-form/', views.update_advanced_settings, name='update_advanced_settings'),
 
+    # MENU MANAGEMENT URLS
+    path('add-menu-item/', views.add_menu_item, name='add_menu_item'),
+    path('add-inbuilt-menu-item/', views.add_inbuilt_menu_item, name='add_inbuilt_menu_item'),
+    path('tap-add-inbuilt-menu-item/<str:item_id>/', views.tap_add_inbuilt_menu_item, name='tap_add_inbuilt_menu_item'),
+    path('menu_search/', views.menu_search, name='menu_search'),
+    path('menu_filter/<slug:slug>/', views.menu_filter, name='menu_filter'),
+    path('toggle-menu-availability/<str:item_id>/', views.toggle_menu_availability, name='toggle_menu_availability'),
+    path('edit-menu-item/<str:item_id>/', views.edit_menu_item, name='menu_edit_form'),
+    path('delete-menu-item/<str:item_id>/', views.delete_menu_item, name='delete_menu_item'),
+
+
 ]

@@ -5,6 +5,8 @@ from django.core.files import File
 from django.utils.translation import gettext_lazy as _
 from datetime import datetime, timedelta
 
+from slugify import slugify
+
 
 # Common model to be used across different apps
 class HotelSettings(models.Model):
@@ -32,9 +34,15 @@ class HotelSettings(models.Model):
 
 # Category model for categorizing items
 class Category(models.Model):
-    Category_id = models.AutoField(primary_key=True)
+    category_id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=100)
     description = models.TextField(blank=True, null=True)
+    slug = models.SlugField(unique=True, default='')
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = slugify(self.name)
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return self.name
@@ -50,12 +58,28 @@ class Menu (models.Model):
     price = models.DecimalField(max_digits=8, decimal_places=2)
     picture = models.ImageField(upload_to='menus/', blank=True, null=True)
     category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name='menus')
+    is_available = models.BooleanField(default=True)
 
     def __str__(self):
         return f'{self.title} ({self.category.name})'
     
     class Meta:
         db_table = 'menu'
+
+
+class InbuiltMenuItems(models.Model):
+    item_id = models.AutoField(primary_key=True)
+    title = models.CharField( max_length=200)
+    description = models.TextField()
+    price = models.DecimalField(max_digits=8, decimal_places=2)
+    picture = models.ImageField(upload_to='inbuilt_menus/', blank=True, null=True)
+    category = models.CharField(max_length=100)
+
+    def __str__(self):
+        return f'{self.title} ({self.category})'
+    
+    class Meta:
+        db_table = 'inbuilt_menu_items'
 
 class Table(models.Model):
     number = models.PositiveIntegerField(unique=True)

@@ -5,7 +5,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>{{ hotel_name }}</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="{% static 'dist/output.css' %}">
   <script src="https://unpkg.com/htmx.org@1.9.2"></script>
 </head>
 <body class="bg-gray-50 text-gray-800 flex min-h-screen">
@@ -49,5 +49,27 @@
   </main>
   
   {% endblock %}
+  <!-- Global Modal Overlay -->
+  <div 
+    id="modal"
+    class="fixed inset-0 bg-black/40 backdrop-blur-sm hidden items-center justify-center z-50"
+    hx-target="#modal-content"
+    hx-swap="innerHTML"
+    onclick="if(event.target.id === 'modal'){ closeModal(); }"
+  >
+      <div id="modal-content" class="w-full flex items-center justify-center"></div>
+  </div>
+
+
+<script>
+  function openModal() {
+    document.getElementById('modal').classList.remove('hidden');
+  }
+  function closeModal() {
+    document.getElementById('modal').classList.add('hidden');
+    document.getElementById('modal-content').innerHTML = "";
+  }
+</script>
+
 </body>
 </html>

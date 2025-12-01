@@ -9,13 +9,7 @@ from django.db.models import Q  # For search/filter queries
 from django.contrib import messages  # For showing success/error notifications
 
 # --- Local Application Models ---
-from .models import (
-    MenuItem,      # Menu items displayed to users
-    Category,      # Menu categories like "Main Food", "Drinks", etc.
-    Order,         # Represents a placed order
-    OrderItem,     # Represents individual items within an order
-    Table          # Represents a restaurant table (linked via QR)
-)
+from apps.common_flow.models import Menu as MenuItem, Category, Table,Orders,HotelSettings
 
 
 def _get_cart(session):
@@ -136,7 +130,7 @@ def checkout_view(request):
             return redirect('client_flow:checkout')
 
         #  Create Order
-        order = Order.objects.create(
+        order = Orders.objects.create(
             table=table,
             payment_method=payment_method,
             payment_reference=payment_reference,
@@ -145,13 +139,13 @@ def checkout_view(request):
         )
 
         #  Create OrderItems
-        for row in cart_items:
-            OrderItem.objects.create(
-                order=order,
-                menu_item=row['item'],
-                quantity=row['quantity'],
-                unit_price=row['item'].price
-            )
+        # for row in cart_items:
+        #     OrderItem.objects.create(
+        #         order=order,
+        #         menu_item=row['item'],
+        #         quantity=row['quantity'],
+        #         unit_price=row['item'].price
+        #     )
 
         #  Clear cart
         request.session['cart'] = {}
@@ -165,7 +159,7 @@ def checkout_view(request):
     return render(request, 'client_templates/checkout.html', context)
 
 def order_confirmation_view(request, order_id):
-    order = get_object_or_404(Order, id=order_id)
+    order = get_object_or_404(Orders, id=order_id)
     order_items = order.order_items.all()
     return render(request, 'client_templates/order_confirmation.html', {
         'order': order,
@@ -173,7 +167,7 @@ def order_confirmation_view(request, order_id):
     })
     
 def order_tracking_view(request, order_id):
-    order = get_object_or_404(Order, id=order_id)
+    order = get_object_or_404(Orders, id=order_id)
 
     # Define all steps in the process
     steps = ['pending', 'paid', 'confirmed', 'preparing', 'ready', 'served']

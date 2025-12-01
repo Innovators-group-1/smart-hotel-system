@@ -5,7 +5,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Order Status</title>
-  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <link rel="stylesheet" href="{% static 'dist/output.css' %}">
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
   <style>
@@ -16,24 +16,6 @@
       font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
     }
   </style>
-  <script id="tailwind-config">
-    tailwind.config = {
-      darkMode: "class",
-      theme: {
-        extend: {
-          colors: {
-            "primary": "#13ec5b",
-            "background-light": "#f6f8f6",
-            "background-dark": "#102216",
-          },
-          fontFamily: {
-            "display": ["Plus Jakarta Sans"]
-          },
-          borderRadius: { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" },
-        },
-      },
-    }
-  </script>
 </head>
 <body class="bg-background-light dark:bg-background-dark font-display text-slate-800 dark:text-slate-200">
 

@@ -1,0 +1,59 @@
+{% for item in items %}
+        <tr class="border-b hover:bg-gray-50 hover:shadow-sm transition-all">
+
+          <td class="py-3 px-4 flex items-center gap-3">
+            <img src="{{ item.image.url }}" 
+                 class="w-12 h-12 object-cover rounded-lg shadow-sm hover:scale-105 transition">
+            <span class="font-medium text-gray-800">{{ item.name }}</span>
+          </td>
+
+          <td class="py-3 px-4 text-gray-600">{{ item.category.name }}</td>
+
+          <td class="py-3 px-4 font-medium text-gray-700">${{ item.price }}</td>
+
+          <td class="py-3 px-4">
+            <label class="inline-flex items-center cursor-pointer">
+              <input type="checkbox"
+                     class="sr-only peer"
+                     {% if item.is_available %}checked{% endif %}
+                     hx-post="{% url 'menu_toggle' item.id %}"
+                     hx-trigger="click">
+              <div class="w-11 h-6 bg-gray-300 rounded-full peer peer-checked:bg-blue-600 relative transition">
+                <div class="w-5 h-5 bg-white rounded-full absolute top-0.5 left-0.5 
+                            peer-checked:translate-x-5 transition"></div>
+              </div>
+            </label>
+
+            {% if item.is_available %}
+              <span class="ml-2 text-green-600 text-sm font-semibold">Available</span>
+            {% else %}
+              <span class="ml-2 text-red-600 text-sm font-semibold">Unavailable</span>
+            {% endif %}
+          </td>
+
+          <td class="py-3 px-4 text-center">
+            <div class="flex justify-center gap-4">
+
+              <button 
+                class="text-blue-600 hover:text-blue-800 hover:scale-110 transition"
+                hx-get="{% url 'menu_edit_form' item.id %}"
+                hx-target="#modal-content"
+                on-click="openModal()"
+              >
+                ✏️
+              </button>
+
+              <button 
+                class="text-red-600 hover:text-red-800 hover:scale-110 transition"
+                hx-delete="{% url 'delete_menu_item' item.id %}"
+                hx-target="#menu-table-body"
+                hx-swap="innerHTML"
+              >
+                🗑️
+              </button>
+
+            </div>
+          </td>
+
+        </tr>
+        {% endfor %}

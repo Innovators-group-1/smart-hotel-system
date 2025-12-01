@@ -82,6 +82,14 @@ TEMPLATES = [
     },
 ]
 
+# TailwindCSS BaseDir
+STATICFILES_DIRS = [
+    BASE_DIR / "static",
+    BASE_DIR / "static/dist"
+]
+
+
+
 WSGI_APPLICATION = 'smart_hotel_system.wsgi.application'
 
 
