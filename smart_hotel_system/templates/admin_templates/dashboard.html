@@ -32,7 +32,7 @@
       <button hx-get="{% url 'reports_partial' %}" hx-target="#content" hx-swap="innerHTML"
         class="block w-full text-left px-3 py-2 rounded hover:bg-blue-100">📊 Reports</button>
 
-      <button hx-get="{% url 'settings_partial' %}" hx-target="#content" hx-swap="innerHTML"
+      <button hx-get="{% url 'history_partial' %}" hx-target="#content" hx-swap="innerHTML"
         class="block w-full text-left px-3 py-2 rounded hover:bg-blue-100">📜 History</button>
 
       <button hx-get="{% url 'settings_partial' %}" hx-target="#content" hx-swap="innerHTML"
@@ -52,24 +52,92 @@
   <!-- Global Modal Overlay -->
   <div 
     id="modal"
-    class="fixed inset-0 bg-black/40 backdrop-blur-sm hidden items-center justify-center z-50"
-    hx-target="#modal-content"
-    hx-swap="innerHTML"
+    class="fixed inset-0 bg-black/40 backdrop-blur-sm hidden z-50 
+          overflow-y-auto p-6"
     onclick="if(event.target.id === 'modal'){ closeModal(); }"
   >
-      <div id="modal-content" class="w-full flex items-center justify-center"></div>
+    <div 
+      id="modal-content"
+      class="mx-auto mt-10 w-full max-w-lg bg-white rounded-2xl shadow-xl 
+             max-h-[90vh] overflow-y-auto p-6"
+      hx-target="this"
+      hx-swap="innerHTML"
+    ></div>
   </div>
 
-
+  <!-- Toast Notification Container -->
+  <div id="toast-container" class="fixed top-4 right-4 space-y-3 z-50"></div>
 <script>
   function openModal() {
-    document.getElementById('modal').classList.remove('hidden');
+    const modal = document.getElementById('modal');
+    if (modal) {
+      modal.classList.remove('hidden');
+    }
   }
   function closeModal() {
-    document.getElementById('modal').classList.add('hidden');
-    document.getElementById('modal-content').innerHTML = "";
+    const modal = document.getElementById('modal');
+    if (modal) {
+      modal.classList.add('hidden');
+    }
+    const modalContent = document.getElementById('modal-content');
+    if (modalContent) {
+      modalContent.innerHTML = "";
+    }
   }
+
+  // HTMX event listeners for toast notifications
+  function showToast(message, type="error") {
+    let toast = document.createElement("div");
+    toast.className = `
+        px-4 py-3 rounded-xl shadow-lg text-white 
+        ${type === "error" ? "bg-red-600" : "bg-green-600"}
+        animate-slide-in
+    `;
+    toast.innerText = message;
+
+    document.getElementById("toast-container").appendChild(toast);
+
+    setTimeout(() => {
+        toast.classList.add("opacity-0");
+        setTimeout(() => toast.remove(), 300);
+    }, 3000);
+}
+  document.body.addEventListener('toast-error',(e)=>{
+    showToast(e.detail.message,'error');
+  })
+
+  // Set CSRF header for all HTMX requests using the csrftoken cookie
+  function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+      const cookies = document.cookie.split(';');
+      for (let i = 0; i < cookies.length; i++) {
+        const cookie = cookies[i].trim();
+        if (cookie.substring(0, name.length + 1) === (name + '=')) {
+          cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+          break;
+        }
+      }
+    }
+    return cookieValue;
+  }
+
+  document.body.addEventListener('htmx:configRequest', function(event) {
+    const csrftoken = getCookie('csrftoken');
+    if (csrftoken) {
+      event.detail.headers['X-CSRFToken'] = csrftoken;
+    }
+  });
 </script>
+<style>
+@keyframes slide-in {
+    from { transform: translateX(50px); opacity: 0 }
+    to   { transform: translateX(0); opacity: 1 }
+}
+.animate-slide-in {
+    animation: slide-in .25s ease-out;
+}
+</style>
 
 </body>
 </html>

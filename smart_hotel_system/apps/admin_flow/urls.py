@@ -9,6 +9,7 @@ urlpatterns = [
     path('menu/', views.menu_partial, name='menu_partial'),
     path('reports/', views.reports_partial, name='reports_partial'),
     path('chefs/', views.chefs_partial, name='chefs_partial'),
+    path('history/', views.history_partial, name='history_partial'),
     path('settings/', views.settings_partial, name='settings_partial'),
 
 
@@ -48,6 +49,21 @@ urlpatterns = [
     path('toggle-menu-availability/<str:item_id>/', views.toggle_menu_availability, name='toggle_menu_availability'),
     path('edit-menu-item/<str:item_id>/', views.edit_menu_item, name='menu_edit_form'),
     path('delete-menu-item/<str:item_id>/', views.delete_menu_item, name='delete_menu_item'),
+
+    # ORDER MANAGEMENT URLS
+    path('order_search/', views.order_search, name='order_search'),
+    path('order_filter/all/', views.order_filter, name='all'),
+    path('order_filter/completed/', views.order_filter, {'status': 'completed'}, name='completed'),
+    path('order_filter/pending/', views.order_filter, {'status': 'pending'}, name='pending'),
+    path('order_filter/cancelled/', views.order_filter, {'status': 'cancelled'}, name='cancelled'),
+    path('order_filter/in_kichen/', views.order_filter, name='in_kichen'),
+    path('order_payment/filter/all/', views.order_payment_filter, name='all'),
+    path('order_payment/filter/paid/', views.order_payment_filter, {'payment_status': 'paid'}, name='paid'),
+    path('order_payment/filter/pending/', views.order_payment_filter, {'payment_status': 'pending'}, name='payment_pending'),
+    path('order_verify/<str:order_id>/', views.order_verify, name='order_verify'),
+    path('order_send_to_kitchen/<str:order_id>/', views.order_send_to_kitchen, name='order_send_to_kitchen'),
+    path('order_print/<str:order_id>/', views.order_print, name='order_print'),
+    path('order_cancel/<str:order_id>/', views.order_cancel, name='order_cancel'),
 
 
 ]

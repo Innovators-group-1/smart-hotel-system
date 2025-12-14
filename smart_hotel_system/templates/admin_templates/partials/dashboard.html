@@ -41,6 +41,7 @@
       <ul class="divide-y divide-gray-200">
         {% for meal in top_meals %}
           <li class="py-2 flex justify-between">
+            <img src="{% if meal.picture %}{{ meal.picture.url }}{% else %}/static/img/placeholder.png{% endif %}" alt="{{ meal.title }}" class="w-10 h-10 rounded-lg object-cover mr-4">
             <span>{{ meal.title }}</span>
             <span class="font-medium text-gray-600">{{ meal.order_count }} orders</span>
           </li>

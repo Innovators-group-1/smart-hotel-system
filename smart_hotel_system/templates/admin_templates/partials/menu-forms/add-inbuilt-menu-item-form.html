@@ -1,9 +1,9 @@
 <!-- Add Menu Item Modal Content (NO overlay, NO container) -->
-<div class="w-full max-w-2xl mx-auto bg-white rounded-2xl shadow-xl animate-fadeIn">
+<div class="w-full max-w-2xl mx-auto bg-white rounded-2xl shadow-xl animate-fadeIn max-h-screen overflow-y-auto">
 
     <!-- Header -->
     <div class="px-6 py-4 border-b flex items-center justify-between">
-        <h2 class="text-xl font-semibold text-gray-900">Add New Menu Item</h2>
+        <h2 class="text-xl font-semibold text-gray-900">Add New Inbuilt Menu Item</h2>
 
         <button 
             onclick="closeModal()"
@@ -15,12 +15,14 @@
 
     <!-- FORM -->
     <form 
-        hx-post="{% url 'add_menu_item' %}"
-        hx-target="#menu-table-body"
+        hx-post="{% url 'add_inbuilt_menu_item' %}"
+        hx-target="#builtin-catalog"
         hx-swap="innerHTML"
         enctype="multipart/form-data"
         class="px-6 py-6 space-y-6"
+        hx-on:htmx:afterRequest="closeModal()"
     >
+        {% csrf_token %}
 
         <!-- Item Name -->
         <div>
@@ -87,7 +89,7 @@
                 <img 
                     id="preview-image" 
                     src="/static/img/placeholder.png"
-                    class="w-20 h-20 rounded-xl object-cover border"
+                    class="w-10 h-10 rounded-xl object-cover border"
                 >
 
                 <!-- Upload Button -->
@@ -108,23 +110,6 @@
             </div>
 
             <p class="text-xs text-gray-500">PNG, JPG, GIF up to 5MB.</p>
-        </div>
-
-        <!-- Availability -->
-        <div>
-            <label class="text-sm font-medium">Availability</label>
-
-            <div class="mt-2 border rounded-xl px-4 py-3 flex items-center justify-between">
-
-                <span>Item is available for order</span>
-
-                <label class="inline-flex items-center cursor-pointer">
-                    <input type="checkbox" name="available" class="sr-only peer" checked>
-                    <div class="w-11 h-6 bg-gray-300 rounded-full peer-checked:bg-blue-600 relative transition">
-                        <div class="w-5 h-5 bg-white rounded-full absolute top-0.5 left-0.5 peer-checked:translate-x-5 transition"></div>
-                    </div>
-                </label>
-            </div>
         </div>
 
         <!-- Footer Buttons -->
