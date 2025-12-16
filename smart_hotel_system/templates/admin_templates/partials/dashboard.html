@@ -66,7 +66,7 @@
         <tbody>
           {% for order in recent_orders %}
             <tr class="border-b hover:bg-gray-50">
-              <td class="py-2">#{{ order.id }}</td>
+              <td class="py-2">#{{ order.pk }}</td>
               <td class="py-2">{{ order.table.number }}</td>
               <td class="py-2 text-yellow-500 font-semibold">{{ order.status }}</td>
               <td class="py-2 text-right">{{ order.created_at|time:"H:i A" }}</td>

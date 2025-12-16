@@ -152,7 +152,7 @@ def checkout_view(request):
         messages.success(request, f"Order confirmed! Payment reference: {payment_reference}")
 
         #  Redirect to order confirmation page or menu
-        return redirect('client_flow:order_confirmation', order_id=order.id)
+        return redirect('client_flow:order_confirmation', order_id=order.pk)
 
     # Render checkout page with cart items and total
     context = {'cart_items': cart_items, 'total': total}

@@ -108,6 +108,8 @@ class Orders(models.Model):
         IN_PROGRESS = 'IN_PROGRESS', _('In Progress')
         COMPLETED = 'COMPLETED', _('Completed')
         CANCELLED = 'CANCELLED', _('Cancelled')
+    
+    
     order_id = models.AutoField(primary_key=True)
     table = models.ForeignKey(Table, on_delete=models.CASCADE, related_name='orders')
     seat = models.PositiveIntegerField(null = False, blank = False)

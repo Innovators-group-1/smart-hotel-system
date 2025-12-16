@@ -61,11 +61,10 @@ def adminDashboard(request):
 
 def dashboard_partial(request):
     # Short order statistics
-    completed_orders = Orders.objects.filter(status='completed').count()
-    pending_orders = Orders.objects.filter(status='pending').count()
-    cancelled_orders = Orders.objects.filter(status='cancelled').count()
-    in_progress_orders = Orders.objects.filter(status='in_progress').count()
-
+    completed_orders = Orders.objects.filter(status='COMPLETED').count()
+    pending_orders = Orders.objects.filter(status='PENDING').count()
+    cancelled_orders = Orders.objects.filter(status='CANCELLED').count()
+    in_progress_orders = Orders.objects.filter(status='IN_PROGRESS').count()
     # Top five most ordered menu items
     top_meals = Menu.objects.annotate(order_count=Count('orders')).order_by('-order_count')[:5]
 
@@ -90,7 +89,8 @@ def get_hotel_name(request):
 
 def orders_partial(request):
     orders = Orders.objects.all().order_by('-created_at')
-    context = {'orders': orders}
+    order_statuses = Orders.OrderStatus.choices
+    context = {'orders': orders, 'order_statuses': order_statuses}
     return render(request, 'admin_templates/partials/orders.html', context)
 
 def menu_partial(request):
@@ -460,5 +460,6 @@ def delete_menu_item(request, item_id):
     menu_items = Menu.objects.all().order_by('menu_item_id')
     context = {'menu_items': menu_items}
     return render(request, 'admin_templates/partials/menu-forms/manage_menu_rows.html', context)
+
 
 
