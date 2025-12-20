@@ -1,0 +1,29 @@
+{% extends "client_templates/base/base.html" %}
+{% load static %}
+
+{% block title %}Menu{% endblock %}
+
+{% block content %}
+  <!-- Fixed mobile header at top -->
+  {% include "client_templates/shared/mobile_header.html" %}
+
+  <!-- Page wrapper for scrollable content -->
+  <main class="max-w-md mx-auto pb-6">
+
+    <!-- Category navigation (HTMX triggers) -->
+    {% include "client_templates/menu/partials/category_nav.html" %}
+
+    <!-- Main content area: THIS is the HTMX target -->
+    <section
+      id="menu-content"
+      class="px-4 pt-4 space-y-4"
+    >
+      {# Initial render = whatever menu_items your menu_view sends (default category) #}
+      {% include "client_templates/menu/partials/menu_list.html" %}
+    </section>
+
+    <!-- Off-canvas hamburger / side menu -->
+    {% include "client_templates/shared/hamburger_menu.html" %}
+  </main>
+{% endblock %}
+

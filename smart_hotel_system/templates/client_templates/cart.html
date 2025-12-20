@@ -1,132 +1,135 @@
+{% extends "client_templates/base/base.html" %}
 {% load static %}
-<!DOCTYPE html>
-<html class="dark" lang="en">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Your Order</title>
-  <link rel="stylesheet" href="{% static 'dist/output.css' %}">
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
-  <style>
-    body {
-      -webkit-font-smoothing: antialiased;
-      -moz-osx-font-smoothing: grayscale;
-      min-height: max(884px, 100dvh);
-    }
-    .material-symbols-outlined {
-      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
-    }
-  </style>
-  <script>
-    function updateQuantity(itemId, action) {
-      const form = document.createElement('form');
-      form.method = 'POST';
-      form.action = `{% url 'client_flow:update_cart' 0 %}`.replace('0', itemId);
 
-      const csrfToken = document.createElement('input');
-      csrfToken.type = 'hidden';
-      csrfToken.name = 'csrfmiddlewaretoken';
-      csrfToken.value = document.querySelector('[name=csrfmiddlewaretoken]').value;
+{% block title %}My Cart{% endblock %}
 
-      const actionInput = document.createElement('input');
-      actionInput.type = 'hidden';
-      actionInput.name = 'action';
-      actionInput.value = action;
+{% block content %}
+  {% include "client_templates/shared/mobile_header.html" %}
 
-      form.appendChild(csrfToken);
-      form.appendChild(actionInput);
-      document.body.appendChild(form);
-      form.submit();
-    }
-  </script>
-</head>
-<body class="font-display bg-background-light dark:bg-background-dark text-[#2D2D2D] dark:text-white">
-  <div class="relative flex min-h-screen w-full flex-col">
-
-    <!-- Top App Bar -->
-    <header class="sticky top-0 z-10 flex items-center justify-between bg-background-light dark:bg-background-dark p-4 pb-3 border-b border-gray-200/50 dark:border-white/10">
-      <button onclick="history.back()" class="flex size-10 shrink-0 items-center justify-center text-[#2D2D2D] dark:text-white" aria-label="Go Back">
-        <span class="material-symbols-outlined text-2xl">arrow_back</span>
-      </button>
-      <h1 class="text-xl font-bold leading-tight tracking-tight flex-1 text-center">Your Order</h1>
-      <div class="size-10 shrink-0"></div> <!-- Spacer -->
+  <main class="max-w-md mx-auto px-4 pt-4 pb-6">
+    <header class="mb-4">
+      <h1 class="text-xl font-semibold text-slate-900">My Cart</h1>
     </header>
 
-    <!-- Main Content -->
-    <main class="flex-1 px-4 pt-6 pb-40 overflow-auto">
-      {% if cart_items %}
-      <div class="flex flex-col gap-4">
-
-        {% for row in cart_items %}
-        <div class="flex items-center gap-4">
-          <div class="bg-center bg-no-repeat aspect-square bg-cover rounded-lg size-16 shrink-0" style="background-image: url('{{ row.item.image_url }}');" aria-label="{{ row.item.name }}"></div>
-          <div class="flex flex-col justify-center flex-1 min-w-0">
-            <p class="text-base font-medium leading-normal line-clamp-1">{{ row.item.name }}</p>
-            {% if row.item.description %}
-            <p class="text-sm font-normal leading-normal text-gray-500 dark:text-[#9db9a6] line-clamp-2">{{ row.item.description }}</p>
-            {% endif %}
-            <p class="text-base font-semibold mt-1 text-primary">${{ row.item.price }}</p>
-          </div>
-          <div class="shrink-0">
-            <div class="flex items-center gap-2 text-[#2D2D2D] dark:text-white">
-              <button onclick="updateQuantity({{ row.item.id }}, 'decrease')" class="flex h-8 w-8 items-center justify-center rounded-full bg-primary/20 dark:bg-[#28392e] cursor-pointer text-lg font-bold text-primary dark:text-primary" aria-label="Decrease quantity">-</button>
-              <span class="w-8 text-center text-base font-semibold">{{ row.quantity }}</span>
-              <button onclick="updateQuantity({{ row.item.id }}, 'increase')" class="flex h-8 w-8 items-center justify-center rounded-full bg-primary/20 dark:bg-[#28392e] cursor-pointer text-lg font-bold text-primary dark:text-primary" aria-label="Increase quantity">+</button>
+    {# cart_items = [{'item': Menu, 'quantity': int, 'subtotal': Decimal}] #}
+    <section class="space-y-4 mb-6">
+      {% for row in cart_items %}
+        {% with item=row.item quantity=row.quantity subtotal=row.subtotal %}
+          <article class="flex items-center gap-3 bg-white rounded-2xl shadow-sm px-3 py-3">
+            <div class="flex-shrink-0">
+              <img
+                src="{{ item.picture.url if item.picture else 'https://via.placeholder.com/80' }}"
+                alt="{{ item.title }}"
+                class="w-16 h-16 rounded-xl object-cover"
+              />
             </div>
-          </div>
-        </div>
-        <hr class="border-gray-200/50 dark:border-white/10" />
-        {% endfor %}
+
+            <div class="flex-1">
+              <h2 class="text-sm font-semibold text-slate-900">
+                {{ item.title }}
+              </h2>
+              <p class="text-xs text-slate-500">
+                {{ item.description|truncatewords:8 }}
+              </p>
+              <p class="mt-1 text-sm font-medium text-slate-900">
+                Ksh {{ item.price }}
+              </p>
+            </div>
+
+            <div class="flex flex-col items-center gap-1">
+              <div class="flex items-center gap-2">
+                <form
+                  method="post"
+                  action="{% url 'client_flow:update_cart' item.menu_item_id %}"
+                >
+                  {% csrf_token %}
+                  <input type="hidden" name="action" value="decrease" />
+                  <button
+                    type="submit"
+                    class="w-7 h-7 rounded-full border border-slate-300
+                           flex items-center justify-center text-sm"
+                  >
+                    -
+                  </button>
+                </form>
+
+                <span class="text-sm font-medium">
+                  {{ quantity }}
+                </span>
+
+                <form
+                  method="post"
+                  action="{% url 'client_flow:update_cart' item.menu_item_id %}"
+                >
+                  {% csrf_token %}
+                  <input type="hidden" name="action" value="increase" />
+                  <button
+                    type="submit"
+                    class="w-7 h-7 rounded-full border border-slate-300
+                           flex items-center justify-center text-sm"
+                  >
+                    +
+                  </button>
+                </form>
+              </div>
+
+              <form
+                method="post"
+                action="{% url 'client_flow:remove_from_cart' item.menu_item_id %}"
+              >
+                {% csrf_token %}
+                <button
+                  type="submit"
+                  class="text-[11px] text-red-500"
+                >
+                  Remove
+                </button>
+              </form>
+            </div>
+          </article>
+        {% endwith %}
+      {% empty %}
+        <p class="text-sm text-slate-500">
+          Your cart is empty.
+        </p>
+      {% endfor %}
+    </section>
+
+    <section class="bg-white rounded-2xl shadow-sm px-4 py-4 mb-5">
+      <h2 class="text-sm font-semibold text-slate-900 mb-3">
+        Order Summary
+      </h2>
+
+      <div class="flex items-center justify-between text-sm mb-2">
+        <span class="text-slate-500">Subtotal</span>
+        <span class="font-medium text-slate-900">
+          Ksh {{ total }}
+        </span>
       </div>
 
-      <!-- Special Instructions -->
-      <div class="mt-8">
-        <label class="flex flex-col w-full">
-          <p class="text-base font-medium leading-normal pb-2">Special Instructions</p>
-          <textarea name="special_instructions" placeholder="Add any special requests for the kitchen..."
-            class="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg bg-background-light dark:bg-background-dark text-[#2D2D2D] dark:text-white focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-gray-300 dark:border-[#3b5443] focus:border-primary/80 dark:focus:border-primary min-h-24 placeholder:text-gray-400 dark:placeholder:text-[#9db9a6] p-3 text-base font-normal leading-normal"
-          ></textarea>
-        </label>
+      <div class="flex items-center justify-between text-sm mb-2">
+        <span class="text-slate-500">Taxes &amp; Fees</span>
+        <span class="font-medium text-slate-900">
+          Included
+        </span>
       </div>
 
-      <!-- Order Summary -->
-      <div class="mt-8 space-y-3">
-        <div class="flex justify-between items-center text-base">
-          <p class="text-gray-600 dark:text-gray-300">Subtotal</p>
-          <p class="font-medium">${{ total }}</p>
-        </div>
-        <div class="flex justify-between items-center text-base">
-          <p class="text-gray-600 dark:text-gray-300">Taxes & Fees</p>
-          <p class="font-medium">$0.00</p>
-        </div>
-        <hr class="border-gray-200/50 dark:border-white/10 !my-4" />
-        <div class="flex justify-between items-center text-lg">
-          <p class="font-bold">Total</p>
-          <p class="font-bold text-primary">${{ total }}</p>
-        </div>
+      <div class="border-t border-slate-100 mt-2 pt-2 flex items-center justify-between">
+        <span class="text-sm font-semibold text-slate-900">
+          Grand Total
+        </span>
+        <span class="text-base font-semibold text-slate-900">
+          Ksh {{ total }}
+        </span>
       </div>
+    </section>
 
-      {% else %}
-      <p class="text-center py-20 text-gray-500 dark:text-gray-400 italic text-lg">Your cart is empty.</p>
-      <div class="text-center">
-        <a href="{% url 'client_flow:menu' %}" class="bg-primary hover:bg-[#0ec34a] text-background-dark px-5 py-3 rounded-lg inline-block shadow transition">
-          Browse Menu
-        </a>
-      </div>
-      {% endif %}
-    </main>
-
-    <!-- Sticky Footer / CTA -->
-    <footer class="fixed bottom-0 left-0 right-0 z-10 bg-background-light dark:bg-background-dark p-4 border-t border-gray-200/50 dark:border-white/10">
-      <a href="{% url 'client_flow:checkout' %}" class="block w-full">
-        <button class="w-full rounded-xl bg-primary py-4 px-6 text-lg font-bold text-background-dark transition-opacity hover:opacity-90">
-          Proceed to Checkout
-        </button>
-      </a>
-    </footer>
-
-  </div>
-</body>
-</html>
-
+    <a
+      href="{% url 'client_flow:checkout' %}"
+      class="block w-full text-center bg-orange-500 text-white
+             font-semibold py-3 rounded-full text-sm"
+    >
+      Proceed to Checkout
+    </a>
+  </main>
+{% endblock %}

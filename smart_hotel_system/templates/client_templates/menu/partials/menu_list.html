@@ -1,0 +1,9 @@
+{% if menu_items %}
+  <div class="space-y-4">
+    {% for item in menu_items %}
+      {% include "client_templates/menu/partials/menu_item_card.html" with item=item %}
+    {% endfor %}
+  </div>
+{% else %}
+  {% include "client_templates/menu/partials/menu_empty.html" %}
+{% endif %}

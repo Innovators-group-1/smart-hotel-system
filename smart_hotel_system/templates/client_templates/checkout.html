@@ -1,154 +1,146 @@
+{% extends "client_templates/base/base.html" %}
 {% load static %}
-<!DOCTYPE html>
-<html class="dark" lang="en">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Payment Method</title>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
-  <link rel="stylesheet" href="{% static 'dist/output.css' %}">
-  <style>
-    body {
-      -webkit-font-smoothing: antialiased;
-      -moz-osx-font-smoothing: grayscale;
-      min-height: max(884px, 100dvh);
-    }
-    .material-symbols-outlined {
-      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
-    }
-  </style>
-  <script>
-    document.addEventListener('DOMContentLoaded', function() {
-      const radios = document.querySelectorAll('.payment-radio');
-      const expressFields = document.querySelector('.express-fields');
-      const paymentAccountInput = document.querySelector('input[name="payment_account"]');
-      const form = document.getElementById('payment-form');
 
-      // Handle payment method selection
-      radios.forEach(radio => {
-        radio.addEventListener('change', function() {
-          if (this.value === 'express') {
-            expressFields.style.display = 'block';
-            paymentAccountInput.required = true;
-            paymentAccountInput.focus();
-          } else {
-            expressFields.style.display = 'none';
-            paymentAccountInput.required = false;
-            paymentAccountInput.value = '';
-          }
-        });
-      });
+{% block title %}Checkout{% endblock %}
 
-      // Form validation
-      form.addEventListener('submit', function(e) {
-        const selectedPayment = document.querySelector('input[name="payment_method"]:checked');
-        if (!selectedPayment) {
-          e.preventDefault();
-          alert('Please select a payment method.');
-          return;
-        }
+{% block content %}
+  {% include "client_templates/shared/mobile_header.html" %}
 
-        if (selectedPayment.value === 'express') {
-          const accountValue = paymentAccountInput.value.trim();
-          if (!accountValue || accountValue.length < 10) {
-            e.preventDefault();
-            alert('Please enter a valid phone number or account number (at least 10 characters).');
-            paymentAccountInput.focus();
-            return;
-          }
-        }
-      });
-    });
-  </script>
-</head>
-<body class="bg-background-light dark:bg-background-dark font-display">
-  <div class="relative flex h-auto min-h-screen w-full flex-col">
-
-    <!-- Top App Bar -->
-    <header class="flex items-center p-4 pb-2 justify-between sticky top-0 bg-background-light dark:bg-background-dark z-10">
-      <button onclick="history.back()" class="text-slate-800 dark:text-white flex size-10 shrink-0 items-center justify-center rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors" aria-label="Go Back">
-        <span class="material-symbols-outlined text-2xl">arrow_back</span>
-      </button>
-      <h1 class="text-slate-900 dark:text-white text-lg font-bold leading-tight tracking-[-0.015em] absolute left-1/2 -translate-x-1/2">
-        Payment Method
+  <main class="max-w-md mx-auto px-4 pt-4 pb-6">
+    <header class="mb-4">
+      <h1 class="text-xl font-semibold text-slate-900">
+        Payment
       </h1>
-      <div class="w-10 h-10"></div> <!-- Spacer -->
+      <p class="text-xs text-slate-500 mt-1">
+        Pay with M-Pesa. You will get a prompt on your phone to enter your PIN.
+      </p>
     </header>
 
-    <!-- Order Summary -->
-    <div class="px-4 pt-4">
-      <div class="flex justify-between items-center rounded-lg bg-slate-100 dark:bg-slate-800/50 p-4">
-        <p class="text-sm font-medium text-slate-600 dark:text-slate-300">Total Amount</p>
-        <p class="text-lg font-bold text-slate-900 dark:text-white">${{ total }}</p>
-      </div>
-    </div>
-
-    <!-- Payment Options Form -->
-    <main class="flex-grow p-4">
-      <form method="POST" class="space-y-4" id="payment-form">
-        {% csrf_token %}
-        <fieldset>
-          <legend class="sr-only">Payment Options</legend>
-
-          <label class="flex cursor-pointer items-start gap-4 rounded-xl border-2 border-slate-200 dark:border-slate-800 bg-white dark:bg-background-dark p-4 has-[:checked]:border-primary dark:has-[:checked]:border-primary transition-all has-[:checked]:ring-4 has-[:checked]:ring-primary/20">
-            <div class="mt-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/20 text-primary">
-              <span class="material-symbols-outlined">credit_card</span>
+    {# uses cart_items + total from checkout_view #}
+    <section class="bg-white rounded-2xl shadow-sm px-4 py-4 mb-4">
+      {% for row in cart_items %}
+        {% with item=row.item quantity=row.quantity subtotal=row.subtotal %}
+          <div class="flex items-center justify-between text-sm mb-2 last:mb-0">
+            <div>
+              <p class="font-medium text-slate-900">
+                {{ item.title }}
+              </p>
+              <p class="text-xs text-slate-500">
+                x{{ quantity }}
+              </p>
             </div>
-            <div class="flex grow flex-col">
-              <p class="text-base font-bold text-slate-900 dark:text-white">Express Payment</p>
-              <p class="text-sm text-slate-600 dark:text-slate-400 mt-1">Enter phone or account number for digital payment. System will send payment request to gateway.</p>
-              <div class="mt-3 express-fields" style="display: none;">
-                <label for="payment_account" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                  Phone Number or Account Number *
-                </label>
-                <input type="text"
-                       id="payment_account"
-                       name="payment_account"
-                       placeholder="Enter phone or account number"
-                       pattern=".{10,}"
-                       title="Please enter at least 10 characters"
-                       class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder:text-slate-500 dark:placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary">
-                <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Required for Express Payment processing</p>
-              </div>
-            </div>
-            <input
-              class="mt-1 h-5 w-5 shrink-0 appearance-none rounded-full border-2 border-slate-300 dark:border-slate-700 checked:border-[5px] checked:border-primary focus:outline-none focus:ring-0 focus:ring-offset-0 payment-radio"
-              name="payment_method"
-              type="radio"
-              value="express"
-              required
-            />
-          </label>
+            <p class="font-medium text-slate-900">
+              Ksh {{ subtotal }}
+            </p>
+          </div>
+        {% endwith %}
+      {% endfor %}
+    </section>
 
-          <label class="flex cursor-pointer items-start gap-4 rounded-xl border-2 border-slate-200 dark:border-slate-800 bg-white dark:bg-background-dark p-4 has-[:checked]:border-primary dark:has-[:checked]:border-primary transition-all has-[:checked]:ring-4 has-[:checked]:ring-primary/20">
-            <div class="mt-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/20 text-primary">
-              <span class="material-symbols-outlined">payments</span>
-            </div>
-            <div class="flex grow flex-col">
-              <p class="text-base font-bold text-slate-900 dark:text-white">Pay with Cash</p>
-              <p class="text-sm text-slate-600 dark:text-slate-400 mt-1">System will generate a unique payment code. Show this code to waiter to pay physically.</p>
-              <div class="mt-3 cash-info" style="display: none;">
-                <p class="text-xs text-slate-500 dark:text-slate-400">Payment code will be generated after order confirmation.</p>
-              </div>
-            </div>
-            <input
-              class="mt-1 h-5 w-5 shrink-0 appearance-none rounded-full border-2 border-slate-300 dark:border-slate-700 checked:border-[5px] checked:border-primary focus:outline-none focus:ring-0 focus:ring-offset-0 payment-radio"
-              name="payment_method"
-              type="radio"
-              value="cash"
-            />
-          </label>
-        </fieldset>
+    <form method="post" class="space-y-4">
+      {% csrf_token %}
 
-        <footer class="sticky bottom-0 bg-background-light dark:bg-background-dark p-4 pt-2">
-          <button type="submit" class="flex w-full cursor-pointer items-center justify-center overflow-hidden rounded-xl h-14 px-5 bg-primary text-background-dark text-base font-bold leading-normal tracking-[-0.015em] hover:opacity-90 transition-opacity">
-            <span class="truncate">Confirm Payment</span>
-          </button>
-        </footer>
-      </form>
-    </main>
+      {# payment_method values EXACTLY as used in checkout_view #}
+      <section class="bg-white rounded-2xl shadow-sm px-4 py-4">
+        <h2 class="text-sm font-semibold text-slate-900 mb-3">
+          Payment Method
+        </h2>
 
-  </div>
-</body>
-</html>
+        {# EXPRESS => M-Pesa express (STK push) #}
+        <label class="flex items-center gap-3 mb-3">
+          <input
+            type="radio"
+            name="payment_method"
+            value="express"
+            checked
+            class="w-4 h-4 text-orange-500 border-slate-300 focus:ring-orange-500"
+          />
+          <div>
+            <p class="text-sm font-medium text-slate-900">
+              M-Pesa (Express)
+            </p>
+            <p class="text-xs text-slate-500">
+              You will receive an M-Pesa prompt on this phone to confirm payment.
+            </p>
+          </div>
+        </label>
+
+        {# CASH => no STK push, waiter notes payment_reference as CASH-XXXX #}
+        <label class="flex items-center gap-3">
+          <input
+            type="radio"
+            name="payment_method"
+            value="cash"
+            class="w-4 h-4 text-orange-500 border-slate-300 focus:ring-orange-500"
+          />
+          <div>
+            <p class="text-sm font-medium text-slate-900">
+              Cash at Table
+            </p>
+            <p class="text-xs text-slate-500">
+              You will pay the waiter directly in cash.
+            </p>
+          </div>
+        </label>
+      </section>
+
+      {# this field name matches request.POST.get('payment_account') in EXPRESS branch #}
+      <section class="bg-white rounded-2xl shadow-sm px-4 py-4 space-y-2" id="mpesa-phone-section">
+        <label
+          for="payment_account"
+          class="block text-xs font-medium text-slate-700"
+        >
+          M-Pesa Phone Number
+        </label>
+        <input
+          type="tel"
+          id="payment_account"
+          name="payment_account"
+          class="w-full rounded-xl border border-slate-200 px-3 py-2
+                 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+          placeholder="07xx xxx xxx"
+        />
+        <p class="text-[11px] text-slate-500">
+          Required when paying with M-Pesa Express. Leave empty if paying cash.
+        </p>
+      </section>
+
+      <section class="bg-white rounded-2xl shadow-sm px-4 py-4 space-y-3">
+        <div class="flex items-center justify-between text-sm">
+          <span class="text-slate-500">Total to Pay</span>
+          <span class="text-base font-semibold text-slate-900">
+            Ksh {{ total }}
+          </span>
+        </div>
+
+        <button
+          type="submit"
+          class="w-full bg-orange-500 text-white font-semibold
+                 py-3 rounded-full text-sm"
+        >
+          Confirm and Pay
+        </button>
+      </section>
+    </form>
+  </main>
+
+  <script>
+    // Optional UX: hide phone field when cash is selected
+    document.addEventListener("DOMContentLoaded", function () {
+      const methodInputs = document.querySelectorAll("input[name='payment_method']");
+      const mpesaSection = document.getElementById("mpesa-phone-section");
+
+      function togglePhone() {
+        const selected = document.querySelector("input[name='payment_method']:checked");
+        if (selected && selected.value === "express") {
+          mpesaSection.style.display = "block";
+        } else {
+          mpesaSection.style.display = "none";
+        }
+      }
+
+      methodInputs.forEach((input) => input.addEventListener("change", togglePhone));
+      togglePhone(); // initial state
+    });
+  </script>
+{% endblock %}

@@ -215,4 +215,4 @@ def menu_view(request):
         'query': query,
     }
 
-    return render(request, 'client_templates/menu.html', context)
+    return render(request, 'client_templates/menu/menu_page.html', context)
