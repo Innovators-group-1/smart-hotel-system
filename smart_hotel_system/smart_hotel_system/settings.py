@@ -101,7 +101,7 @@ DATABASES = {
         'ENGINE': 'django_tenants.postgresql_backend',
         'NAME': 'Smart_Hotel_System_Db',
         'USER': 'postgres',
-        'PASSWORD': 'Nyansoho@123',
+        'PASSWORD': 'Deno@123',
         'HOST': 'localhost',
         'PORT': '5432',
     }
