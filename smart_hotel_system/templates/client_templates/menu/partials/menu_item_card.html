@@ -1,27 +1,7 @@
 <article class="bg-white rounded-2xl shadow-sm overflow-hidden">
   <!-- Image + badge area -->
   <div class="relative">
-    {% if item.image_url %}
-    <img
-      src="{{ item.image_url }}"
-      alt="{{ item.name }}"
-      class="w-full h-40 object-cover"
-    />
-    {% else %}
-    <img
-      src="https://via.placeholder.com/640x360"
-      alt="{{ item.name }}"
-      class="w-full h-40 object-cover"
-    />
-    {% endif %}
-    {% if item.badge %}
-      <span
-        class="absolute top-3 right-3 bg-green-600 text-white text-xs
-               px-2 py-0.5 rounded-full"
-      >
-        {{ item.badge }}
-      </span>
-    {% endif %}
+    <img src="{% if item.picture %}{{ item.picture.url }}{% else %}#{% endif %}" alt="{{ item.title }}" class="w-full h-40 object-cover" />
   </div>
 
   <!-- Text and price area -->
