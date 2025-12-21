@@ -1,0 +1,36 @@
+<aside
+  id="hamburger-drawer"
+  class="fixed inset-y-0 left-0 z-30 w-64 bg-white shadow-lg
+         transform -translate-x-full transition-transform duration-200"
+>
+  <div class="p-4 space-y-4">
+    <div class="flex items-center justify-between">
+      <h2 class="text-base font-semibold">Menu</h2>
+      <button
+        type="button"
+        class="text-sm text-slate-500"
+        onclick="document.getElementById('hamburger-drawer').classList.add('-translate-x-full')"
+      >
+        Close
+      </button>
+    </div>
+
+    <nav class="space-y-2 text-sm">
+      <a href="{% url 'client_flow:menu' %}" class="block py-1">
+        Menu
+      </a>
+      <a href="{% url 'client_flow:cart' %}" class="block py-1">
+        My Cart
+      </a>
+      <a href="#" class="block py-1">Help &amp; Support</a>
+    </nav>
+  </div>
+</aside>
+
+<script>
+  // Simple toggle helper you can call from the header button.
+  function toggleDrawer() {
+    const drawer = document.getElementById("hamburger-drawer");
+    drawer.classList.toggle("-translate-x-full");
+  }
+</script>

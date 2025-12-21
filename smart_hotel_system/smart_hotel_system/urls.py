@@ -15,11 +15,14 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from django.urls import path,include;
+from django.urls import path, include, re_path
 from django.conf import settings
 from django.conf.urls.static import static
+from django.http import JsonResponse
 
 urlpatterns = [
+    # Respond to Chrome DevTools `.well-known` probe to avoid noisy 404s during development
+    re_path(r'^\.well-known/appspecific/com\.chrome\.devtools\.json$', lambda req: JsonResponse({}, status=200)),
     path('admin/', admin.site.urls),
     path('chef_dashboard/', include('apps.chef_flow.urls')),
     path('admin_dashboard/', include('apps.admin_flow.urls')),

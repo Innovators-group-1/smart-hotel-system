@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- 
+        Character encoding.
+        UTF-8 supports all characters (important for prices, symbols, etc.)
+    -->
+    <meta charset="UTF-8">
+
+    <!-- 
+        Mobile-first viewport.
+        This is CRITICAL for phone responsiveness.
+        Without this, Tailwind mobile styles break.
+    -->
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <!-- 
+        Page title.
+        Child templates can override this block if needed.
+    -->
+    <title>{% block title %}TapNOrder{% endblock %}</title>
+
+    <!-- 
+        HTMX library.
+        Enables hx-get, hx-post, hx-target, hx-swap, etc.
+        We load it ONCE here so all pages can use it.
+    -->
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+
+    <!-- 
+        Tailwind CSS.
+        You said you're using Tailwind.
+        This can later be replaced with your compiled Tailwind file.
+    -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- 
+        Extra head block.
+        Allows child templates to inject additional styles/scripts if needed.
+    -->
+    {% block extra_head %}{% endblock %}
+</head>
+
+<body class="bg-[#FAF7F2] text-gray-900">
+    <!-- 
+        This is where EVERY page injects its content.
+        HTMX NEVER replaces this entire body.
+    -->
+    {% block content %}{% endblock %}
+        <!-- HTMX cart update listener: updates #cart-count when server triggers `cartChanged` -->
+        <script>
+            document.body.addEventListener('cartChanged', function(evt) {
+                try {
+                    const newValue = evt.detail;
+                    const el = document.getElementById('cart-count');
+                    if (!el) return;
+
+                    // If detail is an object like {cartChanged: 3}, try to extract number
+                    let value = newValue;
+                    if (value && typeof value === 'object') {
+                        // pick the first numeric value
+                        const keys = Object.keys(value);
+                        if (keys.length > 0) {
+                            const k = keys[0];
+                            value = value[k];
+                        }
+                    }
+
+                    el.textContent = String(value || 0);
+                    if (value > 0) {
+                        el.classList.remove('hidden');
+                    } else {
+                        el.classList.add('hidden');
+                    }
+                } catch (e) {
+                    console.warn('Failed to update cart count', e);
+                }
+            });
+        </script>
+</body>
+</html>

@@ -1,0 +1,61 @@
+<article class="bg-white rounded-2xl shadow-sm overflow-hidden">
+  <!-- Image + badge area -->
+  <div class="relative">
+    {% if item.image_url %}
+    <img
+      src="{{ item.image_url }}"
+      alt="{{ item.name }}"
+      class="w-full h-40 object-cover"
+    />
+    {% else %}
+    <img
+      src="https://via.placeholder.com/640x360"
+      alt="{{ item.name }}"
+      class="w-full h-40 object-cover"
+    />
+    {% endif %}
+    {% if item.badge %}
+      <span
+        class="absolute top-3 right-3 bg-green-600 text-white text-xs
+               px-2 py-0.5 rounded-full"
+      >
+        {{ item.badge }}
+      </span>
+    {% endif %}
+  </div>
+
+  <!-- Text and price area -->
+  <div class="p-4 space-y-2">
+    <h2 class="text-base font-semibold text-slate-900">
+      {{ item.name }}
+    </h2>
+
+    <p class="text-xs text-slate-500">
+      {{ item.description|truncatewords:18 }}
+    </p>
+
+    <div class="flex items-center justify-between pt-2">
+      <span class="text-base font-semibold text-slate-900">
+        Ksh {{ item.price }}
+      </span>
+
+      <!-- Add to cart submits to your existing view -->
+      <form
+        method="post"
+        action="{% url 'client_flow:add_to_cart' item.menu_item_id %}"
+        hx-post="{% url 'client_flow:add_to_cart' item.menu_item_id %}"
+        hx-trigger="click"
+        hx-target="this"
+      >
+        {% csrf_token %}
+        <button
+          type="submit"
+          class="bg-orange-500 text-white text-sm font-medium
+                 px-4 py-1.5 rounded-full"
+        >
+          Add
+        </button>
+      </form>
+    </div>
+  </div>
+</article>

@@ -112,7 +112,6 @@ DATABASES = {
             'sslmode': 'require',
         },
     }
-    
 }
 
 # Database router for django-tenants
