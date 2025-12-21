@@ -109,6 +109,14 @@ class Orders(models.Model):
         COMPLETED = 'COMPLETED', _('Completed')
         CANCELLED = 'CANCELLED', _('Cancelled')
     
+    class PaymentStatus(models.TextChoices):
+        UNPAID = 'UNPAID', _('Unpaid')
+        PAID = 'PAID', _('Paid')
+        REFUNDED = 'REFUNDED', _('Refunded')
+
+    class PaymentMethod(models.TextChoices):
+        CASH = 'CASH', _('Cash')
+        M_PESA = 'M-PESA', _('M-PESA')
     
     order_id = models.AutoField(primary_key=True)
     table = models.ForeignKey(Table, on_delete=models.CASCADE, related_name='orders')
@@ -117,6 +125,9 @@ class Orders(models.Model):
     quantity = models.PositiveIntegerField(default=1,null=True, blank=True)
     total_price = models.DecimalField(max_digits=8, decimal_places=2, null=False, blank=False)
     status = models.CharField(max_length = 20, choices=OrderStatus.choices, default=OrderStatus.PENDING)
+    payment_status = models.CharField(max_length = 20, choices=PaymentStatus.choices, default=PaymentStatus.UNPAID)
+    payment_method = models.CharField(max_length = 20, choices=PaymentMethod.choices, default=PaymentMethod.CASH)
+    payment_number = models.CharField(max_length=50, blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     completed_at = models.DateTimeField(blank=True, null=True)
@@ -133,6 +144,7 @@ class Orders(models.Model):
         if self.status == self.OrderStatus.IN_PROGRESS:
             self.in_progress_period = datetime.now() - self.created_at
             super().save(*args, **kwargs)
+
     
 
     # Represent Orders using Queue format FIFO
@@ -142,6 +154,7 @@ class Orders(models.Model):
 
     def __str__(self):
         return f'Order {self.id} - Table {self.table.number} - {self.menu_item.title} x{self.quantity} ({self.status})'
+
     
 class Reports(models.Model):
     report_id = models.AutoField(primary_key=True)

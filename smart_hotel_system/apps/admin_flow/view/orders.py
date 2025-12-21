@@ -77,15 +77,23 @@ def payment_status_filter(request, slug):
 def order_list_partial(request):
     try:
         orders = Orders.objects.all().order_by('-created_at')
-        html = render_to_string('admin_templates/partials/order_list_partial.html', {'orders': orders})
+        html = render_to_string('admin_templates/partials/order-partials/order_list_partial.html', {'orders': orders})
         return HttpResponse(html)
     except Exception as PartialError:
         return HttpResponse(f"An error occurred: {str(PartialError)}", status=500)
+    
+def order_row_partial(request,order_id):
+    try:
+        order = get_object_or_404(Orders, pk=order_id)
+        html = render_to_string('admin_templates/partials/order-partials/order_row_partial.html',{'order':order})
+        return HttpResponse(html)
+    except Exception as OrderRowError:
+        return HttpResponse(f"An error occurred: {str(OrderRowError)}", status=500)
 
 def order_details_partial(request, order_id):
     try:
         order = get_object_or_404(Orders, pk=order_id)
-        html = render_to_string('admin_templates/partials/order_details_partial.html', {'order': order})
+        html = render_to_string('admin_templates/partials/order-partials/order_details_partial.html', {'order': order})
         return HttpResponse(html)
     except Exception as DetailsError:
         return HttpResponse(f"An error occurred: {str(DetailsError)}", status=500)
@@ -94,7 +102,24 @@ def orders_page(request, page_number):
     HttpResponse("Paging functionality to be implemented.")
 
 def verify_payment(request, order_id):
-    HttpResponse("Payment verification functionality to be implemented.")
+    order = get_object_or_404(Orders, pk=order_id)
+    if order.payment_method == Orders.PaymentMethod.CASH:
+        if order.payment_status != Orders.PaymentStatus.PAID:
+            order.payment_status = Orders.PaymentStatus.PAID
+            order.save(update_fields=['payment_status'])
+            return HttpResponse("✅ Cash payment verified successfully.")
+        else:
+            return HttpResponse("⚠️ Payment already processed.")
+    else:
+        return HttpResponse("⚠️ An Error occurred during CASH verification.")
+
+def mpesa_verification_partial(request, order_id):
+    try:
+        order = get_object_or_404(Orders, pk=order_id)
+        html = render_to_string('admin_templates/partials/order-partials/mpesa_verify.html', {'order': order})
+        return HttpResponse(html)
+    except Exception as MpesaPartialError:
+        return HttpResponse(f"An error occurred: {str(MpesaPartialError)}", status=500)
 def send_to_kitchen(request, order_id):
     HttpResponse("Send to kitchen functionality to be implemented.")
 def print_receipt(request, order_id):

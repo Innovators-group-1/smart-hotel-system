@@ -7,6 +7,9 @@ name = "pypi"
 django-tenants = "*"
 psycopg2-binary = "*"
 qrcode = {extras = ["pil"], version = "*"}
+django-tailwind = "*"
+python-slugify = "*"
+python-dotenv = "*"
 
 [dev-packages]
 

@@ -29,7 +29,12 @@
   <div class="flex flex-wrap gap-2">
     {% for value, label in order_statuses %}
       <button 
-        class="px-3 py-1 rounded-full bg-gray-100 text-gray-600 hover:bg-blue-100 transition"
+        class="px-3 py-1 rounded-full transition
+          {% if value == 'COMPLETED' %} bg-emerald-100 text-emerald-700 hover:bg-emerald-200
+          {% elif value == 'PENDING' %} bg-amber-100 text-amber-700 hover:bg-amber-200
+          {% elif value == 'IN_PROGRESS' %} bg-blue-100 text-blue-700 hover:bg-blue-200
+          {% elif value == 'CANCELLED' %} bg-red-100 text-red-700 hover:bg-red-200
+          {% endif %}"
         hx-get="{% url 'orders_filter' value %}"
         hx-target="#orders-table-body"
         hx-swap="innerHTML"
@@ -39,7 +44,10 @@
     {% endfor %}
     {% for payment in payment_statuses %}
       <button 
-        class="px-3 py-1 rounded-full bg-gray-100 text-gray-600 hover:bg-green-100 transition"
+        class="px-3 py-1 rounded-full transition
+          {% if payment.slug == 'PAID' %} bg-green-100 text-green-700 hover:bg-green-200
+          {% elif payment.slug == 'UNPAID' %} bg-yellow-100 text-yellow-700 hover:bg-yellow-200
+          {% endif %}"
         hx-get="{% url 'payment_status_filter' payment.slug %}"
         hx-target="#orders-table-body"
         hx-swap="innerHTML"
@@ -60,59 +68,87 @@
           <th class="px-4 py-2">Total</th>
           <th class="px-4 py-2">Payment</th>
           <th class="px-4 py-2">Status</th>
+          <th class="px-4 py-2">Actions</th>
         </tr>
       </thead>
       <tbody 
         id="orders-table-body"
         hx-get="{% url 'order_list_partial' %}"
-        hx-trigger="every 10s"
+        hx-trigger="every 60s"
         hx-swap="innerHTML"
       >
         {% for order in orders %}
-        <tr 
-          class="hover:bg-gray-100 transition"
-        >
-          <td class="px-5 py-3 font-semibold">{{ order.order_id }}</td>
-          <td class="px-5 py-3">{{ order.table }}</td>
-          <td class="px-5 py-3">{{ order.created_at }}</td>
-          <td class="px-5 py-3">KSH {{ order.total_price|floatformat:2 }}</td>
-          <td class="px-5 py-3">
-            <span class="px-2 py-1 rounded-full text-xs font-medium 
-              {% if order.payment_status == 'Paid' %} bg-green-100 text-green-700
-              {% elif order.payment_status == 'Pending' %} bg-yellow-100 text-yellow-700
-              {% elif order.payment_status == 'Failed' %} bg-red-100 text-red-700
-              {% endif %}
-            ">
-              {{ order.payment_status }}
-            </span>
-          </td>
-          <td class="px-4 py-2">
-           <span class="px-3 py-1 rounded-full text-xs font-medium 
-                {% if order.get_status_display == 'Completed' %} bg-emerald-100 text-emerald-700
-                {% elif order.get_status_display == 'Pending' %} bg-amber-100 text-amber-700
-                {% elif order.get_status_display == 'In Progress' %} bg-blue-100 text-blue-700
-                {% elif order.get_status_display == 'Cancelled' %} bg-red-100 text-red-700
+          <tr class="hover:bg-gray-50 transition-colors duration-200 border-b border-gray-200">
+            <!-- Order ID -->
+            <td class="px-6 py-4 font-semibold text-gray-800">
+              #{{ order.order_id }}
+            </td>
+
+            <!-- Table -->
+            <td class="px-6 py-4 text-gray-700">
+              {{ order.table }}
+            </td>
+
+            <!-- Created At -->
+            <td class="px-6 py-4 text-sm text-gray-500">
+              {{ order.created_at|date:"M d, Y H:i" }}
+            </td>
+
+            <!-- Total Price -->
+            <td class="px-6 py-4 font-medium text-gray-900">
+              <span class="text-gray-600">KSH</span> {{ order.total_price|floatformat:2 }}
+            </td>
+
+            <!-- Payment Status -->
+            <td class="px-6 py-4">
+              <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold tracking-wide
+                      {% if order.payment_status == 'PAID' %}
+                        bg-green-100 text-green-700
+                      {% elif order.payment_status == 'UNPAID' %}
+                        bg-yellow-100 text-yellow-700
+                      {% elif order.payment_status == 'REFUNDED' %}
+                        bg-purple-100 text-purple-700
+                      {% else %}
+                        bg-gray-100 text-gray-700
+                      {% endif %}">
+                {{ order.payment_status }}
+            </td>
+
+            <!-- Order Status -->
+            <td class="px-6 py-4">
+              <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold tracking-wide
+                {% if order.status == 'COMPLETED' %} bg-emerald-100 text-emerald-700
+                {% elif order.status == 'PENDING' %} bg-amber-100 text-amber-700
+                {% elif order.status == 'IN_PROGRESS' %} bg-blue-100 text-blue-700
+                {% elif order.status == 'CANCELLED' %} bg-red-100 text-red-700
                 {% endif %}
               ">
                 {{ order.get_status_display }}
-           </span>
-          </td>
-          <td class="px-4 py-2 text-center">
-            <button 
-              type="button"
-              class="px-3 py-1.5 rounded-md text-sm bg-blue-100 text-blue-700 hover:bg-blue-200 transition"
-              hx-get="{% if order.pk %}{% url 'order_details_partial' order.pk %}{% endif %}"
-              hx-target="#order-details-{{ order.pk }}"
-              hx-swap="outerHTML"
-            >
-              View Details
-            </button>
-          </td>
-        </tr>
+              </span>
+            </td>
 
-        <!-- Expandable Details Row -->
-        <tr id="order-details-{{ order.pk }}" class="hidden"></tr>
+            <!-- Actions -->
+            <td class="px-6 py-4 text-right">
+              <button 
+                class="inline-flex items-center gap-1 text-sm font-medium text-blue-600 hover:text-blue-800 transition-colors"
+                hx-get="{% url 'order_details_partial' order.pk %}"
+                hx-target="#order-details-{{ order.pk }}"
+                hx-swap="outerHTML"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none"
+                    viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M15 12H9m12 0a9 9 0 11-18 0a9 9 0 0118 0z" />
+                </svg>
+                View Details
+              </button>
+            </td>
+          </tr>
+
+          <!-- Expandable Details Row -->
+          <tr id="order-details-{{ order.pk }}" class="hidden"></tr>
         {% endfor %}
+
       </tbody>
     </table>
   </div>

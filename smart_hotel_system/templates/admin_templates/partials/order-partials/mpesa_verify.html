@@ -1,0 +1,39 @@
+<!-- mpesa_verification_placeholder.html -->
+<div class="space-y-6">
+  <!-- Header -->
+  <div class="flex justify-between items-center border-b pb-3">
+    <h3 class="text-lg font-semibold text-gray-800">Verify M‑Pesa Payment</h3>
+    <span class="text-sm text-gray-500">Order ID: {{ order.order_id }}</span>
+  </div>
+
+  <!-- Customer-entered payment number -->
+  <div class="bg-gray-50 rounded-lg p-4">
+    <h4 class="text-sm font-semibold text-gray-700 mb-2">Customer Payment Number</h4>
+    <p class="text-base font-bold text-gray-900">{{ order.payment_number }}</p>
+  </div>
+
+  <!-- Placeholder for transaction codes/messages -->
+  <div>
+    <h4 class="text-sm font-semibold text-gray-700 mb-2">Available M‑Pesa Messages</h4>
+    <div class="border rounded-lg p-4 bg-white text-gray-500 italic">
+      <!-- Placeholder content -->
+      <p>No messages loaded yet. This section will display parsed M‑Pesa transaction codes and details once integrated.</p>
+    </div>
+  </div>
+
+  <!-- Actions -->
+  <div class="flex justify-end gap-3">
+    <button 
+      class="px-4 py-2 rounded bg-green-600 text-white hover:bg-green-700 transition"
+      disabled
+    >
+      Confirm Payment
+    </button>
+    <button 
+      class="px-4 py-2 rounded bg-red-600 text-white hover:bg-red-700 transition"
+      disabled
+    >
+      Mark Unpaid
+    </button>
+  </div>
+</div>

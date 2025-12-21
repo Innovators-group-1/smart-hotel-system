@@ -29,6 +29,15 @@
       >
         + Add In-built Food
       </button>
+      <button 
+        class="px-4 py-2 bg-blue-50 text-blue-700 rounded-xl shadow-md
+               hover:bg-blue-100 hover:shadow-lg active:scale-95 transition-all duration-200"
+        hx-get="{% url 'add_new_category' %}"
+        hx-target="#modal-content"
+        onclick="openModal()"
+      >
+        + Add Category
+      </button>
 
     </div>
   </div>
@@ -70,21 +79,14 @@
         All
       </button>
 
-      <button class="px-4 py-2 rounded-xl bg-gray-100 text-gray-600 shadow-sm hover:bg-gray-200 hover:shadow-md transition">
-        Starters
+      {% for cat in categories %}
+      <button 
+        class="px-4 py-2 rounded-xl bg-gray-100 text-gray-600 shadow-sm 
+               hover:bg-gray-200 hover:shadow-md transition"
+      >
+        {{ cat.name }}
       </button>
-
-      <button class="px-4 py-2 rounded-xl bg-gray-100 text-gray-600 shadow-sm hover:bg-gray-200 hover:shadow-md transition">
-        Mains
-      </button>
-
-      <button class="px-4 py-2 rounded-xl bg-gray-100 text-gray-600 shadow-sm hover:bg-gray-200 hover:shadow-md transition">
-        Sides
-      </button>
-
-      <button class="px-4 py-2 rounded-xl bg-gray-100 text-gray-600 shadow-sm hover:bg-gray-200 hover:shadow-md transition">
-        Beverages
-      </button>
+      {% endfor %}
     </div>
 
     <!-- In-built Food Cards -->

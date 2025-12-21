@@ -1,4 +1,4 @@
-#!/home/stephen-nyansoho-machera/Desktop/Smart-hotel/smart-hotel-system/venv/bin/python3
+#!/home/stephen-nyansoho-machera/Desktop/Smart-hotel/smart-hotel-system/venv/bin/python
 # -*- coding: utf-8 -*-
 import re
 import sys

@@ -1,64 +1,167 @@
-<tr id="order-details-{{ order.pk }}" class="bg-gray-50 transition-all duration-300 ease-in-out">
-  <td colspan="6" class="px-6 py-4">
-    <div class="space-y-4">
-      <!-- Ordered Items -->
-      <div>
-        <h4 class="text-sm font-semibold text-gray-700 mb-2">Items</h4>
-        <ul class="space-y-1">
-          <li class="flex justify-between text-sm text-gray-600">
-            <span>{{ order.quantity }}x {{ order.menu_item.title }}</span>
-            <span class="font-medium">{{ order.total_price|floatformat:2 }}</span>
-          </li>
-        </ul>
+<tr id="order-details-{{ order.pk }}" class="bg-slate-50 transition-all duration-300 ease-in-out">
+  <td colspan="7" class="px-6 py-6">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+
+      <!-- Left side: Order Summary -->
+      <div class="space-y-6">
+        <!-- Basic Info -->
+        <div class="bg-indigo-50 rounded-lg shadow-sm p-4 border border-indigo-100">
+          <h4 class="text-lg font-semibold text-indigo-800 mb-3">Order Summary</h4>
+          <dl class="grid grid-cols-2 gap-x-4 gap-y-2 text-sm text-gray-700">
+            <dt class="font-medium">Order ID:</dt>
+            <dd>#{{ order.order_id }}</dd>
+
+            <dt class="font-medium">Table:</dt>
+            <dd>{{ order.table }}</dd>
+
+            <dt class="font-medium">Seat:</dt>
+            <dd>{{ order.seat }}</dd>
+
+            <dt class="font-medium">Status:</dt>
+            <dd>
+              <span class="px-2 py-1 rounded-full text-xs font-semibold
+                {% if order.status == 'COMPLETED' %} bg-emerald-100 text-emerald-700
+                {% elif order.status == 'PENDING' %} bg-amber-100 text-amber-700
+                {% elif order.status == 'IN_PROGRESS' %} bg-blue-100 text-blue-700
+                {% elif order.status == 'CANCELLED' %} bg-red-100 text-red-700
+                {% endif %}
+              ">
+                {{ order.get_status_display }}
+              </span>
+            </dd>
+
+            <dt class="font-medium">Payment Method:</dt>
+            <dd>{{ order.payment_method }}</dd>
+
+            <dt class="font-medium">Payment Status:</dt>
+            <dd>
+              <span
+                class="px-2 py-1 rounded-full text-xs font-semibold
+                      {% if order.payment_status == 'PAID' %}
+                        bg-green-100 text-green-700
+                      {% elif order.payment_status == 'UNPAID' %}
+                        bg-yellow-100 text-yellow-700
+                      {% elif order.payment_status == 'REFUNDED' %}
+                        bg-purple-100 text-purple-700
+                      {% else %}
+                        bg-gray-100 text-gray-700
+                      {% endif %}">
+                {{ order.payment_status }}
+              </span>
+            </dd>
+
+            {% if order.payment_number %}
+            <dt class="font-medium">Payment Number:</dt>
+            <dd>{{ order.payment_number }}</dd>
+            {% endif %}
+          </dl>
+        </div>
+
+        <!-- Ordered Items -->
+        <div class="bg-teal-50 rounded-lg shadow-sm p-4 border border-teal-100">
+          <h4 class="text-lg font-semibold text-teal-800 mb-3">Items</h4>
+          <ul class="space-y-3">
+            <li class="flex items-center justify-between">
+              <div class="flex items-center gap-3">
+                {% if order.menu_item.image %}
+                  <img src="{{ order.menu_item.image.url }}" alt="{{ order.menu_item.title }}"
+                       class="w-12 h-12 rounded object-cover border border-teal-200" />
+                {% endif %}
+                <span class="font-medium text-gray-700">
+                  {{ order.quantity }} × {{ order.menu_item.title }}
+                </span>
+              </div>
+              <span class="font-bold text-gray-900">KSH {{ order.total_price|floatformat:2 }}</span>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Notes -->
+        {% if order.special_requests %}
+        <div class="bg-amber-50 rounded-lg shadow-sm p-4 border border-amber-100">
+          <h4 class="text-lg font-semibold text-amber-800 mb-3">Special Requests</h4>
+          <p class="text-sm text-gray-700 italic">{{ order.special_requests }}</p>
+        </div>
+        {% endif %}
       </div>
 
-      <!-- Notes -->
-      {% if order.special_requests %}
-      <div>
-        <h4 class="text-sm font-semibold text-gray-700 mb-2">Notes</h4>
-        <p class="text-sm text-gray-600">{{ order.special_requests }}</p>
-      </div>
-      {% endif %}
+      <!-- Right side: Actions -->
+      <div class="space-y-6">
+        <div class="bg-sky-50 rounded-lg shadow-sm p-4 border border-sky-100">
+          <h4 class="text-lg font-semibold text-sky-800 mb-3">Actions</h4>
+          <div class="flex flex-wrap gap-3">
+            <!-- Verify Payment -->
+            {% if order.payment_method == "CASH" %}
+              <button 
+                class="flex items-center gap-2 px-4 py-2 rounded bg-green-600 text-white hover:bg-green-700 transition"
+                hx-post="{% url 'verify_payment' order.pk %}"
+                hx-target="#toast-container"
+                hx-swap="innerHTML"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
+                     viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M9 12l2 2l4-4m6 2a9 9 0 11-18 0a9 9 0 0118 0z" />
+                </svg>
+                Verify Payment
+              </button>
+            {% elif order.payment_method == "M-PESA" %}
+              <button 
+                class="flex items-center gap-2 px-4 py-2 rounded bg-green-600 text-white hover:bg-green-700 transition"
+                hx-get="{% url 'mpesa_verification_partial' order.pk %}"
+                hx-target="#modal-content"
+                onclick="openModal()"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
+                     viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M9 12l2 2l4-4m6 2a9 9 0 11-18 0a9 9 0 0118 0z" />
+                </svg>
+                Verify Payment
+              </button>
+            {% endif %}
 
-      <!-- Actions -->
-      <div class="flex flex-wrap gap-2">
-        <button 
-          class="px-3 py-1 rounded bg-green-100 text-green-700 hover:bg-green-200 transition"
-          hx-post="{% url 'verify_payment' order.pk %}"
-          hx-target="#orders-table-body"
-          hx-swap="innerHTML"
-        >
-          Verify Payment
-        </button>
-        <button 
-          class="px-3 py-1 rounded bg-blue-100 text-blue-700 hover:bg-blue-200 transition"
-          hx-post="{% url 'send_to_kitchen' order.pk %}"
-          hx-target="#orders-table-body"
-          hx-swap="innerHTML"
-        >
-          Send to Kitchen
-        </button>
-        <button 
-          class="px-3 py-1 rounded bg-gray-100 text-gray-700 hover:bg-gray-200 transition"
-          hx-get="{% url 'print_receipt' order.pk %}"
-          hx-target="#orders-table-body"
-          hx-swap="innerHTML"
-        >
-          Print Receipt
-        </button>
-        <button 
-          class="px-3 py-1 rounded bg-red-100 text-red-700 hover:bg-red-200 transition"
-          hx-post="{% url 'cancel_order' order.pk %}"
-          hx-target="#orders-table-body"
-          hx-swap="innerHTML"
-        >
-          Cancel Order
-        </button>
-      </div>
+            <!-- Send to Kitchen -->
+            <button 
+              class="flex items-center gap-2 px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700 transition"
+              hx-post="{% url 'send_to_kitchen' order.pk %}"
+              hx-target="#orders-table-body"
+              hx-swap="innerHTML"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
+                   viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M4 3h2v18H4zM8 3h2v18H8zM16 3h2v18h-2zM20 3h2v18h-2z" />
+              </svg>
+              Send to Kitchen
+            </button>
 
-      <!-- Metadata -->
-      <div class="text-xs text-gray-500">
-        Placed at {{ order.created_at }} | Order ID: {{ order.order_id }}
+            <!-- Cancel Order -->
+            <button 
+              class="flex items-center gap-2 px-4 py-2 rounded bg-red-600 text-white hover:bg-red-700 transition"
+              hx-post="{% url 'cancel_order' order.pk %}"
+              hx-target="#orders-table-body"
+              hx-swap="innerHTML"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
+                   viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m6-2a9 9 0 11-18 0a9 9 0 0118 0z" />
+              </svg>
+              Cancel Order
+            </button>
+          </div>
+        </div>
+
+        <!-- Metadata -->
+        <div class="bg-gray-50 rounded-lg shadow-sm p-4 border border-gray-200 text-xs text-gray-500">
+          Placed at {{ order.created_at|date:"M d, Y H:i" }}<br>
+          Last updated {{ order.updated_at|date:"M d, Y H:i" }}<br>
+          In-progress period: {{ order.in_progress_period }}<br>
+          {% if order.completed_at %}
+            Completed at {{ order.completed_at|date:"M d, Y H:i" }}
+          {% endif %}
+        </div>
       </div>
     </div>
   </td>
