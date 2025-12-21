@@ -47,5 +47,35 @@
         HTMX NEVER replaces this entire body.
     -->
     {% block content %}{% endblock %}
+        <!-- HTMX cart update listener: updates #cart-count when server triggers `cartChanged` -->
+        <script>
+            document.body.addEventListener('cartChanged', function(evt) {
+                try {
+                    const newValue = evt.detail;
+                    const el = document.getElementById('cart-count');
+                    if (!el) return;
+
+                    // If detail is an object like {cartChanged: 3}, try to extract number
+                    let value = newValue;
+                    if (value && typeof value === 'object') {
+                        // pick the first numeric value
+                        const keys = Object.keys(value);
+                        if (keys.length > 0) {
+                            const k = keys[0];
+                            value = value[k];
+                        }
+                    }
+
+                    el.textContent = String(value || 0);
+                    if (value > 0) {
+                        el.classList.remove('hidden');
+                    } else {
+                        el.classList.add('hidden');
+                    }
+                } catch (e) {
+                    console.warn('Failed to update cart count', e);
+                }
+            });
+        </script>
 </body>
 </html>

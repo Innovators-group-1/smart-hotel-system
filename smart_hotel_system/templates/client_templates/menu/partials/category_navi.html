@@ -1,0 +1,36 @@
+<nav class="bg-white pt-3 pb-2 border-b border-slate-100">
+  <div class="max-w-md mx-auto px-4">
+    <div class="flex gap-2 overflow-x-auto no-scrollbar">
+      <button
+        type="button"
+        class="whitespace-nowrap px-3 py-1.5 rounded-full text-sm
+               {% if not selected_category %}
+                 bg-orange-500 text-white
+               {% else %}
+                 bg-slate-100 text-slate-700
+               {% endif %}"
+        hx-get="{% url 'client_flow:all_items' %}"
+        hx-target="#menu-content"
+        hx-swap="innerHTML"
+      >All</button>
+      {% for category in categories %}
+        {% if category.category_id %}
+        <button
+          type="button"
+          class="whitespace-nowrap px-3 py-1.5 rounded-full text-sm
+                 {% if selected_category != category.category_id %}
+                   bg-orange-500 text-white
+                 {% else %}
+                   bg-slate-100 text-slate-700
+                 {% endif %}"
+          hx-get="{% url 'client_flow:menu_category_filter' category.category_id %}"
+          hx-target="#menu-content"
+          hx-swap="innerHTML"
+        >
+          {{ category.name }}
+        </button>
+        {% endif %}
+      {% endfor %}
+    </div>
+  </div>
+</nav>

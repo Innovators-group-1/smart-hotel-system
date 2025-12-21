@@ -2,14 +2,22 @@
 import random  # Used for generating random cash payment codes
 
 # --- Django Utilities ---
-from django.utils.crypto import get_random_string  # For generating unique payment references
-from django.shortcuts import render, get_object_or_404, redirect  # For rendering pages and redirects
-from django.http import JsonResponse  # For returning JSON data in AJAX responses
-from django.db.models import Q  # For search/filter queries
-from django.contrib import messages  # For showing success/error notifications
+from django.utils.crypto import get_random_string  
+from django.shortcuts import render, get_object_or_404, redirect 
+from django.http import JsonResponse, HttpResponse 
+import json
+from django.db.models import Q 
+from django.contrib import messages  
 
 # --- Local Application Models ---
 from apps.common_flow.models import Menu as MenuItem, Category, Table,Orders,HotelSettings
+
+def hotel_name_view(request):
+    hotel_name = HotelSettings.objects.get_solo().hotel_name
+    if not hotel_name:
+        hotel_name = "Smart Hotel"
+    return HttpResponse(hotel_name)
+    
 
 
 def _get_cart(session):
@@ -20,9 +28,9 @@ def _save_cart(session, cart):
     session.modified = True
 
 def add_to_cart(request, item_id):
-    item = get_object_or_404(MenuItem, id=item_id)
+    item = get_object_or_404(MenuItem, menu_item_id=item_id)
     cart = _get_cart(request.session)
-
+    print(cart)
     item_id_str = str(item_id)
     if item_id_str in cart:
         cart[item_id_str] += 1
@@ -30,24 +38,37 @@ def add_to_cart(request, item_id):
         cart[item_id_str] = 1
     _save_cart(request.session, cart)
 
-    if request.headers.get('x-requested-with') == 'XMLHttpRequest':
-        # AJAX request
-        cart_count = sum(cart.values())
-        return JsonResponse({'message': f'{item.name} added to cart.', 'cart_count': cart_count})
-    else:
-        # Regular request
-        messages.success(request, f'{item.name} added to cart.')
-        return redirect('client_flow:menu')
+    # Prepare response data
+    cart_count = sum(cart.values())
+    data = {'message': f'{item.title} added to cart.', 'cart_count': cart_count}
+
+    # Detect HTMX or AJAX requests and return JSON so the page isn't redirected/refreshed.
+    is_htmx = request.headers.get('HX-Request') == 'true'
+    is_ajax = request.headers.get('x-requested-with') == 'XMLHttpRequest'
+    accepts_json = 'application/json' in request.headers.get('Accept', '')
+
+    if is_htmx or is_ajax or accepts_json:
+        # For HTMX: return no body but trigger a client event with the new cart count
+        # so the frontend can update the cart count without parsing JSON.
+        headers = {
+            'HX-Trigger': json.dumps({'cartChanged': cart_count})
+        }
+        # 204 No Content is appropriate since we don't send a JSON body
+        return HttpResponse(status=204, headers=headers)
+
+    # Fallback for regular (non-AJAX) requests: keep previous behavior
+    messages.success(request, data['message'])
+    return redirect('client_flow:menu')
 
 def cart_view(request):
     cart = _get_cart(request.session)
     item_ids = [int(i) for i in cart.keys()]
-    items = MenuItem.objects.filter(id__in=item_ids)
+    items = MenuItem.objects.filter(menu_item_id__in=item_ids)
     cart_items = []
     total = 0
 
     for item in items:
-        quantity = cart[str(item.id)]
+        quantity = cart[str(item.menu_item_id)]
         subtotal = item.price * quantity
         total += subtotal
         cart_items.append({'item': item, 'quantity': quantity, 'subtotal': subtotal})
@@ -92,12 +113,12 @@ def checkout_view(request):
 
     # 2 Retrieve MenuItem objects and calculate totals
     item_ids = [int(i) for i in cart.keys()]
-    items = MenuItem.objects.filter(id__in=item_ids)
+    items = MenuItem.objects.filter(menu_item_id__in=item_ids)
     cart_items = []
     total = 0
 
     for item in items:
-        quantity = cart[str(item.id)]
+        quantity = cart[str(item.menu_item_id)]
         subtotal = item.price * quantity
         total += subtotal
         cart_items.append({'item': item, 'quantity': quantity, 'subtotal': subtotal})
@@ -193,7 +214,7 @@ def menu_view(request):
     query = request.GET.get('q', '').strip()
     category_id = request.GET.get('category')  # Get selected category from URL
 
-    categories = Category.objects.prefetch_related('menu_items').all()
+    categories = Category.objects.all()
     selected_category = None
     menu_items = MenuItem.objects.filter(is_available=True)
 
@@ -205,7 +226,7 @@ def menu_view(request):
     # If user searched something
     if query:
         menu_items = menu_items.filter(
-            Q(name__icontains=query) | Q(description__icontains=query)
+            Q(title__icontains=query) | Q(description__icontains=query)
         )
 
     context = {
@@ -216,3 +237,15 @@ def menu_view(request):
     }
 
     return render(request, 'client_templates/menu/menu_page.html', context)
+
+def menu_filter_view(request, category_id):
+    menu_items = MenuItem.objects.filter(category_id=category_id)
+    context = {'menu_items': menu_items}
+
+    return render(request, 'client_templates/menu/partials/menu_list.html', context)
+
+def all_menu_items_view(request):
+    menu_items = MenuItem.objects.all()
+    context = {'menu_items': menu_items}
+
+    return render(request, 'client_templates/menu/partials/menu_list.html', context)
