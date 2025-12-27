@@ -17,7 +17,8 @@
     </header>
 
     {# uses cart_items + total from checkout_view #}
-    <section class="bg-white rounded-2xl shadow-sm px-4 py-4 mb-4">
+    <section class="bg-white rounded-2xl shadow-sm px-4 py-4 mb-4" >
+      <!-- A section for displaying cart items -->
       {% for row in cart_items %}
         {% with item=row.item quantity=row.quantity subtotal=row.subtotal %}
           <div class="flex items-center justify-between text-sm mb-2 last:mb-0">
@@ -37,7 +38,9 @@
       {% endfor %}
     </section>
 
-    <form method="post" class="space-y-4">
+    <form 
+      method="post" 
+      class="space-y-4">
       {% csrf_token %}
 
       {# payment_method values EXACTLY as used in checkout_view #}

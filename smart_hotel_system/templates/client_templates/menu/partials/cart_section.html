@@ -1,0 +1,53 @@
+{# client_templates/partials/cart_section.html #}
+<section id="cart-section" class="space-y-4 mb-6">
+  {% for row in cart_items %}
+    {% with item=row.item quantity=row.quantity subtotal=row.subtotal %}
+      <article class="flex items-center gap-3 bg-white rounded-2xl shadow-sm px-3 py-3">
+        <div class="flex-shrink-0">
+          {% if item.picture %}
+            <img src="{{ item.picture.url }}" alt="{{ item.title }}" class="w-16 h-16 rounded-xl object-cover" />
+          {% else %}
+            <img src="https://via.placeholder.com/80" alt="{{ item.title }}" class="w-16 h-16 rounded-xl object-cover" />
+          {% endif %}
+        </div>
+
+        <div class="flex-1">
+          <h2 class="text-sm font-semibold text-slate-900">{{ item.title }}</h2>
+          <p class="text-xs text-slate-500">{{ item.description|truncatewords:8 }}</p>
+          <p class="mt-1 text-sm font-medium text-slate-900">Ksh {{ item.price }}</p>
+        </div>
+
+        <div class="flex flex-col items-center gap-1">
+          <div class="flex items-center gap-2">
+            <button
+              hx-post="{% url 'client_flow:update_cart' item.menu_item_id %}"
+              hx-vals='{"action":"decrease"}'
+              hx-target="#cart-section"
+              hx-swap="outerHTML"
+              class="w-7 h-7 rounded-full border border-slate-300 flex items-center justify-center text-sm"
+            >-</button>
+
+            <span class="text-sm font-medium">{{ quantity }}</span>
+
+            <button
+              hx-post="{% url 'client_flow:update_cart' item.menu_item_id %}"
+              hx-vals='{"action":"increase"}'
+              hx-target="#cart-section"
+              hx-swap="outerHTML"
+              class="w-7 h-7 rounded-full border border-slate-300 flex items-center justify-center text-sm"
+            >+</button>
+          </div>
+
+          <button
+            hx-post="{% url 'client_flow:remove_from_cart' item.menu_item_id %}"
+            hx-target="#cart-section"
+            hx-swap="outerHTML"
+            class="text-[11px] text-red-500"
+          >Remove</button>
+        </div>
+      </article>
+    {% endwith %}
+  {% empty %}
+    <p class="text-sm text-slate-500">Your cart is empty.</p>
+  {% endfor %}
+</section>

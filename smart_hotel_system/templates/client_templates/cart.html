@@ -11,97 +11,8 @@
       <h1 class="text-xl font-semibold text-slate-900">My Cart</h1>
     </header>
 
-    {# cart_items = [{'item': Menu, 'quantity': int, 'subtotal': Decimal}] #}
-    <section class="space-y-4 mb-6">
-      {% for row in cart_items %}
-        {% with item=row.item quantity=row.quantity subtotal=row.subtotal %}
-          <article class="flex items-center gap-3 bg-white rounded-2xl shadow-sm px-3 py-3">
-            <div class="flex-shrink-0">
-                {% if item.picture %}
-                <img
-                  src="{{ item.picture.url }}"
-                  alt="{{ item.title }}"
-                  class="w-16 h-16 rounded-xl object-cover"
-                />
-                {% else %}
-                <img
-                  src="https://via.placeholder.com/80"
-                  alt="{{ item.title }}"
-                  class="w-16 h-16 rounded-xl object-cover"
-                />
-                {% endif %}
-            </div>
-
-            <div class="flex-1">
-              <h2 class="text-sm font-semibold text-slate-900">
-                {{ item.title }}
-              </h2>
-              <p class="text-xs text-slate-500">
-                {{ item.description|truncatewords:8 }}
-              </p>
-              <p class="mt-1 text-sm font-medium text-slate-900">
-                Ksh {{ item.price }}
-              </p>
-            </div>
-
-            <div class="flex flex-col items-center gap-1">
-              <div class="flex items-center gap-2">
-                <form
-                  method="post"
-                  action="{% url 'client_flow:update_cart' item.menu_item_id %}"
-                >
-                  {% csrf_token %}
-                  <input type="hidden" name="action" value="decrease" />
-                  <button
-                    type="submit"
-                    class="w-7 h-7 rounded-full border border-slate-300
-                           flex items-center justify-center text-sm"
-                  >
-                    -
-                  </button>
-                </form>
-
-                <span class="text-sm font-medium">
-                  {{ quantity }}
-                </span>
-
-                <form
-                  method="post"
-                  action="{% url 'client_flow:update_cart' item.menu_item_id %}"
-                >
-                  {% csrf_token %}
-                  <input type="hidden" name="action" value="increase" />
-                  <button
-                    type="submit"
-                    class="w-7 h-7 rounded-full border border-slate-300
-                           flex items-center justify-center text-sm"
-                  >
-                    +
-                  </button>
-                </form>
-              </div>
-
-              <form
-                method="post"
-                action="{% url 'client_flow:remove_from_cart' item.menu_item_id %}"
-              >
-                {% csrf_token %}
-                <button
-                  type="submit"
-                  class="text-[11px] text-red-500"
-                >
-                  Remove
-                </button>
-              </form>
-            </div>
-          </article>
-        {% endwith %}
-      {% empty %}
-        <p class="text-sm text-slate-500">
-          Your cart is empty.
-        </p>
-      {% endfor %}
-    </section>
+    {# Cart section with HTMX target #}
+    {% include "client_templates/menu/partials/cart_section.html" %}
 
     <section class="bg-white rounded-2xl shadow-sm px-4 py-4 mb-5">
       <h2 class="text-sm font-semibold text-slate-900 mb-3">
@@ -132,12 +43,23 @@
       </div>
     </section>
 
-    <a
-      href="{% url 'client_flow:checkout' %}"
-      class="block w-full text-center bg-orange-500 text-white
-             font-semibold py-3 rounded-full text-sm"
+    {# Proceed to checkout button triggers seat selector modal #}
+    <button
+      hx-get="{% url 'client_flow:seat_selector' %}"
+      hx-target="#modal"
+      hx-swap="innerHTML"
+      onclick="document.getElementById('modal').classList.remove('hidden')"
+      class="w-full btn-primary py-3 text-center font-semibold bg-orange-500 text-white rounded-2xl mb-3"
     >
       Proceed to Checkout
+    </button>
+
+    {# Fade-style button to go back to menu #}
+    <a
+      href="{% url 'client_flow:menu_redirect' %}"
+      class="w-full py-3 text-center font-semibold text-slate-600 bg-slate-100 rounded-2xl transition duration-300 ease-in-out hover:bg-slate-200 hover:text-slate-900"
+    >
+      ← Back to Menu
     </a>
   </main>
 {% endblock %}

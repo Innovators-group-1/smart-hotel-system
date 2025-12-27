@@ -6,10 +6,11 @@ name = "pypi"
 [packages]
 django-tenants = "*"
 psycopg2-binary = "*"
-qrcode = {extras = ["pil"], version = "*"}
+qrcode = "*"
 django-tailwind = "*"
 python-slugify = "*"
 python-dotenv = "*"
+pillow = "*"
 
 [dev-packages]
 

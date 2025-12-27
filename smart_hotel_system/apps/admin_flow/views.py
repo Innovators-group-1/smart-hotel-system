@@ -1,7 +1,7 @@
 from django.shortcuts import render
 from django.http import JsonResponse,HttpResponse
 from django.template.loader import render_to_string
-from apps.common_flow.models import HotelSettings,Reports,Orders,Category,Menu,Table,InbuiltMenuItems
+from apps.common_flow.models import HotelSettings,Reports,Order,Category,Menu,Table,InbuiltMenuItems
 from django.db.models import Count, Q
 from django.shortcuts import get_object_or_404
 import json
@@ -32,16 +32,16 @@ def adminDashboard(request):
     hotel_name = HotelSettings.objects.first().hotel_name if HotelSettings.objects.exists() else 'Smart Hotel'
 
     # Short order statistics
-    completed_orders = Orders.objects.filter(status='COMPLETED').count()
-    pending_orders = Orders.objects.filter(status='PENDING').count()
-    cancelled_orders = Orders.objects.filter(status='CANCELLED').count()
-    in_progress_orders = Orders.objects.filter(status='IN_PROGRESS').count()
+    completed_orders = Order.objects.filter(status='COMPLETED').count()
+    pending_orders = Order.objects.filter(status='PENDING').count()
+    cancelled_orders = Order.objects.filter(status='CANCELLED').count()
+    in_progress_orders = Order.objects.filter(status='IN_PROGRESS').count()
 
     # Top five most ordered menu items
     top_meals = Menu.objects.annotate(order_count=Count('orders')).order_by('-order_count')[:5]
 
     # Recent orders
-    recent_orders = Orders.objects.all().order_by('-created_at')[:5]
+    recent_orders = Order.objects.all().order_by('-created_at')[:5]
 
     context = {
         'hotel_name': hotel_name,
@@ -61,15 +61,15 @@ def adminDashboard(request):
 
 def dashboard_partial(request):
     # Short order statistics
-    completed_orders = Orders.objects.filter(status='COMPLETED').count()
-    pending_orders = Orders.objects.filter(status='PENDING').count()
-    cancelled_orders = Orders.objects.filter(status='CANCELLED').count()
-    in_progress_orders = Orders.objects.filter(status='IN_PROGRESS').count()
+    completed_orders = Order.objects.filter(status='COMPLETED').count()
+    pending_orders = Order.objects.filter(status='PENDING').count()
+    cancelled_orders = Order.objects.filter(status='CANCELLED').count()
+    in_progress_orders = Order.objects.filter(status='IN_PROGRESS').count()
     # Top five most ordered menu items
     top_meals = Menu.objects.annotate(order_count=Count('orders')).order_by('-order_count')[:5]
 
     # Recent orders
-    recent_orders = Orders.objects.all().order_by('-created_at')[:5]
+    recent_orders = Order.objects.all().order_by('-created_at')[:5]
 
     context = {
         'completed_orders': completed_orders,
@@ -88,8 +88,8 @@ def get_hotel_name(request):
     return HttpResponse(hotel_name)
 
 def orders_partial(request):
-    orders = Orders.objects.all().order_by('-created_at')
-    order_statuses = Orders.OrderStatus.choices
+    orders = Order.objects.all().order_by('-created_at')
+    order_statuses = Order.OrderStatus.choices
     context = {'orders': orders, 'order_statuses': order_statuses}
     return render(request, 'admin_templates/partials/orders.html', context)
 

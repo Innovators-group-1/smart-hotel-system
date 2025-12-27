@@ -1,11 +1,13 @@
+from email.policy import default
 from django.db import models
 import qrcode
 from io import BytesIO
 from django.core.files import File
 from django.utils.translation import gettext_lazy as _
 from datetime import datetime, timedelta
+from PIL import Image, ImageDraw , ImageFont
 
-from slugify import slugify
+from django.utils.text import slugify
 
 
 # Common model to be used across different apps
@@ -89,11 +91,42 @@ class Table(models.Model):
     # Overriding save method to generate QR code upon creating a new table
     def save(self, *args, **kwargs):
         #  Generate QR code that will redirect the customer to the menu page as well us identify the table uniquely
-        qr_data = f'http://localhost:8000/menu/?table={self.number}'
-        qr_code_img = qrcode.make(qr_data)
+        qr_data = f'http://localhost:8000/client_flow/menu/{self.number}/'
+        qr = qrcode.QRCode(
+            version = 1,
+            box_size = 10,
+            border = 4
+        )
+        qr.add_data(qr_data)
+        qr.make(fit=True)
+        qr_img = qr.make_image(fill_color='darkgreen', back_color='white').convert('RGB')
+
+        # Generate a qrcode with table number displayed below the QR code
+        draw = ImageDraw.Draw(qr_img)
+        font = ImageFont.truetype("DejaVuSans-Bold.ttf", size=28)
+        # Get hotel name from settings or use default
+        settings = HotelSettings.objects.first()
+        hotel_name = settings.hotel_name if settings and settings.hotel_name else "Smart Hotel"
+        label = f' Scan to Order - Table {self.number}\n {hotel_name}'
+        bbox = draw.textbbox((0,0), label, font=font, align='center')
+        text_width = bbox[2] - bbox[0]
+        text_height = bbox[3] - bbox[1]
+
+        # Create new canvas qrcode to fit both qr code and text
+        canvas_height = qr_img.height + text_height + 40
+        canvas = Image.new('RGB', (qr_img.width, canvas_height), 'white')
+        canvas.paste(qr_img, (0,0))
+
+        # draw text centered below the qr code
+        text_x = (canvas.width - text_width) // 2
+        text_y = qr_img.height + 10
+        draw = ImageDraw.Draw(canvas)
+        draw.multiline_text((text_x, text_y), label, fill='black', font=font, align='center')
+
         buffer = BytesIO()
-        qr_code_img.save(buffer, format='PNG')
-        self.qr_code.save(f'table_{self.number}_qrcode.png', File(buffer), save=False)
+        canvas.save(buffer, format='PNG')
+        self.qr_code.save(f'table_{self.number}_qr.png', File(buffer), save=False)
+        
         super().save(*args, **kwargs)
 
     def __str__(self):
@@ -102,7 +135,7 @@ class Table(models.Model):
         db_table = 'table'
 
 # Order Model to track customer orders
-class Orders(models.Model):
+class Order(models.Model):
     class OrderStatus(models.TextChoices):
         PENDING = 'PENDING', _('Pending')
         IN_PROGRESS = 'IN_PROGRESS', _('In Progress')
@@ -120,14 +153,12 @@ class Orders(models.Model):
     
     order_id = models.AutoField(primary_key=True)
     table = models.ForeignKey(Table, on_delete=models.CASCADE, related_name='orders')
-    seat = models.PositiveIntegerField(null = False, blank = False)
-    menu_item = models.ForeignKey(Menu, on_delete=models.CASCADE, related_name='orders')
-    quantity = models.PositiveIntegerField(default=1,null=True, blank=True)
-    total_price = models.DecimalField(max_digits=8, decimal_places=2, null=False, blank=False)
-    status = models.CharField(max_length = 20, choices=OrderStatus.choices, default=OrderStatus.PENDING)
-    payment_status = models.CharField(max_length = 20, choices=PaymentStatus.choices, default=PaymentStatus.UNPAID)
-    payment_method = models.CharField(max_length = 20, choices=PaymentMethod.choices, default=PaymentMethod.CASH)
+    seat = models.PositiveIntegerField(null=False, blank=False)
+    status = models.CharField(max_length=20, choices=OrderStatus.choices, default=OrderStatus.PENDING)
+    payment_status = models.CharField(max_length=20, choices=PaymentStatus.choices, default=PaymentStatus.UNPAID)
+    payment_method = models.CharField(max_length=20, choices=PaymentMethod.choices, default=PaymentMethod.CASH)
     payment_number = models.CharField(max_length=50, blank=True, null=True)
+    payment_reference = models.CharField(max_length=50, blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     completed_at = models.DateTimeField(blank=True, null=True)
@@ -136,27 +167,46 @@ class Orders(models.Model):
 
     # Overriding save method to set completed_at timestamp when status changes to COMPLETED and update in_progress_period
     def save(self, *args, **kwargs):
-
         if self.status == self.OrderStatus.COMPLETED and not self.completed_at:
             self.completed_at = datetime.now()
-            super().save(*args, **kwargs)
-
-        if self.status == self.OrderStatus.IN_PROGRESS:
+        elif self.status == self.OrderStatus.IN_PROGRESS:
             self.in_progress_period = datetime.now() - self.created_at
-            super().save(*args, **kwargs)
+        super().save(*args, **kwargs)
 
-    
+    def __str__(self):
+        return f'Order {self.order_id} - Table {self.table.number} - Seat {self.seat} ({self.status})'
 
     # Represent Orders using Queue format FIFO
     class Meta:
-        db_table = 'orders'
+        db_table = 'order'
         ordering = ['created_at']
 
-    def __str__(self):
-        return f'Order {self.id} - Table {self.table.number} - {self.menu_item.title} x{self.quantity} ({self.status})'
 
-    
+class OrderItem(models.Model):
+    order_item_id = models.AutoField(primary_key=True)
+    order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='order_items')
+    menu_item = models.ForeignKey(Menu, on_delete=models.CASCADE, related_name='orders')
+    quantity = models.PositiveIntegerField(default=1, null=True, blank=True)
+    total_price = models.DecimalField(max_digits=8, decimal_places=2, null=False, blank=False)
+
+    def __str__(self):
+        return f'{self.menu_item.title} x{self.quantity}'
+
+    class Meta:
+        db_table = 'order_items'
+
+
 class Reports(models.Model):
+    report_id = models.AutoField(primary_key=True)
+    report_date = models.DateField(auto_now_add=True)
+    total_orders = models.PositiveIntegerField()
+    total_revenue = models.DecimalField(max_digits=10, decimal_places=2)
+
+    def __str__(self):
+        return f'Report for {self.report_date} - Orders: {self.total_orders} - Revenue: {self.total_revenue}'
+    
+    class Meta:
+        db_table = 'reports'
     report_id = models.AutoField(primary_key=True)
     report_date = models.DateField(auto_now_add=True)
     total_orders = models.PositiveIntegerField()

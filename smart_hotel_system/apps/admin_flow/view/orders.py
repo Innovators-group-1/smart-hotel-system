@@ -1,8 +1,8 @@
 from django.shortcuts import render
 from django.http import JsonResponse,HttpResponse
 from django.template.loader import render_to_string
-from apps.common_flow.models import Orders
-from django.db.models import Count, Q
+from apps.common_flow.models import Order
+from django.db.models import Sum
 from django.shortcuts import get_object_or_404
 import json
 
@@ -32,11 +32,11 @@ def is_htmx(request):
 def orders_search(request):
     try:
         query = request.GET.get('q', '')
-        orders = Orders.objects.filter(
+        orders = Order.objects.annotate(total=Sum('order_items__total_price')).filter(
             Q(table__number__icontains=query) |
-            Q(menu_item__title__icontains=query) |
+            Q(order_items__menu_item__title__icontains=query) |
             Q(status__icontains=query)
-        ).order_by('-created_at')
+        ).distinct().order_by('-created_at')
 
         if is_htmx(request):
             html = render_to_string('admin_templates/partials/order_list_partial.html', {'orders': orders})
@@ -49,9 +49,9 @@ def orders_search(request):
 def orders_filter_by_status(request, status):
     try:
         if status in ['PENDING', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED']:
-            orders = Orders.objects.filter(status=status).order_by('-created_at')
+            orders = Order.objects.annotate(total=Sum('order_items__total_price')).filter(status=status).order_by('-created_at')
         else:
-            orders = Orders.objects.all().order_by('-created_at')
+            orders = Order.objects.annotate(total=Sum('order_items__total_price')).all().order_by('-created_at')
         if is_htmx(request):
             html = render_to_string('admin_templates/partials/order_list_partial.html', {'orders': orders})
             return HttpResponse(html)
@@ -63,9 +63,9 @@ def orders_filter_by_status(request, status):
 def payment_status_filter(request, slug):
     try:
         if slug in ['PAID', 'UNPAID']:
-            orders = Orders.objects.filter(payment_status=slug).order_by('-created_at')
+            orders = Order.objects.annotate(total=Sum('order_items__total_price')).filter(payment_status=slug).order_by('-created_at')
         else:
-            orders = Orders.objects.all().order_by('-created_at')
+            orders = Order.objects.annotate(total=Sum('order_items__total_price')).all().order_by('-created_at')
         if is_htmx(request):
             html = render_to_string('admin_templates/partials/order_list_partial.html', {'orders': orders})
             return HttpResponse(html)
@@ -76,7 +76,7 @@ def payment_status_filter(request, slug):
 
 def order_list_partial(request):
     try:
-        orders = Orders.objects.all().order_by('-created_at')
+        orders = Order.objects.annotate(total=Sum('order_items__total_price')).all().order_by('-created_at')
         html = render_to_string('admin_templates/partials/order-partials/order_list_partial.html', {'orders': orders})
         return HttpResponse(html)
     except Exception as PartialError:
@@ -84,16 +84,18 @@ def order_list_partial(request):
     
 def order_row_partial(request,order_id):
     try:
-        order = get_object_or_404(Orders, pk=order_id)
-        html = render_to_string('admin_templates/partials/order-partials/order_row_partial.html',{'order':order})
+        order = get_object_or_404(Order, pk=order_id)
+        total = sum(item.total_price for item in order.order_items.all())
+        html = render_to_string('admin_templates/partials/order-partials/order_row_partial.html',{'order':order, 'total': total})
         return HttpResponse(html)
     except Exception as OrderRowError:
         return HttpResponse(f"An error occurred: {str(OrderRowError)}", status=500)
 
 def order_details_partial(request, order_id):
     try:
-        order = get_object_or_404(Orders, pk=order_id)
-        html = render_to_string('admin_templates/partials/order-partials/order_details_partial.html', {'order': order})
+        order = get_object_or_404(Order, pk=order_id)
+        total = sum(item.total_price for item in order.order_items.all())
+        html = render_to_string('admin_templates/partials/order-partials/order_details_partial.html', {'order': order, 'total': total})
         return HttpResponse(html)
     except Exception as DetailsError:
         return HttpResponse(f"An error occurred: {str(DetailsError)}", status=500)
@@ -102,10 +104,10 @@ def orders_page(request, page_number):
     HttpResponse("Paging functionality to be implemented.")
 
 def verify_payment(request, order_id):
-    order = get_object_or_404(Orders, pk=order_id)
-    if order.payment_method == Orders.PaymentMethod.CASH:
-        if order.payment_status != Orders.PaymentStatus.PAID:
-            order.payment_status = Orders.PaymentStatus.PAID
+    order = get_object_or_404(Order, pk=order_id)
+    if order.payment_method == Order.PaymentMethod.CASH:
+        if order.payment_status != Order.PaymentStatus.PAID:
+            order.payment_status = Order.PaymentStatus.PAID
             order.save(update_fields=['payment_status'])
             return HttpResponse("✅ Cash payment verified successfully.")
         else:
@@ -115,7 +117,7 @@ def verify_payment(request, order_id):
 
 def mpesa_verification_partial(request, order_id):
     try:
-        order = get_object_or_404(Orders, pk=order_id)
+        order = get_object_or_404(Order, pk=order_id)
         html = render_to_string('admin_templates/partials/order-partials/mpesa_verify.html', {'order': order})
         return HttpResponse(html)
     except Exception as MpesaPartialError:

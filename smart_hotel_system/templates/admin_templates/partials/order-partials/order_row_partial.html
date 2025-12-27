@@ -7,7 +7,7 @@
           <td class="px-5 py-3 font-semibold">{{ order.order_id }}</td>
           <td class="px-5 py-3">{{ order.table }}</td>
           <td class="px-5 py-3">{{ order.created_at }}</td>
-          <td class="px-5 py-3">KSH {{ order.total_price|floatformat:2 }}</td>
+          <td class="px-5 py-3">KSH {{ total|floatformat:2 }}</td>
           <td class="px-5 py-3">
             <span class="px-2 py-1 rounded-full text-xs font-medium 
               {% if order.payment_status == 'PAID' %} bg-green-100 text-green-700

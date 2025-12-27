@@ -1,103 +1,50 @@
-{% load static %}
-<!DOCTYPE html>
-<html class="dark" lang="en">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Order Confirmation</title>
-  <link rel="stylesheet" href="{% static 'dist/output.css' %}">
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;700;800&display=swap" rel="stylesheet" />
-  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
-  <style>
-    body {
-      -webkit-font-smoothing: antialiased;
-      -moz-osx-font-smoothing: grayscale;
-      min-height: max(884px, 100dvh);
-    }
-    .material-symbols-outlined {
-      font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 48;
-    }
-  </style>
-</head>
-<body class="bg-background-light dark:bg-background-dark font-display">
-  <div class="relative flex h-auto min-h-screen w-full flex-col bg-background-light dark:bg-background-dark font-display group/design-root overflow-x-hidden">
+<!-- {# client_templates/partials/confirmation_modal.html #}
+<div class="bg-white rounded-2xl shadow-lg max-w-md mx-auto p-6">
+  <h2 class="text-xl font-semibold text-green-600 mb-3 text-center">
+    🎉 Order Confirmed!
+  </h2>
 
-    <div class="flex flex-col items-center justify-center p-6 pt-16">
-      <div class="flex h-24 w-24 items-center justify-center rounded-full bg-primary/20">
-        {% if order.payment_method == 'express' %}
-          <span class="material-symbols-outlined text-primary text-6xl">credit_card</span>
-        {% else %}
-          <span class="material-symbols-outlined text-primary text-6xl">payments</span>
-        {% endif %}
-      </div>
-    </div>
+  <p class="text-sm text-slate-700 mb-4 text-center">
+    Your order has been placed successfully.
+  </p>
 
-    <h1 class="text-slate-900 dark:text-white tracking-light text-[32px] font-bold leading-tight px-4 text-center pb-3 pt-6">
-      Order Confirmed!
-    </h1>
-
-    <p class="text-slate-600 dark:text-slate-300 text-base font-normal leading-normal pb-3 pt-1 px-4 text-center">
-      {% if order.payment_method == 'express' %}
-        Your payment request has been sent to the gateway. Order marked as paid and sent to kitchen.
-      {% else %}
-        Payment code generated. Show this code to your waiter to complete payment. Order will be sent to kitchen after verification.
-      {% endif %}
-    </p>
-
-    <div class="p-4 mx-4 my-6 bg-slate-50 dark:bg-background-dark border border-slate-200 dark:border-slate-800 rounded-xl">
-      <div class="flex justify-between gap-x-6 py-3 border-b border-slate-200 dark:border-slate-800">
-        <p class="text-slate-500 dark:text-slate-400 text-sm font-normal leading-normal">Order Number</p>
-        <p class="text-slate-900 dark:text-white text-sm font-semibold leading-normal text-right">#{{ order.pk }}</p>
-      </div>
-      <div class="flex justify-between gap-x-6 py-3 border-b border-slate-200 dark:border-slate-800">
-        <p class="text-slate-500 dark:text-slate-400 text-sm font-normal leading-normal">Payment Method</p>
-        <p class="text-slate-900 dark:text-white text-sm font-semibold leading-normal text-right">{{ order.payment_method|title }}</p>
-      </div>
-      <div class="flex justify-between gap-x-6 py-3 border-b border-slate-200 dark:border-slate-800">
-        <p class="text-slate-500 dark:text-slate-400 text-sm font-normal leading-normal">Payment Reference</p>
-        <p class="text-slate-900 dark:text-white text-sm font-semibold leading-normal text-right">{{ order.payment_reference }}</p>
-      </div>
-      <div class="flex justify-between gap-x-6 py-3 border-b border-slate-200 dark:border-slate-800">
-        <p class="text-slate-500 dark:text-slate-400 text-sm font-normal leading-normal">Order Status</p>
-        <p class="text-slate-900 dark:text-white text-sm font-semibold leading-normal text-right">{{ order.status|title }}</p>
-      </div>
-      <div class="flex justify-between gap-x-6 py-3 border-b border-slate-200 dark:border-slate-800">
-        <p class="text-slate-500 dark:text-slate-400 text-sm font-normal leading-normal">Your Order Summary</p>
-        <p class="text-slate-900 dark:text-white text-sm font-semibold leading-normal text-right">{{ order_items|length }} items</p>
-      </div>
-      <div class="flex justify-between gap-x-6 pt-3">
-        <p class="text-slate-500 dark:text-slate-400 text-sm font-normal leading-normal">Total Amount</p>
-        <p class="text-slate-900 dark:text-white text-sm font-semibold leading-normal text-right">${{ order.total_amount }}</p>
-      </div>
-    </div>
-
-    <!-- Order Items -->
-    <div class="p-4 mx-4 mb-6 bg-slate-50 dark:bg-background-dark border border-slate-200 dark:border-slate-800 rounded-xl">
-      <h3 class="text-slate-900 dark:text-white text-base font-semibold mb-3">Order Items</h3>
-      {% for item in order_items %}
-      <div class="flex justify-between items-center py-2 border-b border-slate-200 dark:border-slate-800 last:border-b-0">
-        <div class="flex-1">
-          <p class="text-slate-900 dark:text-white text-sm font-medium">{{ item.menu_item.name }}</p>
-          <p class="text-slate-500 dark:text-slate-400 text-xs">Quantity: {{ item.quantity }}</p>
-        </div>
-        <p class="text-slate-900 dark:text-white text-sm font-semibold">${{ item.subtotal }}</p>
-      </div>
-      {% endfor %}
-    </div>
-
-    <div class="flex-grow"></div>
-
-    <div class="sticky bottom-0 bg-background-light dark:bg-background-dark py-4 px-4 w-full">
-      <div class="flex px-0 py-3">
-        <a href="{% url 'client_flow:order_tracking' order.pk %}" class="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center rounded-xl h-12 px-5 flex-1 bg-primary text-slate-900 text-base font-bold leading-normal tracking-[0.015em] text-center">
-          <span class="truncate">Track Order Progress</span>
-        </a>
-      </div>
-      <div class="flex items-center justify-center py-2">
-        <a href="{% url 'client_flow:menu' %}" class="text-primary text-sm font-bold leading-normal">Continue Browsing Menu</a>
-      </div>
-    </div>
-
+  <div class="text-sm text-slate-600 mb-4">
+    <p><span class="font-semibold">Table:</span> {{ table }}</p>
+    <p><span class="font-semibold">Seat:</span> {{ seat }}</p>
+    <p><span class="font-semibold">Payment Method:</span> {{ payment_method }}</p>
+    <p><span class="font-semibold">Payment Reference:</span> {{ payment_reference }}</p>
   </div>
-</body>
-</html>
+
+  <div class="border-t border-slate-200 pt-4 mb-4">
+    <h3 class="text-sm font-semibold text-slate-900 mb-2">Order Items</h3>
+    <ul class="space-y-2 text-sm">
+      {% for row in cart_items %}
+        <li class="flex justify-between">
+          <span>{{ row.item.title }} × {{ row.quantity }}</span>
+          <span>Ksh {{ row.subtotal }}</span>
+        </li>
+      {% endfor %}
+    </ul>
+    <div class="mt-3 flex justify-between font-semibold text-slate-900">
+      <span>Total</span>
+      <span>Ksh {{ total }}</span>
+    </div>
+  </div>
+
+  <div class="space-y-3">
+    {# Primary button: Proceed to order tracking #}
+    <a href="{% url 'client_flow:order_tracking' order.order_id %}"
+       class="w-full py-3 text-center font-semibold bg-orange-500 text-white rounded-2xl transition duration-300 ease-in-out hover:bg-orange-600">
+      Proceed to Order Tracking
+    </a>
+
+    {# Secondary fading button: Back to Menu #}
+    <a href="{% url 'client_flow:menu_redirect' %}"
+       class="w-full py-3 text-center font-semibold text-slate-600 bg-slate-100 rounded-2xl transition duration-300 ease-in-out hover:bg-slate-200 hover:text-slate-900">
+      ← Back to Menu
+    </a>
+  </div>
+</div> -->
+
+
+<h1>you have successfully place your order</h1>

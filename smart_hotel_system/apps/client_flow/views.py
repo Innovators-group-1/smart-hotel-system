@@ -1,6 +1,5 @@
 # --- Python Standard Library ---
-import random  # Used for generating random cash payment codes
-
+import random  
 # --- Django Utilities ---
 from django.utils.crypto import get_random_string  
 from django.shortcuts import render, get_object_or_404, redirect 
@@ -10,7 +9,7 @@ from django.db.models import Q
 from django.contrib import messages  
 
 # --- Local Application Models ---
-from apps.common_flow.models import Menu as MenuItem, Category, Table,Orders,HotelSettings
+from apps.common_flow.models import Menu as MenuItem, Category, Table, Order, OrderItem, HotelSettings
 
 def hotel_name_view(request):
     hotel_name = HotelSettings.objects.get_solo().hotel_name
@@ -18,7 +17,57 @@ def hotel_name_view(request):
         hotel_name = "Smart Hotel"
     return HttpResponse(hotel_name)
     
+def menu_view(request,table_number):
+    table = get_object_or_404(Table, number=table_number)
+    request.session['table_number'] = table.number
+    request.session.modified = True
 
+    query = request.GET.get('q', '').strip()
+    category_id = request.GET.get('category')  # Get selected category from URL
+
+    categories = Category.objects.all()
+    selected_category = None
+    menu_items = MenuItem.objects.filter(is_available=True)
+
+    # If user clicked a category
+    if category_id:
+        selected_category = get_object_or_404(Category, id=category_id)
+        menu_items = menu_items.filter(category=selected_category)
+
+    # If user searched something
+    if query:
+        menu_items = menu_items.filter(
+            Q(title__icontains=query) | Q(description__icontains=query)
+        )
+
+    context = {
+        'categories': categories,
+        'menu_items': menu_items,
+        'selected_category': selected_category.id if selected_category else None,
+        'query': query,
+    }
+
+    return render(request, 'client_templates/menu/menu_page.html', context)
+
+def menu_search_view(request):
+    query = request.GET.get('q', '').strip()
+    menu_items = MenuItem.objects.filter(is_available=True)
+
+    if query:
+        menu_items = menu_items.filter(
+            Q(title__icontains=query) | Q(description__icontains=query)
+        )
+
+    context = {'menu_items': menu_items}
+    return render(request, 'client_templates/menu/partials/menu_list.html', context)
+
+def menu_redirect_view(request):
+    table_number = request.session.get('table_number')
+    if table_number:
+        return redirect('client_flow:menu', table_number=table_number)
+    else:
+        messages.error(request, "Table number not found in session. Please scan your table's QR code again.")
+        return redirect('client_flow:menu', table_number=1)  
 
 def _get_cart(session):
     return session.get('cart',{})
@@ -30,7 +79,6 @@ def _save_cart(session, cart):
 def add_to_cart(request, item_id):
     item = get_object_or_404(MenuItem, menu_item_id=item_id)
     cart = _get_cart(request.session)
-    print(cart)
     item_id_str = str(item_id)
     if item_id_str in cart:
         cart[item_id_str] += 1
@@ -58,7 +106,7 @@ def add_to_cart(request, item_id):
 
     # Fallback for regular (non-AJAX) requests: keep previous behavior
     messages.success(request, data['message'])
-    return redirect('client_flow:menu')
+    return redirect('client_flow:menu_redirect')
 
 def cart_view(request):
     cart = _get_cart(request.session)
@@ -77,42 +125,95 @@ def cart_view(request):
     return render(request, 'client_templates/cart.html', context)
 
 def update_cart(request, item_id):
-    if request.method == 'POST':
-        action = request.POST.get('action')
-        cart = _get_cart(request.session)
+    if request.method == "POST":
+        action = request.POST.get("action")
+        cart = request.session.get("cart", {})
 
+        # Ensure item exists in cart
         if str(item_id) in cart:
-            if action == 'increase':
+            if action == "increase":
                 cart[str(item_id)] += 1
-                messages.success(request, 'Cart updated successfully.')
-            elif action == 'decrease':
-                if cart[str(item_id)] > 1:
-                    cart[str(item_id)] -= 1
-                    messages.success(request, 'Cart updated successfully.')
-                else:
-                    del cart[str(item_id)]
-                    messages.success(request, 'Item removed from cart.')
+            elif action == "decrease":
+                cart[str(item_id)] -= 1
+                # Remove if quantity drops to 0
+                if cart[str(item_id)] <= 0:
+                    cart.pop(str(item_id))
 
-            _save_cart(request.session, cart)
-        return redirect('client_flow:cart')
+        request.session["cart"] = cart
+        request.session.modified = True
+
+    # Build updated cart context
+    cart_items = []
+    total = 0
+    for item_id, quantity in cart.items():
+        menu_item = get_object_or_404(MenuItem, pk=item_id)
+        subtotal = float(menu_item.price) * quantity
+        total += subtotal
+        cart_items.append({
+            "item": menu_item,
+            "quantity": quantity,
+            "subtotal": subtotal,
+        })
+
+    # Return partial for HTMX swap
+    return render(request, "client_templates/menu/partials/cart_section.html", {
+        "cart_items": cart_items,
+        "total": total,
+    })
 
 def remove_from_cart(request, item_id):
-    cart = _get_cart(request.session)
+    cart = request.session.get("cart", {})
+
+    # Remove the item if it exists
     if str(item_id) in cart:
-        del cart[str(item_id)]
-        _save_cart(request.session, cart)
-        messages.info(request, "Item removed from cart.")
-    return redirect('client_flow:cart')
+        cart.pop(str(item_id))
+
+    request.session["cart"] = cart
+    request.session.modified = True
+
+    # Build updated cart context
+    cart_items = []
+    total = 0
+    for item_id, item in cart.items():
+        menu_item = get_object_or_404(MenuItem, pk=item_id)
+        subtotal = float(item["price"]) * int(item["quantity"])
+        total += subtotal
+        cart_items.append({
+            "item": menu_item,
+            "quantity": item["quantity"],
+            "subtotal": subtotal,
+        })
+
+    # Return partial for HTMX swap
+    return render(request, "client_templates/menu/partials/cart_section.html", {
+        "cart_items": cart_items,
+        "total": total,
+    })
+
+def seat_selector_view(request):
+    table_number = request.session.get('table_number')
+    table = get_object_or_404(Table, number=table_number)
+    seat_range = range(1, table.seats + 1)
+
+    return render(request, 'client_templates/menu/partials/seat_selector.html', {'table': table, 'seat_range': seat_range})
+
+def set_seat_view(request):
+    if request.method == 'POST':
+        seat = request.POST.get('seat')
+        request.session['seat'] = seat
+        request.session.modified = True
+        # Close the modal by returning an empty response
+        return redirect('client_flow:checkout')
 
 def checkout_view(request):
     # 1 Get cart from session
     cart = request.session.get('cart', {})
     if not cart:
         messages.warning(request, "Your cart is empty.")
-        return redirect('client_flow:menu')
-
+        return redirect('client_flow:menu_redirect')
     # 2 Retrieve MenuItem objects and calculate totals
     item_ids = [int(i) for i in cart.keys()]
+    print(item_ids)
     items = MenuItem.objects.filter(menu_item_id__in=item_ids)
     cart_items = []
     total = 0
@@ -126,7 +227,13 @@ def checkout_view(request):
     # 3 Handle POST requests (when payment form is submitted)
     if request.method == 'POST':
         payment_method = request.POST.get('payment_method')
-        table = Table.objects.first()  # For now, pick the first table. Replace as needed.
+        table_number = request.session.get('table_number')
+        seat = request.session.get('seat')
+
+        try:
+            table = get_object_or_404(Table,number=table_number)
+        except Table.DoesNotExist:
+            return HttpResponse('Table not found')
 
         if not table:
             messages.error(request, "No table available. Please add a table first.")
@@ -141,46 +248,63 @@ def checkout_view(request):
 
             # Simulate sending payment request to gateway here
             payment_reference = f"EXP-{get_random_string(6).upper()}"  # Unique reference
+            payment_method_value = Order.PaymentMethod.M_PESA
 
         # CASH PAYMENT
         elif payment_method == 'cash':
             payment_reference = f"CASH-{get_random_string(6).upper()}"  # Unique code
+            payment_method_value = Order.PaymentMethod.CASH
 
         else:
             messages.error(request, "Invalid payment method selected.")
             return redirect('client_flow:checkout')
 
-        #  Create Order
-        order = Orders.objects.create(
+        if not seat:
+            messages.error(request, "Please select a seat before proceeding to checkout.")
+            return redirect('client_flow:checkout')
+
+        # Create the Order
+        order = Order.objects.create(
             table=table,
-            payment_method=payment_method,
+            seat=seat,
+            status=Order.OrderStatus.PENDING,
+            payment_status=Order.PaymentStatus.UNPAID,
+            payment_method=payment_method_value, 
+            payment_number=request.POST.get('payment_account', ''),
             payment_reference=payment_reference,
-            status='pending',
-            total_amount=total
+            special_requests=request.POST.get('special_requests', ''),
         )
 
-        #  Create OrderItems
-        # for row in cart_items:
-        #     OrderItem.objects.create(
-        #         order=order,
-        #         menu_item=row['item'],
-        #         quantity=row['quantity'],
-        #         unit_price=row['item'].price
-        #     )
+        # Create OrderItems
+        for item in items:
+            quantity = cart[str(item.pk)]
+            subtotal = item.price * quantity
 
+            OrderItem.objects.create(
+                order=order,
+                menu_item=item,
+                quantity=quantity,
+                total_price=subtotal,
+            )
+
+        print(f'this is the order that you have placed {order}')
         #  Clear cart
         request.session['cart'] = {}
         messages.success(request, f"Order confirmed! Payment reference: {payment_reference}")
 
-        #  Redirect to order confirmation page or menu
-        return redirect('client_flow:order_confirmation', order_id=order.pk)
+        # Redirect to order confirmation with the order id
+        return redirect('client_flow:order_confirmation', order_id=order.order_id)
+        return HttpResponse('you have succcessfu;lly placed your order')
+
+       
 
     # Render checkout page with cart items and total
     context = {'cart_items': cart_items, 'total': total}
     return render(request, 'client_templates/checkout.html', context)
 
 def order_confirmation_view(request, order_id):
-    order = get_object_or_404(Orders, id=order_id)
+    order = get_object_or_404(Order, order_id=order_id)
+    # Get order items
     order_items = order.order_items.all()
     return render(request, 'client_templates/order_confirmation.html', {
         'order': order,
@@ -188,7 +312,7 @@ def order_confirmation_view(request, order_id):
     })
     
 def order_tracking_view(request, order_id):
-    order = get_object_or_404(Orders, id=order_id)
+    order = get_object_or_404(Order, order_id=order_id)
 
     # Define all steps in the process
     steps = ['pending', 'paid', 'confirmed', 'preparing', 'ready', 'served']
@@ -209,34 +333,6 @@ def order_tracking_view(request, order_id):
         'progress': progress
     }) 
 
-
-def menu_view(request):
-    query = request.GET.get('q', '').strip()
-    category_id = request.GET.get('category')  # Get selected category from URL
-
-    categories = Category.objects.all()
-    selected_category = None
-    menu_items = MenuItem.objects.filter(is_available=True)
-
-    # If user clicked a category
-    if category_id:
-        selected_category = get_object_or_404(Category, id=category_id)
-        menu_items = menu_items.filter(category=selected_category)
-
-    # If user searched something
-    if query:
-        menu_items = menu_items.filter(
-            Q(title__icontains=query) | Q(description__icontains=query)
-        )
-
-    context = {
-        'categories': categories,
-        'menu_items': menu_items,
-        'selected_category': selected_category.id if selected_category else None,
-        'query': query,
-    }
-
-    return render(request, 'client_templates/menu/menu_page.html', context)
 
 def menu_filter_view(request, category_id):
     menu_items = MenuItem.objects.filter(category_id=category_id)

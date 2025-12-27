@@ -1,0 +1,21 @@
+<div class="bg-white p-6 rounded shadow-lg w-11/12 max-w-md">
+  <h2 class="text-lg font-bold">Select Your Seat</h2>
+  <form method="post" action="{% url 'client_flow:set_seat' %}">
+    {% csrf_token %}
+    <select name="seat" class="w-full mt-4 border rounded p-2">
+      {% for i in seat_range %}
+        <option value="{{ i }}">Seat {{ i }}</option>
+      {% endfor %}
+    </select>
+    <button type="submit" class="w-full btn-primary py-3 text-center font-semibold bg-orange-500 text-white rounded-2xl">Continue to Checkout</button>
+  </form>
+</div>
+<!-- Close modal if clicked outside -->
+<script>
+  document.addEventListener('click', function(event) {
+    const modal = document.getElementById('modal');
+    if (event.target === modal) {
+      modal.classList.add('hidden');
+    }
+  });
+</script>
