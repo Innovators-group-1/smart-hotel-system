@@ -1,0 +1,46 @@
+<div class="relative h-70">
+    <canvas id="salesChart"></canvas>
+</div>
+
+{{ labels|json_script:"sales-labels" }}
+{{ totals|json_script:"sales-totals" }}
+
+<script>
+(function () {
+    const labels = JSON.parse(
+        document.getElementById("sales-labels").textContent
+    );
+
+    const totals = JSON.parse(
+        document.getElementById("sales-totals").textContent
+    );
+
+    const canvas = document.getElementById("salesChart");
+    const ctx = canvas.getContext("2d");
+
+    // Destroy old chart if it exists
+    if (canvas.chartInstance) {
+        canvas.chartInstance.destroy();
+    }
+
+    canvas.chartInstance = new Chart(ctx, {
+        type: "line",
+        data: {
+            labels: labels,
+            datasets: [{
+                label: "Sales",
+                data: totals,
+                borderWidth: 2,
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false }
+            }
+        }
+    });
+})();
+</script>

@@ -143,8 +143,10 @@ class Order(models.Model):
         CANCELLED = 'CANCELLED', _('Cancelled')
     
     class PaymentStatus(models.TextChoices):
+        VERIFYING = 'VERIFYING', _('Verifying')
         UNPAID = 'UNPAID', _('Unpaid')
         PAID = 'PAID', _('Paid')
+        FAILED = 'FAILED', _('Failed')
         REFUNDED = 'REFUNDED', _('Refunded')
 
     class PaymentMethod(models.TextChoices):
@@ -159,6 +161,12 @@ class Order(models.Model):
     payment_method = models.CharField(max_length=20, choices=PaymentMethod.choices, default=PaymentMethod.CASH)
     payment_number = models.CharField(max_length=50, blank=True, null=True)
     payment_reference = models.CharField(max_length=50, blank=True, null=True)
+    # M-PESA specific fields
+    mpesa_amount = models.DecimalField(max_digits=8, decimal_places=2, blank=True, null=True)
+    mpesa_receipt = models.CharField(max_length=50, blank=True, null=True)
+    mpesa_phone = models.CharField(max_length=20, blank=True, null=True)
+    mpesa_txn_date = models.DateTimeField(blank=True, null=True)
+    mpesa_result_code = models.IntegerField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     completed_at = models.DateTimeField(blank=True, null=True)

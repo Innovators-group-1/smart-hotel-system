@@ -5,6 +5,8 @@ from apps.common_flow.models import HotelSettings,Reports,Order,Category,Menu,Ta
 from django.db.models import Count, Q
 from django.shortcuts import get_object_or_404
 import json
+from django.db.models import Sum,Value,DecimalField
+from django.db.models.functions import TruncDay,Coalesce
 
 
 def is_htmx(request):
@@ -88,25 +90,51 @@ def get_hotel_name(request):
     return HttpResponse(hotel_name)
 
 def orders_partial(request):
+    hotel_name = HotelSettings.objects.first().hotel_name if HotelSettings.objects.exists() else 'Smart Hotel'
     orders = Order.objects.all().order_by('-created_at')
     order_statuses = Order.OrderStatus.choices
-    context = {'orders': orders, 'order_statuses': order_statuses}
+    context = {'hotel_name': hotel_name, 'orders': orders, 'order_statuses': order_statuses}
     return render(request, 'admin_templates/partials/orders.html', context)
 
 def menu_partial(request):
+    hotel_name = HotelSettings.objects.first().hotel_name if HotelSettings.objects.exists() else 'Smart Hotel'
     menu_items = Menu.objects.all()
     builtin_foods = InbuiltMenuItems.objects.all()
     categories = Category.objects.all()
     context = {
+        'hotel_name': hotel_name,
         'menu_items': menu_items,
         'builtin_foods': builtin_foods,
         'categories': categories
     }
     return render(request, 'admin_templates/partials/menu.html', context)
 
+# chats view for the admin dashboard
+def sales_overview(request):
+    sales = (Order.objects
+        .filter(status='COMPLETED')
+        .annotate(day=TruncDay('created_at'))
+        .values('day')
+        .annotate(total_sales=Coalesce(Sum('order_items__total_price'), Value(0),output_field=DecimalField(max_digits=10, decimal_places=2)))
+        .order_by('day')
+    )
+    labels = [s["day"].strftime("%b %d") for s in sales]
+    totals = [float(s["total_sales"]) for s in sales]
+
+    context = {
+        'labels': labels,
+        'totals': totals,
+    }
+    html = render_to_string('admin_templates/partials/sales_overview_chart.html', context)
+    return HttpResponse(html)
+
+
+
+
 def reports_partial(request):
+    hotel_name = HotelSettings.objects.first().hotel_name if HotelSettings.objects.exists() else 'Smart Hotel'
     reports = Reports.objects.all().order_by('-report_date')
-    context = {'reports': reports}
+    context = {'hotel_name': hotel_name, 'reports': reports}
     return render(request, 'admin_templates/partials/reports.html', context)
 
 def settings_partial(request):
@@ -115,11 +143,14 @@ def settings_partial(request):
     return render(request, 'admin_templates/partials/settings.html', context)
 
 def chefs_partial(request):
-    return render(request, 'admin_templates/partials/chefs.html')
+    hotel_name = HotelSettings.objects.first().hotel_name if HotelSettings.objects.exists() else 'Smart Hotel'
+    context = {'hotel_name': hotel_name}
+    return render(request, 'admin_templates/partials/chefs.html', context)
 
 def history_partial(request):
-    return render(request, 'admin_templates/partials/history.html')
-
+    hotel_name = HotelSettings.objects.first().hotel_name if HotelSettings.objects.exists() else 'Smart Hotel'
+    context = {'hotel_name': hotel_name}
+    return render(request, 'admin_templates/partials/history.html', context)
 # Settings partials views
 def general_settings_partial(request):
     hotel_settings = HotelSettings.objects.first()

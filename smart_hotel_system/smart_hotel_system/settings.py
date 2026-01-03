@@ -25,7 +25,7 @@ SECRET_KEY = 'django-insecure-8i_pw1ass4ikn2zsa*^_7*n+96q2-#h!cp)^flig8ysfu^(n@@
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ["*"]
 
 MEDIA_URL = '/media/'   
 MEDIA_ROOT = BASE_DIR / 'media'
@@ -41,6 +41,7 @@ TENANT_APPS = [
 
 SHARED_APPS = [
     'django_tenants',
+    'django_extensions',
     'django.contrib.contenttypes',
     'django.contrib.auth',
     'django.contrib.sessions',
@@ -53,9 +54,12 @@ SHARED_APPS = [
 INSTALLED_APPS = SHARED_APPS + TENANT_APPS
 
 MIDDLEWARE = [
-    'django_tenants.middleware.main.TenantMainMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+
+    # django-tenants
+    'django_tenants.middleware.main.TenantMainMiddleware',
+
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -63,6 +67,8 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
+# settings.py
+PUBLIC_SCHEMA_URLCONF = 'smart_hotel_system.urls'
 ROOT_URLCONF = 'smart_hotel_system.urls'
 
 TEMPLATES = [

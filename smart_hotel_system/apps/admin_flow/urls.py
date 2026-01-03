@@ -5,6 +5,10 @@ urlpatterns = [
     # GENERAL ADMIN DASHBOARD URLS
     path('main/', views.adminDashboard, name='admin-dashboard'),
     path('dashboard/',views.dashboard_partial, name='dashboard_partial'),
+    # chart data url
+    path('sales-overview/', views.sales_overview, name='sales-overview'),
+
+    # PARTIAL URLS
     path('orders/', views.orders_partial, name='orders_partial'),
     path('menu/', views.menu_partial, name='menu_partial'),
     path('reports/', views.reports_partial, name='reports_partial'),

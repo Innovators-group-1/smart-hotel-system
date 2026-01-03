@@ -1,4 +1,5 @@
 # --- Python Standard Library ---
+import os
 import random  
 # --- Django Utilities ---
 from django.utils.crypto import get_random_string  
@@ -6,10 +7,15 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.http import JsonResponse, HttpResponse 
 import json
 from django.db.models import Q 
-from django.contrib import messages  
+from django.contrib import messages
+import requests
+
+from .utils.payload import create_stk_push_payload  
+from .utils.mpesa_utils import get_access_token, generate_password
 
 # --- Local Application Models ---
 from apps.common_flow.models import Menu as MenuItem, Category, Table, Order, OrderItem, HotelSettings
+from apps.platform_admin_flow.models import PaymentIndex
 
 def hotel_name_view(request):
     hotel_name = HotelSettings.objects.get_solo().hotel_name
@@ -241,15 +247,21 @@ def checkout_view(request):
 
         # EXPRESS PAYMENT
         if payment_method == 'express':
+            
             account_number = request.POST.get('payment_account', '').strip()
-            if not account_number:
-                messages.error(request, "Please enter a phone or account number for express payment.")
-                return redirect('client_flow:checkout')
-
+            # Make the account number to start with country code if it doesn't and remove leading zeros
+            if account_number and not account_number.startswith('254'):
+                if account_number.startswith('0'):
+                    account_number = '254' + account_number[1:]
+                else:
+                    account_number = '254' + account_number
             # Simulate sending payment request to gateway here
             payment_reference = f"EXP-{get_random_string(6).upper()}"  # Unique reference
             payment_method_value = Order.PaymentMethod.M_PESA
 
+            # remove cents from the total amount for M-Pesa
+            total = int(total)
+            
         # CASH PAYMENT
         elif payment_method == 'cash':
             payment_reference = f"CASH-{get_random_string(6).upper()}"  # Unique code
@@ -288,6 +300,37 @@ def checkout_view(request):
             )
 
         print(f'this is the order that you have placed {order}')
+        # simulate STK Push for M-Pesa payments
+        if payment_method == 'express':
+            # Create PaymentIndex record
+            index_record = PaymentIndex.objects.create(
+                tenant=request.tenant,
+                order_ref=order.pk,
+                account_reference=account_number,
+            )
+            # Simulate sending payment request to gateway here
+            payload, headers = create_stk_push_payload(
+                amount=total,
+                phone_number=account_number,
+                account_reference=payment_reference,
+                transaction_desc="Hotel Order Payment"
+            )
+            # Send the STK Push request to M-Pesa
+            response = requests.post(
+                'https://sandbox.safaricom.co.ke/mpesa/stkpush/v1/processrequest',
+                json=payload,
+                headers=headers
+            )
+            if response.status_code == 200:
+                response_data = response.json()
+                # Update PaymentIndex with the checkout and merchant request IDs
+                index_record.checkout_request_id = response_data.get('CheckoutRequestID')
+                index_record.merchant_request_id = response_data.get('MerchantRequestID')
+                index_record.save()
+                print(f'STK Push initiated successfully: {response_data}')
+            else:
+                print(f'Failed to initiate STK Push: {response.text}')
+            
         #  Clear cart
         request.session['cart'] = {}
         messages.success(request, f"Order confirmed! Payment reference: {payment_reference}")

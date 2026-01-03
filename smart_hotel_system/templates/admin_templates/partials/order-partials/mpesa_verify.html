@@ -1,4 +1,4 @@
-<!-- mpesa_verification_placeholder.html -->
+<!-- mpesa_verification.html -->
 <div class="space-y-6">
   <!-- Header -->
   <div class="flex justify-between items-center border-b pb-3">
@@ -12,26 +12,33 @@
     <p class="text-base font-bold text-gray-900">{{ order.payment_number }}</p>
   </div>
 
-  <!-- Placeholder for transaction codes/messages -->
-  <div>
-    <h4 class="text-sm font-semibold text-gray-700 mb-2">Available M‑Pesa Messages</h4>
-    <div class="border rounded-lg p-4 bg-white text-gray-500 italic">
-      <!-- Placeholder content -->
-      <p>No messages loaded yet. This section will display parsed M‑Pesa transaction codes and details once integrated.</p>
-    </div>
+  <!-- Actual M-Pesa transaction details -->
+  <div class="bg-white rounded-lg p-4 border">
+    <h4 class="text-sm font-semibold text-gray-700 mb-2">M‑Pesa Transaction Details</h4>
+    {% if order.mpesa_receipt %}
+      <ul class="text-sm text-gray-800 space-y-1">
+        <li><strong>Amount:</strong> {{ order.mpesa_amount }}</li>
+        <li><strong>Receipt:</strong> {{ order.mpesa_receipt }}</li>
+        <li><strong>Phone:</strong> {{ order.mpesa_phone }}</li>
+        <li><strong>Date:</strong> {{ order.mpesa_txn_date }}</li>
+        <li><strong>Result Code:</strong> {{ order.mpesa_result_code }}</li>
+      </ul>
+    {% else %}
+      <p class="text-gray-500 italic">No M‑Pesa callback received yet.</p>
+    {% endif %}
   </div>
 
   <!-- Actions -->
   <div class="flex justify-end gap-3">
     <button 
       class="px-4 py-2 rounded bg-green-600 text-white hover:bg-green-700 transition"
-      disabled
+      {% if order.payment_status == 'PAID' %}{% else %}disabled{% endif %}
     >
       Confirm Payment
     </button>
     <button 
       class="px-4 py-2 rounded bg-red-600 text-white hover:bg-red-700 transition"
-      disabled
+      {% if order.payment_status == 'UNPAID' %}{% else %}disabled{% endif %}
     >
       Mark Unpaid
     </button>
