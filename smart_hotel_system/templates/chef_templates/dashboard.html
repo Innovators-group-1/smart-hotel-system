@@ -1,0 +1,39 @@
+{% extends "chef_templates/base.html" %}
+{% block title %}Chef Dashboard{% endblock %}
+
+{% block content %}
+<h2 class="text-3xl font-bold mb-6">Chef Dashboard</h2>
+
+<div class="grid grid-cols-3 gap-6">
+
+    <!-- LEFT COLUMN -->
+    <div class="col-span-2 space-y-6">
+
+        <section>
+            <h3 class="text-xl font-semibold mb-3">Active Orders</h3>
+            {% include "chef_templates/partials/active_orders.html" %}
+        </section>
+
+        <section>
+            <h3 class="text-xl font-semibold mb-3">Completed Orders Log</h3>
+            {% include "chef_templates/partials/completed_orders.html" %}
+        </section>
+
+    </div>
+
+    <!-- RIGHT COLUMN -->
+    <div class="space-y-6">
+
+        <section>
+            <h3 class="text-xl font-semibold mb-3 text-red-400">Urgent Alerts</h3>
+            {% include "chef_templates/partials/urgent_orders.html" %}
+        </section>
+
+        <section>
+            <h3 class="text-xl font-semibold mb-3">Pending Orders</h3>
+            {% include "chef_templates/partials/pending_orders.html" %}
+        </section>
+
+    </div>
+</div>
+{% endblock %}

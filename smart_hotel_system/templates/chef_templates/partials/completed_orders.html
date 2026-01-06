@@ -1,0 +1,16 @@
+<div class="bg-slate-800 rounded-xl divide-y divide-slate-700">
+
+{% for order in completed_orders %}
+<div class="flex justify-between p-3 text-sm">
+    <span>
+        Order #{{ order.order_id }} – Table {{ order.table.number }}
+    </span>
+    <span class="text-slate-400">
+        Completed at {{ order.completed_at|time:"H:i" }}
+    </span>
+</div>
+{% empty %}
+<p class="p-4 text-slate-400">No completed orders yet</p>
+{% endfor %}
+
+</div>

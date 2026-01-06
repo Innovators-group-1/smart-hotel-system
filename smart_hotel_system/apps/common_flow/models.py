@@ -192,16 +192,15 @@ class Order(models.Model):
     in_progress_period = models.DurationField(blank=True, null=True, default=timedelta(minutes=15))
     special_requests = models.TextField(blank=True, null=True)
 
-    # Overriding save method to set completed_at timestamp when status changes to COMPLETED and update in_progress_period
+    # Overriding save method to set completed_at timestamp when status changes
     def save(self, *args, **kwargs):
         if self.status == self.OrderStatus.COMPLETED and not self.completed_at:
             self.completed_at = datetime.now()
-        elif self.status == self.OrderStatus.IN_PROGRESS:
-            self.in_progress_period = datetime.now() - self.created_at
-        super().save(*args, **kwargs)
 
-    def __str__(self):
-        return f'Order {self.order_id} - Table {self.table.number} - Seat {self.seat} ({self.status})'
+        if self.status == self.OrderStatus.IN_PROGRESS:
+            self.in_progress_period = datetime.now() - self.created_at
+
+        super().save(*args, **kwargs)
 
     # Represent Orders using Queue format FIFO
     class Meta:
@@ -234,14 +233,3 @@ class Reports(models.Model):
     
     class Meta:
         db_table = 'reports'
-    report_id = models.AutoField(primary_key=True)
-    report_date = models.DateField(auto_now_add=True)
-    total_orders = models.PositiveIntegerField()
-    total_revenue = models.DecimalField(max_digits=10, decimal_places=2)
-
-    def __str__(self):
-        return f'Report for {self.report_date} - Orders: {self.total_orders} - Revenue: {self.total_revenue}'
-    
-    class Meta:
-        db_table = 'reports'
-

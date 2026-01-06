@@ -1,0 +1,16 @@
+<div class="space-y-4">
+
+{% for order in urgent_orders %}
+<div class="border border-red-500 bg-red-900/30 rounded-xl p-4">
+    <h4 class="font-semibold text-red-400">
+        Table {{ order.table.number }}: Special Request
+    </h4>
+    <p class="text-sm text-red-300">
+        {{ order.special_requests }}
+    </p>
+</div>
+{% empty %}
+<p class="text-slate-400">No urgent alerts </p>
+{% endfor %}
+
+</div>
