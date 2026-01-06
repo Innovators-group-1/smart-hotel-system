@@ -8,11 +8,8 @@
   "devDependencies": {
     "@tailwindcss/container-queries": "^0.1.1",
     "@tailwindcss/forms": "^0.5.7",
-<<<<<<< HEAD
-=======
     "autoprefixer": "^10.4.23",
     "postcss": "^8.4.21",
->>>>>>> 5649375a5d9532254ac22e1fc2741e29b1723cdf
     "tailwindcss": "^3.4.0"
   }
 }

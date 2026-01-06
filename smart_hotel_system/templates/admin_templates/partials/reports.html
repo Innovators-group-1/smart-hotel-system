@@ -6,6 +6,73 @@
     <title>Reports-{{ hotel_name }}</title>
 </head>
 <body>
-    
+    <div class="p-6 bg-white rounded-lg shadow-md w-full max-w-4xl mx-auto">
+        <!-- Header -->
+        <div class="flex items-center justify-between mb-4">
+            <h2 class="text-xl font-semibold text-gray-800">Reports & Analytics</h2>
+            <input type="search" placeholder="Search reports…" class="px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring focus:border-blue-300 w-48">
+        </div>
+
+        <!-- Top Metrics -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+            <div class="bg-blue-50 p-4 rounded-lg">
+            <p class="text-sm text-gray-500">Total Revenue</p>
+            <p class="text-lg font-bold text-blue-700">{{ total_revenue }}</p>
+            <p class="text-xs text-green-600">+12.5% from last week</p>
+            </div>
+            <div class="bg-yellow-50 p-4 rounded-lg">
+            <p class="text-sm text-gray-500">Avg. Order Value</p>
+            <p class="text-lg font-bold text-yellow-700">{{ avarage_order_value }}</p>
+            <p class="text-xs text-red-600">-21% from last week</p>
+            </div>
+            <div class="bg-green-50 p-4 rounded-lg">
+            <p class="text-sm text-gray-500">Total Orders</p>
+            <p class="text-lg font-bold text-green-700">{{ totals_orders }}</p>
+            <p class="text-xs text-green-600">+15.3% from last week</p>
+            </div>
+            <div class="bg-purple-50 p-4 rounded-lg">
+            <p class="text-sm text-gray-500">Top Category</p>
+            <p class="text-lg font-bold text-purple-700">{{ top_category }}</p>
+            <p class="text-xs text-gray-600">28% of total sales</p>
+            </div>
+        </div>
+
+        <!-- Charts -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            <div class="bg-gray-50 p-4 rounded-lg h-64 flex items-center justify-center text-gray-400">
+            <!-- Replace with actual chart -->
+            <span>Sales Trend Chart Placeholder</span>
+            </div>
+            <div class="bg-gray-50 p-4 rounded-lg h-64 flex items-center justify-center text-gray-400">
+            <!-- Replace with actual chart -->
+            <span>Sales by Category Pie Chart Placeholder</span>
+            </div>
+        </div>
+
+        <!-- Order Summary Table -->
+        <div class="overflow-x-auto">
+            <table class="min-w-full text-sm text-left text-gray-700">
+            <thead class="bg-gray-100 text-xs uppercase text-gray-600">
+                <tr>
+                <th class="px-4 py-2">Date</th>
+                <th class="px-4 py-2">Orders</th>
+                <th class="px-4 py-2">Completed</th>
+                <th class="px-4 py-2">Cancelled</th>
+                <th class="px-4 py-2">Revenue</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr class="border-b">
+                    <td class="px-4 py-2">{{ date }}</td>
+                    <td class="px-4 py-2">{{ orders_by_date }}</td>
+                    <td class="px-4 py-2">{{ completed_orders }}</td>
+                    <td class="px-4 py-2">{{ cancelled_orders }}</td>
+                    <td class="px-4 py-2">{{ revenue_by_date }}</td>
+                </tr>
+            </tbody>
+            </table>
+        </div>
+        </div>
+
 </body>
 </html>

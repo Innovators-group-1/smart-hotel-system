@@ -34,11 +34,30 @@ class HotelSettings(models.Model):
     class Meta:
         db_table = 'hotel_settings'
 
+# Main categories for menu items
+class MainCategory(models.Model):
+    main_category_id = models.AutoField(primary_key=True)
+    name = models.CharField(max_length=100)
+    description = models.TextField(blank=True, null=True)
+    slug = models.SlugField(unique=True, default='')
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = slugify(self.name)
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return self.name
+    
+    class Meta:
+        db_table = 'main_category'
+
 # Category model for categorizing items
 class Category(models.Model):
     category_id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=100)
     description = models.TextField(blank=True, null=True)
+    # main_category = models.ForeignKey(MainCategory, on_delete=models.CASCADE, related_name='categories', default=None)
     slug = models.SlugField(unique=True, default='')
 
     def save(self, *args, **kwargs):

@@ -1,6 +1,7 @@
 from django.shortcuts import render
 from django.http import JsonResponse,HttpResponse
 from django.template.loader import render_to_string
+from django.utils import timezone
 from apps.common_flow.models import HotelSettings,Reports,Order,Category,Menu,Table,InbuiltMenuItems
 from django.db.models import Count, Q
 from django.shortcuts import get_object_or_404
@@ -133,8 +134,44 @@ def sales_overview(request):
 
 def reports_partial(request):
     hotel_name = HotelSettings.objects.first().hotel_name if HotelSettings.objects.exists() else 'Smart Hotel'
-    reports = Reports.objects.all().order_by('-report_date')
-    context = {'hotel_name': hotel_name, 'reports': reports}
+    # Get total revenue and other metrics as needed
+    # Fetching total revenue for last 7 days
+    total_revenue = Order.objects.filter(
+        status='COMPLETED',
+        created_at__gte=timezone.now() - timezone.timedelta(days=7)
+    ).aggregate(
+        total=Coalesce(Sum('order_items__total_price'), Value(0), output_field=DecimalField(max_digits=10, decimal_places=2))
+    )['total']
+    # Fetching avarage order value for last 7 days
+    avarage_order_value = Order.objects.filter(
+        status='COMPLETED',
+        created_at__gte=timezone.now() - timezone.timedelta(days=7)
+    ).aggregate(
+        average=Coalesce(Sum('order_items__total_price') / Count('id'), Value(0), output_field=DecimalField(max_digits=10, decimal_places=2))
+    )['average']
+    # Fetching total orders for last 7 days
+    totals_orders = Order.objects.filter(
+        status='COMPLETED',
+        created_at__gte=timezone.now() - timezone.timedelta(days=7)
+    ).count()
+    # Fetching top Category with most orders
+    top_category = Order.objects.filter(
+        status='COMPLETED',
+        created_at__gte=timezone.now() - timezone.timedelta(days=7)
+    ).values('order_items__menu__category__name').annotate(
+        order_count=Count('order_items__menu__category')
+    ).order_by('-order_count').first()
+
+    # Fetching orders based in each day
+    
+
+    context = {
+        'hotel_name': hotel_name,
+        'total_revenue': total_revenue,
+        'avarage_order_value': avarage_order_value,
+        'totals_orders': totals_orders,
+        'top_category': top_category,
+    }
     return render(request, 'admin_templates/partials/reports.html', context)
 
 def settings_partial(request):
