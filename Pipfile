@@ -11,6 +11,7 @@ django-tailwind = "*"
 python-slugify = "*"
 python-dotenv = "*"
 pillow = "*"
+django-extensions = "*"
 
 [dev-packages]
 
