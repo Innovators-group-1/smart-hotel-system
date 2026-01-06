@@ -108,11 +108,11 @@ load_dotenv()
 DATABASES = {
     'default': {
         'ENGINE': 'django_tenants.postgresql_backend',
-        'NAME': os.getenv('DB_NAME'),
-        'USER': os.getenv('DB_USER'),
-        'PASSWORD': os.getenv('DB_PASSWORD'),
-        'HOST': os.getenv('DB_HOST'),
-        'PORT': os.getenv('DB_PORT'),
+        'NAME': os.getenv('DB_NAME') or 'Smart-Hotel-System',
+        'USER': os.getenv('DB_USER')or 'postgres',
+        'PASSWORD': os.getenv('DB_PASSWORD') or 'Deno@123',
+        'HOST': os.getenv('DB_HOST') or 'localhost',
+        'PORT': os.getenv('DB_PORT') or '5432',
         'CONN_MAX_AGE': 60,
         'OPTIONS': {
             'sslmode': 'require',
