@@ -2,12 +2,13 @@ from django.shortcuts import render
 from django.http import JsonResponse,HttpResponse
 from django.template.loader import render_to_string
 from django.utils import timezone
-from apps.common_flow.models import HotelSettings,Reports,Order,Category,Menu,Table,InbuiltMenuItems
+from apps.common_flow.models import HotelSettings,Reports,Order,Category,Menu,Table,InbuiltMenuItems,OrderItem
 from django.db.models import Count, Q
 from django.shortcuts import get_object_or_404
 import json
 from django.db.models import Sum,Value,DecimalField
 from django.db.models.functions import TruncDay,Coalesce
+from django.db import models
 
 
 def is_htmx(request):
@@ -147,7 +148,7 @@ def reports_partial(request):
         status='COMPLETED',
         created_at__gte=timezone.now() - timezone.timedelta(days=7)
     ).aggregate(
-        average=Coalesce(Sum('order_items__total_price') / Count('id'), Value(0), output_field=DecimalField(max_digits=10, decimal_places=2))
+        average=Coalesce(Sum('order_items__total_price') / Count('order_id'), Value(0), output_field=DecimalField(max_digits=10, decimal_places=2))
     )['average']
     # Fetching total orders for last 7 days
     totals_orders = Order.objects.filter(
@@ -155,15 +156,41 @@ def reports_partial(request):
         created_at__gte=timezone.now() - timezone.timedelta(days=7)
     ).count()
     # Fetching top Category with most orders
-    top_category = Order.objects.filter(
-        status='COMPLETED',
-        created_at__gte=timezone.now() - timezone.timedelta(days=7)
-    ).values('order_items__menu__category__name').annotate(
-        order_count=Count('order_items__menu__category')
-    ).order_by('-order_count').first()
+    category_sales = (
+        OrderItem.objects
+        .values("menu_item__category__name")
+        .annotate(total_sales=Sum("total_price"))
+        .order_by("-total_sales")
+    )
 
-    # Fetching orders based in each day
-    
+    # Get the top category
+    top_category = None
+    if category_sales:
+        top_category = category_sales[0]['menu_item__category__name']
+
+    #aggregate orders by date
+    orders_summary = (
+        Order.objects
+        .values("created_at__date")
+        .annotate(
+            total_orders=Count("order_id"),
+            completed_orders=Count("order_id", filter=models.Q(status="COMPLETED")),
+            cancelled_orders=Count("order_id", filter=models.Q(status="CANCELLED")),
+            total_revenue=Sum("order_items__total_price"),
+        )
+        .order_by("-created_at__date")[:7]  # last 7 days
+    )
+
+    # Convert queryset into list of dicts with friendly keys
+    summary_list = []
+    for row in orders_summary:
+        summary_list.append({
+            "date": row["created_at__date"].strftime("%b %d, %Y"),
+            "orders": row["total_orders"],
+            "completed": row["completed_orders"],
+            "cancelled": row["cancelled_orders"],
+            "revenue": f"${row['total_revenue']:,.2f}" if row["total_revenue"] else "$0.00",
+        })
 
     context = {
         'hotel_name': hotel_name,
@@ -171,6 +198,7 @@ def reports_partial(request):
         'avarage_order_value': avarage_order_value,
         'totals_orders': totals_orders,
         'top_category': top_category,
+        'orders_summary': summary_list,
     }
     return render(request, 'admin_templates/partials/reports.html', context)
 

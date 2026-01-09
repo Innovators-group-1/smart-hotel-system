@@ -62,13 +62,21 @@
                 </tr>
             </thead>
             <tbody>
-                <tr class="border-b">
-                    <td class="px-4 py-2">{{ date }}</td>
-                    <td class="px-4 py-2">{{ orders_by_date }}</td>
-                    <td class="px-4 py-2">{{ completed_orders }}</td>
-                    <td class="px-4 py-2">{{ cancelled_orders }}</td>
-                    <td class="px-4 py-2">{{ revenue_by_date }}</td>
-                </tr>
+                {% for row in summary_list %}
+                    <tr class="border-b">
+                        <td class="px-4 py-2">{{ row.date }}</td>
+                        <td class="px-4 py-2">{{ row.orders }}</td>
+                        <td class="px-4 py-2">{{ row.completed }}</td>
+                        <td class="px-4 py-2">{{ row.cancelled }}</td>
+                        <td class="px-4 py-2">{{ row.revenue }}</td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="5" class="px-4 py-2 text-center text-gray-500">
+                            No data available
+                        </td>
+                    </tr>
+                {% endfor %}
             </tbody>
             </table>
         </div>
