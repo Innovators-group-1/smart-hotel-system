@@ -1,31 +1,86 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="dark">
 <head>
     <meta charset="UTF-8">
-    <title>{% block title %}Chef Dashboard{% endblock %}</title>
+    <title>{% block title %}{{ hotel_name | default:"Smart Hotel" }} - Chef Dashboard{% endblock %}</title>
 
     <!-- Tailwind -->
     <script src="https://cdn.tailwindcss.com"></script>
 
     <!-- HTMX -->
     <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <style>
+    /* Simple theme variables to ensure visible change when toggling */
+    :root{--bg:#f4f4f4;--text:#0f1724}
+    html.dark{--bg:#0b1220;--text:#e6eef8}
+    /* Force override of Tailwind utilities so theme toggle is visible */
+    html.dark body{background:var(--bg) !important;color:var(--text) !important}
+    html:not(.dark) body{background:var(--bg) !important;color:var(--text) !important}
+    body{transition:background .2s,color .2s}
+    </style>
 </head>
 
 <body class="bg-slate-900 text-slate-100 min-h-screen">
 
 <!-- NAVBAR -->
 <header class="flex justify-between items-center px-8 py-4 bg-slate-800 shadow">
-    <h1 class="text-xl font-bold">TapNOrder</h1>
+    <h1 class="text-xl font-bold"
+        hx-get="{% url 'chef_flow:hotel_name' %}"
+        hx-trigger="load, every 2s"
+        hx-swap="innerHTML"
+        hx-target="this"
+    >
+    {{ hotel_name | default:"Smart Hotel" }}
+    </h1>
 
     <div class="flex items-center gap-3">
         <span class="text-sm">Chef</span>
         <span class="h-2 w-2 bg-green-500 rounded-full"></span>
+
+        <!-- Theme toggle -->
+        <button id="theme-toggle" aria-label="Toggle theme" class="ml-4 p-2 rounded-md bg-slate-700 hover:bg-slate-600">
+            <svg id="icon-moon" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M17.293 13.293A8 8 0 116.707 2.707a7 7 0 0010.586 10.586z" />
+            </svg>
+            <svg id="icon-sun" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-yellow-300 hidden" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M10 3a1 1 0 011 1v1a1 1 0 11-2 0V4a1 1 0 011-1zm4.22 1.78a1 1 0 10-1.44-1.44l-.7.7a1 1 0 101.44 1.44l.7-.7zM17 9a1 1 0 100 2h1a1 1 0 100-2h-1zM4.22 4.78l.7.7a1 1 0 101.44-1.44l-.7-.7a1 1 0 10-1.44 1.44zM10 15a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zm-6-6a1 1 0 100 2H3a1 1 0 100-2h1zm12.78 4.22l-.7-.7a1 1 0 10-1.44 1.44l.7.7a1 1 0 101.44-1.44zM5.64 14.36a1 1 0 10-1.44 1.44l.7.7a1 1 0 101.44-1.44l-.7-.7zM10 6a4 4 0 100 8 4 4 0 000-8z" />
+            </svg>
+        </button>
     </div>
 </header>
 
 <main class="p-8">
     {% block content %}{% endblock %}
 </main>
+
+<script>
+// Theme toggle (delegated) + initial state
+(function(){
+    const html = document.documentElement;
+    const sun = document.getElementById('icon-sun');
+    const moon = document.getElementById('icon-moon');
+
+    // Ensure default is dark
+    if (!html.classList.contains('dark')) html.classList.add('dark');
+
+    function safeToggleIcons(isDark){
+        if(moon) moon.classList.toggle('hidden', !isDark);
+        if(sun) sun.classList.toggle('hidden', isDark);
+    }
+
+    // Initialize icons safely
+    safeToggleIcons(html.classList.contains('dark'));
+
+    document.addEventListener('click', function(e){
+        const btn = e.target.closest && e.target.closest('#theme-toggle');
+        if(!btn) return;
+        const isDark = html.classList.toggle('dark');
+        safeToggleIcons(isDark);
+        btn.classList.toggle('bg-slate-700', isDark);
+        btn.classList.toggle('bg-yellow-100', !isDark);
+    });
+})();
+</script>
 
 </body>
 </html>

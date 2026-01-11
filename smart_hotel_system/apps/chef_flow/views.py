@@ -1,6 +1,7 @@
 from django.shortcuts import render, get_object_or_404, redirect
-from apps.common_flow.models import Order
+from apps.common_flow.models import Order, HotelSettings
 from django_tenants.utils import schema_context
+from django.http import HttpResponse
 
 def chef_dashboard(request):
     """
@@ -8,25 +9,27 @@ def chef_dashboard(request):
     Fetches all orders grouped by their kitchen status.
     """
     with schema_context(request.tenant.schema_name):
-     pending_orders = Order.objects.select_related("table").prefetch_related("order_items__menu_item").filter(
-        status=Order.OrderStatus.PENDING
-    )
+        hotel_name = HotelSettings.objects.first().hotel_name if HotelSettings.objects.exists() else 'Smart Hotel'
+        pending_orders = Order.objects.select_related("table").prefetch_related("order_items__menu_item").filter(
+            status=Order.OrderStatus.PENDING
+        )
 
-    active_orders = Order.objects.select_related("table").prefetch_related("order_items__menu_item").filter(
-        status=Order.OrderStatus.IN_PROGRESS
-    )
+        active_orders = Order.objects.select_related("table").prefetch_related("order_items__menu_item").filter(
+            status=Order.OrderStatus.IN_PROGRESS
+        )
 
-    completed_orders = Order.objects.select_related("table").prefetch_related("order_items__menu_item").filter(
-        status=Order.OrderStatus.COMPLETED
-    ).order_by("-completed_at")[:5]
+        completed_orders = Order.objects.select_related("table").prefetch_related("order_items__menu_item").filter(
+            status=Order.OrderStatus.COMPLETED
+        ).order_by("-completed_at")[:5]
 
-    urgent_orders = Order.objects.select_related("table").prefetch_related("order_items__menu_item").filter(
-        special_requests__isnull=False
-    ).exclude(special_requests="").exclude(
-        status=Order.OrderStatus.COMPLETED
-    )
+        urgent_orders = Order.objects.select_related("table").prefetch_related("order_items__menu_item").filter(
+            special_requests__isnull=False
+        ).exclude(special_requests="").exclude(
+            status=Order.OrderStatus.COMPLETED
+        )
 
     context = {
+        "hotel_name": hotel_name,
         "pending_orders": pending_orders,
         "active_orders": active_orders,
         "completed_orders": completed_orders,
@@ -54,6 +57,10 @@ def accept_order(request, order_id):
         {"active_orders": active_orders}
     )
 
+def get_hotel_name(request):
+     with schema_context(request.tenant.schema_name):
+            hotel_name = HotelSettings.objects.first().hotel_name if HotelSettings.objects.exists() else 'Smart Hotel'
+            return HttpResponse(hotel_name)
 
 def complete_order(request, order_id):
     """

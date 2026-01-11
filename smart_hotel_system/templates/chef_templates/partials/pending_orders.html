@@ -13,7 +13,7 @@
     </div>
 
     <p class="text-sm mb-4">
-        {% for item in order.order_items %}
+        {% for item in order.order_items.all %}
         {{ item.quantity }}× {{ item.menu_item.title }}{% if not forloop.last %}, {% endif %}
         {% endfor %}
     </p>
