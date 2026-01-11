@@ -1,0 +1,36 @@
+<div class="space-y-4">
+
+{% for order in pending_orders %}
+<div class="bg-slate-800 rounded-xl p-4 shadow">
+    <div class="flex justify-between mb-2">
+        <div>
+            <h4 class="font-semibold">Table {{ order.table.number }}</h4>
+            <p class="text-sm text-slate-400">Order #{{ order.order_id }}</p>
+        </div>
+        <span class="text-xs text-slate-400">
+            {{ order.created_at|timesince }} ago
+        </span>
+    </div>
+
+    <p class="text-sm mb-4">
+        {% for item in order.order_items %}
+        {{ item.quantity }}× {{ item.menu_item.title }}{% if not forloop.last %}, {% endif %}
+        {% endfor %}
+    </p>
+
+    <form
+        hx-post="{% url 'chef_flow:accept_order' order.order_id %}"
+        hx-target="closest div"
+        hx-swap="outerHTML"
+    >
+        {% csrf_token %}
+        <button class="w-full bg-blue-600 hover:bg-blue-700 py-2 rounded-lg">
+            Accept Order
+        </button>
+    </form>
+</div>
+{% empty %}
+<p class="text-slate-400">No pending orders </p>
+{% endfor %}
+
+</div>

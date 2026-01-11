@@ -12,6 +12,7 @@ python-slugify = "*"
 python-dotenv = "*"
 pillow = "*"
 django-extensions = "*"
+requests = "*"
 
 [dev-packages]
 
