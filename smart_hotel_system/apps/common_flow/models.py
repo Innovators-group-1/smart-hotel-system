@@ -57,7 +57,7 @@ class Category(models.Model):
     category_id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=100)
     description = models.TextField(blank=True, null=True)
-    # main_category = models.ForeignKey(MainCategory, on_delete=models.CASCADE, related_name='categories', default=None)
+    main_category = models.ForeignKey(MainCategory, on_delete=models.CASCADE, related_name='categories', default=None)
     slug = models.SlugField(unique=True, default='')
 
     def save(self, *args, **kwargs):

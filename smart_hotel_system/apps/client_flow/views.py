@@ -14,7 +14,7 @@ from .utils.payload import create_stk_push_payload
 from .utils.mpesa_utils import get_access_token, generate_password
 
 # --- Local Application Models ---
-from apps.common_flow.models import Menu as MenuItem, Category, Table, Order, OrderItem, HotelSettings
+from apps.common_flow.models import Menu as MenuItem, Category,MainCategory, Table, Order, OrderItem, HotelSettings
 from apps.platform_admin_flow.models import PaymentIndex
 
 def hotel_name_view(request):
@@ -23,22 +23,38 @@ def hotel_name_view(request):
         hotel_name = "Smart Hotel"
     return HttpResponse(hotel_name)
     
-def menu_view(request,table_number):
+from django.db.models import Q
+
+def menu_view(request, table_number):
     table = get_object_or_404(Table, number=table_number)
     request.session['table_number'] = table.number
     request.session.modified = True
 
     query = request.GET.get('q', '').strip()
-    category_id = request.GET.get('category')  # Get selected category from URL
+    main_id = request.GET.get('main')       # main category id
+    sub_id = request.GET.get('sub')         # subcategory id
 
-    categories = Category.objects.all()
-    selected_category = None
+    main_categories = MainCategory.objects.all()
+    selected_main = None
+    selected_sub = None
     menu_items = MenuItem.objects.filter(is_available=True)
 
-    # If user clicked a category
-    if category_id:
-        selected_category = get_object_or_404(Category, id=category_id)
-        menu_items = menu_items.filter(category=selected_category)
+    # Default to first main category if none selected
+    if not main_id and main_categories.exists():
+        selected_main = main_categories.first()
+        subcategories = selected_main.categories.all()
+        menu_items = menu_items.filter(category__main_category=selected_main)
+    elif main_id:
+        selected_main = get_object_or_404(MainCategory, main_category_id=main_id)
+        subcategories = selected_main.categories.all()
+        menu_items = menu_items.filter(category__main_category=selected_main)
+    else:
+        subcategories = Category.objects.none()
+
+    # If user clicked a subcategory
+    if sub_id:
+        selected_sub = get_object_or_404(Category, category_id=sub_id)
+        menu_items = menu_items.filter(category=selected_sub)
 
     # If user searched something
     if query:
@@ -47,13 +63,15 @@ def menu_view(request,table_number):
         )
 
     context = {
-        'categories': categories,
-        'menu_items': menu_items,
-        'selected_category': selected_category.id if selected_category else None,
-        'query': query,
+        "main_categories": main_categories,
+        "sub_categories": subcategories,
+        "menu_items": menu_items,
+        "selected_main": selected_main.main_category_id if selected_main else None,
+        "selected_sub": selected_sub.category_id if selected_sub else None,
+        "query": query,
     }
+    return render(request, "client_templates/menu/menu_page.html", context)
 
-    return render(request, 'client_templates/menu/menu_page.html', context)
 
 def menu_search_view(request):
     query = request.GET.get('q', '').strip()
@@ -349,9 +367,11 @@ def order_confirmation_view(request, order_id):
     order = get_object_or_404(Order, order_id=order_id)
     # Get order items
     order_items = order.order_items.all()
+    total_price = sum(item.total_price for item in order_items)
     return render(request, 'client_templates/order_confirmation.html', {
         'order': order,
-        'order_items': order_items
+        'order_items': order_items,
+        'total_price': total_price
     })
     
 def order_tracking_view(request, order_id):
@@ -388,3 +408,20 @@ def all_menu_items_view(request):
     context = {'menu_items': menu_items}
 
     return render(request, 'client_templates/menu/partials/menu_list.html', context)
+
+
+def load_subcategories(request, main_id):
+    """Return the subcategory navigation partial for a given main category.
+
+    This view is used by HTMX when a main category button is clicked.
+    """
+    selected_main = get_object_or_404(MainCategory, main_category_id=main_id)
+    subcategories = selected_main.categories.all()
+
+    # Maintain the same context keys the partial expects
+    context = {
+        'sub_categories': subcategories,
+        'selected_sub': None,
+    }
+
+    return render(request, 'client_templates/menu/partials/category_navi.html', context)

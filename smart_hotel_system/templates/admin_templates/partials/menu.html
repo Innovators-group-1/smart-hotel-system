@@ -46,6 +46,15 @@
           >
             + Add Category
           </button>
+          <button 
+            class="px-4 py-2 bg-blue-50 text-blue-700 rounded-xl shadow-md
+                  hover:bg-blue-100 hover:shadow-lg active:scale-95 transition-all duration-200"
+            hx-get="{% url 'add_new_main_category' %}"
+            hx-target="#modal-content"
+            onclick="openModal()"
+          >
+            + Add Main Category
+          </button>
 
         </div>
       </div>

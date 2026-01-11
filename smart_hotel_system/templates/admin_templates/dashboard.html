@@ -13,38 +13,38 @@
   {% block content %}
 
   <!-- Sidebar -->
-  <aside class="w-64 bg-white shadow-md p-4 flex flex-col">
-    <div id="sidebar-hotel-name" class="text-2xl font-bold text-blue-600 mb-6" hx-get="{% url 'get_hotel_name' %}" hx-trigger="settingsUpdated,load,every 5s" hx-swap="innerHTML">{{ hotel_name }}</div>
+  <aside class="w-64 lg:w-80 bg-white shadow-md p-4 flex flex-col sticky top-0 h-screen overflow-y-auto">
+    <div id="sidebar-hotel-name" class="text-2xl lg:text-3xl font-bold text-blue-600 mb-6" hx-get="{% url 'get_hotel_name' %}" hx-trigger="settingsUpdated,load,every 5s" hx-swap="innerHTML">{{ hotel_name }}</div>
     <nav class="flex-1 space-y-2">
       <button hx-get="{% url 'dashboard_partial' %}" hx-target="#content" hx-swap="innerHTML"
-        class="block w-full text-left px-3 py-2 rounded hover:bg-blue-100">🏠 Dashboard</button>
+        class="block w-full text-left px-3 py-2 lg:px-4 lg:py-3 rounded hover:bg-blue-100 text-sm lg:text-base">🏠 Dashboard</button>
 
       <button hx-get="{% url 'orders_partial' %}" hx-target="#content" hx-swap="innerHTML"
-        class="block w-full text-left px-3 py-2 rounded hover:bg-blue-100">📦 Orders</button>
+        class="block w-full text-left px-3 py-2 lg:px-4 lg:py-3 rounded hover:bg-blue-100 text-sm lg:text-base">📦 Orders</button>
 
       <button hx-get="{% url 'menu_partial' %}" hx-target="#content" hx-swap="innerHTML"
-        class="block w-full text-left px-3 py-2 rounded hover:bg-blue-100">🍽️ Menu Management</button>
+        class="block w-full text-left px-3 py-2 lg:px-4 lg:py-3 rounded hover:bg-blue-100 text-sm lg:text-base">🍽️ Menu Management</button>
 
       
       <button hx-get="{% url 'chefs_partial' %}" hx-target="#content" hx-swap="innerHTML"
-        class="block w-full text-left px-3 py-2 rounded hover:bg-blue-100">👨‍🍳 Chef Management</button>
+        class="block w-full text-left px-3 py-2 lg:px-4 lg:py-3 rounded hover:bg-blue-100 text-sm lg:text-base">👨‍🍳 Chef Management</button>
 
       <button hx-get="{% url 'reports_partial' %}" hx-target="#content" hx-swap="innerHTML"
-        class="block w-full text-left px-3 py-2 rounded hover:bg-blue-100">📊 Reports</button>
+        class="block w-full text-left px-3 py-2 lg:px-4 lg:py-3 rounded hover:bg-blue-100 text-sm lg:text-base">📊 Reports</button>
 
       <button hx-get="{% url 'history_partial' %}" hx-target="#content" hx-swap="innerHTML"
-        class="block w-full text-left px-3 py-2 rounded hover:bg-blue-100">📜 History</button>
+        class="block w-full text-left px-3 py-2 lg:px-4 lg:py-3 rounded hover:bg-blue-100 text-sm lg:text-base">📜 History</button>
 
       <button hx-get="{% url 'settings_partial' %}" hx-target="#content" hx-swap="innerHTML"
-        class="block w-full text-left px-3 py-2 rounded hover:bg-blue-100">⚙️ Settings</button>
+        class="block w-full text-left px-3 py-2 lg:px-4 lg:py-3 rounded hover:bg-blue-100 text-sm lg:text-base">⚙️ Settings</button>
     </nav>
     <div class="mt-auto">
-      <a href="#" class="block text-red-500 hover:underline">Logout</a>
+      <a href="#" class="block text-red-500 hover:underline text-sm lg:text-base">Logout</a>
     </div>
   </aside>
 
   <!-- Content Area -->
-  <main id="content" class="flex-1 p-6 overflow-y-auto">
+  <main id="content" class="flex-1 p-6 lg:p-8 overflow-y-auto ml-64 lg:ml-80">
     {% include 'admin_templates/partials/dashboard.html' %}
   </main>
   
@@ -106,6 +106,10 @@
 }
   document.body.addEventListener('toast-error',(e)=>{
     showToast(e.detail.message,'error');
+  })
+
+  document.body.addEventListener('toast-success',(e)=>{
+    showToast(e.detail.message,'success');
   })
 
   // Set CSRF header for all HTMX requests using the csrftoken cookie

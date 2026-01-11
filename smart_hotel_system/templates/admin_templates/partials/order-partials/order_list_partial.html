@@ -1,4 +1,4 @@
-{% for order in orders %}
+{% for order in page_obj %}
 <tr class="hover:bg-gray-50 transition-colors duration-200 border-b border-gray-200">
   <!-- Order ID -->
   <td class="px-6 py-4 font-semibold text-gray-800">
@@ -66,3 +66,33 @@
 <!-- Expandable Details Row -->
 <tr id="order-details-{{ order.pk }}" class="hidden"></tr>
 {% endfor %}
+
+<!-- Pagination -->
+<div class="flex items-center justify-between px-6 py-4 bg-gray-50 border-t border-gray-200">
+  <div class="text-sm text-gray-700">
+    Showing {{ page_obj.start_index }} to {{ page_obj.end_index }} of {{ paginator.count }} orders
+  </div>
+  <div class="flex space-x-1">
+    {% if page_obj.has_previous %}
+      <button hx-get="?page={{ page_obj.previous_page_number }}" hx-target="#orders-table-body" hx-swap="innerHTML" class="px-3 py-1 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50">
+        Previous
+      </button>
+    {% endif %}
+    {% for num in page_obj.paginator.page_range %}
+      {% if page_obj.number == num %}
+        <span class="px-3 py-1 text-sm font-medium text-blue-600 bg-blue-50 border border-blue-300 rounded-md">
+          {{ num }}
+        </span>
+      {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+        <button hx-get="?page={{ num }}" hx-target="#orders-table-body" hx-swap="innerHTML" class="px-3 py-1 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50">
+          {{ num }}
+        </button>
+      {% endif %}
+    {% endfor %}
+    {% if page_obj.has_next %}
+      <button hx-get="?page={{ page_obj.next_page_number }}" hx-target="#orders-table-body" hx-swap="innerHTML" class="px-3 py-1 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50">
+        Next
+      </button>
+    {% endif %}
+  </div>
+</div>

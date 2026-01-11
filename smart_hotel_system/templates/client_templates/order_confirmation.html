@@ -1,50 +1,96 @@
-<!-- {# client_templates/partials/confirmation_modal.html #}
-<div class="bg-white rounded-2xl shadow-lg max-w-md mx-auto p-6">
-  <h2 class="text-xl font-semibold text-green-600 mb-3 text-center">
-    🎉 Order Confirmed!
-  </h2>
+{% extends 'client_templates/base/base.html' %}
 
-  <p class="text-sm text-slate-700 mb-4 text-center">
-    Your order has been placed successfully.
-  </p>
+{% block title %}Order Confirmation - Smart Hotel{% endblock %}
 
-  <div class="text-sm text-slate-600 mb-4">
-    <p><span class="font-semibold">Table:</span> {{ table }}</p>
-    <p><span class="font-semibold">Seat:</span> {{ seat }}</p>
-    <p><span class="font-semibold">Payment Method:</span> {{ payment_method }}</p>
-    <p><span class="font-semibold">Payment Reference:</span> {{ payment_reference }}</p>
+{% block extra_head %}
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 to-blue-50">
+  <div class="max-w-md mx-auto bg-white rounded-2xl shadow-xl p-8 text-center">
+    <div class="mb-6">
+      <div class="text-6xl mb-4">🎉</div>
+      <h1 class="text-2xl font-bold text-gray-800 mb-2">Order Confirmed!</h1>
+      <p class="text-gray-600">Your delicious meal is on its way</p>
+    </div>
+
+    <div class="bg-gray-50 rounded-lg p-4 mb-6">
+      <div class="text-sm text-gray-600 space-y-1">
+        <p><span class="font-semibold">Order ID:</span> {{ order.order_id }}</p>
+        <p><span class="font-semibold">Table:</span> {{ order.table }}</p>
+        <p><span class="font-semibold">Seat:</span> {{ order.seat }}</p>
+        <p><span class="font-semibold">Payment:</span> {{ order.payment_method }} - {{ order.payment_reference }}</p>
+      </div>
+    </div>
+
+    <button onclick="showSuccessModal()"
+            class="w-full bg-orange-500 hover:bg-orange-600 text-white font-semibold py-3 px-6 rounded-xl transition duration-300">
+      View Order Details
+    </button>
   </div>
+</div>
 
-  <div class="border-t border-slate-200 pt-4 mb-4">
-    <h3 class="text-sm font-semibold text-slate-900 mb-2">Order Items</h3>
-    <ul class="space-y-2 text-sm">
-      {% for row in cart_items %}
-        <li class="flex justify-between">
-          <span>{{ row.item.title }} × {{ row.quantity }}</span>
-          <span>Ksh {{ row.subtotal }}</span>
-        </li>
-      {% endfor %}
-    </ul>
-    <div class="mt-3 flex justify-between font-semibold text-slate-900">
-      <span>Total</span>
-      <span>Ksh {{ total }}</span>
+<!-- Success Modal -->
+<div id="success-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
+  <div class="bg-white rounded-2xl shadow-2xl max-w-lg mx-4 p-8 relative">
+    <button onclick="closeModal()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600">
+      <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+      </svg>
+    </button>
+
+    <div class="text-center mb-6">
+      <div class="text-5xl mb-4">🎊</div>
+      <h2 class="text-2xl font-bold text-gray-800 mb-2">Congratulations!</h2>
+      <p class="text-gray-600">Your order has been successfully placed</p>
+    </div>
+
+    <div class="bg-green-50 rounded-lg p-4 mb-6">
+      <h3 class="font-semibold text-green-800 mb-2">Order Summary</h3>
+      <div class="text-sm text-gray-700 space-y-1">
+        <p><span class="font-medium">Order ID:</span> {{ order.order_id }}</p>
+        <p><span class="font-medium">Table:</span> {{ order.table }}</p>
+        <p><span class="font-medium">Total:</span> KSH {{ order.total_price|floatformat:2 }}</p>
+      </div>
+    </div>
+
+    <div class="space-y-3">
+      <a href="{% url 'client_flow:order_tracking' order.order_id %}"
+         class="w-full block text-center bg-orange-500 hover:bg-orange-600 text-white font-semibold py-3 px-6 rounded-xl transition duration-300">
+        Proceed to Order Tracking
+      </a>
+      <a href="{% url 'client_flow:menu_redirect' %}"
+         class="w-full block text-center text-gray-600 hover:text-gray-800 font-medium py-2">
+        ← Back to Menu
+      </a>
     </div>
   </div>
+</div>
 
-  <div class="space-y-3">
-    {# Primary button: Proceed to order tracking #}
-    <a href="{% url 'client_flow:order_tracking' order.order_id %}"
-       class="w-full py-3 text-center font-semibold bg-orange-500 text-white rounded-2xl transition duration-300 ease-in-out hover:bg-orange-600">
-      Proceed to Order Tracking
-    </a>
+<script>
+function showSuccessModal() {
+  const modal = document.getElementById('success-modal');
+  modal.classList.remove('hidden');
+  modal.classList.add('flex');
 
-    {# Secondary fading button: Back to Menu #}
-    <a href="{% url 'client_flow:menu_redirect' %}"
-       class="w-full py-3 text-center font-semibold text-slate-600 bg-slate-100 rounded-2xl transition duration-300 ease-in-out hover:bg-slate-200 hover:text-slate-900">
-      ← Back to Menu
-    </a>
-  </div>
-</div> -->
+  // Trigger confetti
+  confetti({
+    particleCount: 100,
+    spread: 70,
+    origin: { y: 0.6 }
+  });
+}
 
+function closeModal() {
+  const modal = document.getElementById('success-modal');
+  modal.classList.add('hidden');
+  modal.classList.remove('flex');
+}
 
-<h1>you have successfully place your order</h1>
+// Auto-show modal on page load
+document.addEventListener('DOMContentLoaded', function() {
+  setTimeout(showSuccessModal, 500); // Small delay for smooth transition
+});
+</script>
+{% endblock %}

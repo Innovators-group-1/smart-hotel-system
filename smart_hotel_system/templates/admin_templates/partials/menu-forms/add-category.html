@@ -1,4 +1,5 @@
-<div class="w-full max-w-2xl mx-auto bg-white rounded-2xl shadow-xl animate-fadeIn">
+<!-- Add Menu Item Modal Content (NO overlay, NO container) -->
+<div class="w-full max-w-2xl mx-auto bg-white rounded-2xl shadow-xl animate-fadeIn max-h-screen overflow-y-auto">
 
     <!-- Header -->
     <div class="px-6 py-4 border-b flex items-center justify-between">
@@ -17,16 +18,18 @@
         hx-post="{% url 'add_category' %}"
         hx-target="#modal-content"
         hx-swap="innerHTML"
-        class="px-6 py-4 space-y-4"
+        class="px-6 py-6 space-y-6"
+        hx-on:htmx:afterRequest="closeModal()"
     >
+        {% csrf_token %}
 
-        <!-- Category Name -->
+        <!-- Item Name -->
         <div>
             <label class="text-sm font-medium">Category Name</label>
             <input 
                 type="text"
                 name="name"
-                placeholder="e.g. Desserts, Beverages, etc."
+                placeholder="e.g. Beverages etc "
                 class="mt-1 w-full rounded-xl border px-4 py-3 focus:ring-2 focus:ring-blue-500"
                 required
             >
@@ -38,12 +41,30 @@
             <textarea 
                 name="description"
                 rows="3"
-                placeholder="Enter a short description for the category"
+                placeholder="Enter a short description for the menu item"
                 class="mt-1 w-full rounded-xl border px-4 py-3 focus:ring-2 focus:ring-blue-500"
             ></textarea>
         </div>
-       
-        <!-- Footer Buttons -->
+
+        <!-- Category + Price -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            
+            <!-- Category -->
+            <div>
+                <label class="text-sm font-medium">Main Category</label>
+                <select 
+                    name="main_category_id"
+                    class="mt-1 w-full rounded-xl border px-4 py-3 focus:ring-2 focus:ring-blue-500"
+                    required
+                >
+                    <option value="">Select a main category</option>
+                    {% for cat in main_categories %}
+                    <option value="{{ cat.main_category_id }}">{{ cat.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+         <!-- Footer Buttons -->
         <div class="flex justify-end gap-3 pt-4 border-t">
             <button 
                 type="button"
@@ -60,7 +81,7 @@
                 Save Category
             </button>
         </div>
-
+        
     </form>
 </div>
 
@@ -73,4 +94,10 @@
 </style>
 
 <script>
+document.getElementById("image-upload")?.addEventListener("change", (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
 
+    document.getElementById("preview-image").src = URL.createObjectURL(file);
+});
+</script>

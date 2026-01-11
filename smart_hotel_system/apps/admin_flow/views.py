@@ -8,6 +8,7 @@ from django.shortcuts import get_object_or_404
 import json
 from django.db.models import Sum,Value,DecimalField
 from django.db.models.functions import TruncDay,Coalesce
+from django.core.paginator import Paginator
 from django.db import models
 
 
@@ -93,9 +94,12 @@ def get_hotel_name(request):
 
 def orders_partial(request):
     hotel_name = HotelSettings.objects.first().hotel_name if HotelSettings.objects.exists() else 'Smart Hotel'
-    orders = Order.objects.all().order_by('-created_at')
+    orders = Order.objects.annotate(total=Sum('order_items__total_price')).all().order_by('-created_at')
+    paginator = Paginator(orders, 20)
+    page_obj = paginator.get_page(1)  # Default to page 1
     order_statuses = Order.OrderStatus.choices
-    context = {'hotel_name': hotel_name, 'orders': orders, 'order_statuses': order_statuses}
+    payment_statuses = Order.PaymentStatus.choices
+    context = {'hotel_name': hotel_name, 'page_obj': page_obj, 'paginator': paginator, 'order_statuses': order_statuses, 'payment_statuses': payment_statuses}
     return render(request, 'admin_templates/partials/orders.html', context)
 
 def menu_partial(request):
@@ -282,7 +286,16 @@ def update_display_settings(request):
         setting.items_per_page = items_per_page
         setting.save() 
 
-        return JsonResponse({'status': 'success', 'message': 'Display settings updated successfully.'})
+        return HttpResponse(
+            status=204,
+            headers={
+                "HX-Trigger": json.dumps({
+                    "toast-success": {
+                        "message": "Display settings updated successfully."
+                    }
+                })
+            }
+        )
     
     return render(request, 'admin_templates/partials/setting-forms/display-settings-form.html')
 # TABLE MANAGEMENT SETTINGS
@@ -297,7 +310,16 @@ def update_table_settings(request):
         setting.table_section = table_section
         setting.save() 
 
-        return JsonResponse({'status': 'success', 'message': 'Table settings updated successfully.'})
+        return HttpResponse(
+            status=204,
+            headers={
+                "HX-Trigger": json.dumps({
+                    "toast-success": {
+                        "message": "Table settings updated successfully."
+                    }
+                })
+            }
+        )
 
     return render(request, 'admin_templates/partials/setting-forms/table-settings-form.html')
 
@@ -310,7 +332,16 @@ def add_table(request):
         # Create a new Table instance
         Table.objects.create(number=table_number, seats=capacity)
 
-        return JsonResponse({'status': 'success', 'message': 'Table added successfully.'})
+        return HttpResponse(
+            status=204,
+            headers={
+                "HX-Trigger": json.dumps({
+                    "toast-success": {
+                        "message": "Table added successfully."
+                    }
+                })
+            }
+        )
     return render(request, 'admin_templates/partials/setting-forms/add-table-form.html')
 
 def update_payment_settings(request):
@@ -323,7 +354,16 @@ def update_payment_settings(request):
         setting.currency = currency
         setting.save() 
 
-        return JsonResponse({'status': 'success', 'message': 'Payment settings updated successfully.'})
+        return HttpResponse(
+            status=204,
+            headers={
+                "HX-Trigger": json.dumps({
+                    "toast-success": {
+                        "message": "Payment settings updated successfully."
+                    }
+                })
+            }
+        )
     return render(request, 'admin_templates/partials/setting-forms/payment-settings-form.html')
 
 def update_user_management(request):   
@@ -336,7 +376,16 @@ def update_user_management(request):
             setting.access_level = access_level
             setting.save() 
 
-            return JsonResponse({'status': 'success', 'message': 'User management settings updated successfully.'})   
+            return HttpResponse(
+                status=204,
+                headers={
+                    "HX-Trigger": json.dumps({
+                        "toast-success": {
+                            "message": "User management settings updated successfully."
+                        }
+                    })
+                }
+            )
     return render(request, 'admin_templates/partials/setting-forms/user-management-form.html')
 
 def update_notification_settings(request):
@@ -349,7 +398,16 @@ def update_notification_settings(request):
         setting.sms_notifications = sms_notifications
         setting.save() 
 
-        return JsonResponse({'status': 'success', 'message': 'Notification settings updated successfully.'})
+        return HttpResponse(
+            status=204,
+            headers={
+                "HX-Trigger": json.dumps({
+                    "toast-success": {
+                        "message": "Notification settings updated successfully."
+                    }
+                })
+            }
+        )
     return render(request, 'admin_templates/partials/setting-forms/notification-settings-form.html')
 
 def update_system_preferences(request):
@@ -362,7 +420,16 @@ def update_system_preferences(request):
         setting.timezone = timezone
         setting.save() 
 
-        return JsonResponse({'status': 'success', 'message': 'System preferences updated successfully.'})
+        return HttpResponse(
+            status=204,
+            headers={
+                "HX-Trigger": json.dumps({
+                    "toast-success": {
+                        "message": "System preferences updated successfully."
+                    }
+                })
+            }
+        )
     return render(request, 'admin_templates/partials/setting-forms/system-preferences-form.html')
 
 def update_security_settings(request):
@@ -375,7 +442,16 @@ def update_security_settings(request):
         setting.password_expiry_days = password_expiry_days
         setting.save() 
 
-        return JsonResponse({'status': 'success', 'message': 'Security settings updated successfully.'})
+        return HttpResponse(
+            status=204,
+            headers={
+                "HX-Trigger": json.dumps({
+                    "toast-success": {
+                        "message": "Security settings updated successfully."
+                    }
+                })
+            }
+        )
     return render(request, 'admin_templates/partials/setting-forms/security-settings-form.html')
 
 def update_advanced_settings(request):
@@ -388,6 +464,15 @@ def update_advanced_settings(request):
         setting.debug_mode = debug_mode
         setting.save() 
 
-        return JsonResponse({'status': 'success', 'message': 'Advanced settings updated successfully.'})
+        return HttpResponse(
+            status=204,
+            headers={
+                "HX-Trigger": json.dumps({
+                    "toast-success": {
+                        "message": "Advanced settings updated successfully."
+                    }
+                })
+            }
+        )
     return render(request, 'admin_templates/partials/setting-forms/advanced-settings-form.html')
 

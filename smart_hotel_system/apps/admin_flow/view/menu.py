@@ -1,7 +1,7 @@
 from django.shortcuts import render
 from django.http import JsonResponse,HttpResponse
 from django.template.loader import render_to_string
-from apps.common_flow.models import Menu,Category,InbuiltMenuItems
+from apps.common_flow.models import Menu,Category,InbuiltMenuItems,MainCategory
 from django.db.models import Count, Q
 from django.shortcuts import get_object_or_404
 import json
@@ -39,13 +39,26 @@ def add_menu_item(request):
         category_id = request.POST.get('category')
         category = Category.objects.get(pk=category_id) if category_id else None
 
-        Menu.objects.create(
+        # prevent duplication of menu items
+        if Menu.objects.filter(title=name, description=description, price=price).exists():
+           return HttpResponse(
+               status=204,
+               headers={
+                   "HX-Trigger":json.dumps({
+                       "toast-error":{
+                           "message":"This menu item already exists."
+                       }
+                   })
+               }
+           )
+        new_menu_item = Menu.objects.create(
             title=name,
             description=description,
             price=price,
             picture=image,
             category=category
         )
+        
 
         # Query the menu row items again to update the menu list
         menu_items = Menu.objects.all().order_by('menu_item_id')
@@ -54,6 +67,17 @@ def add_menu_item(request):
         # if it is htmx request return the updated menu rows partial
         if is_htmx(request):
             return render(request, 'admin_templates/partials/menu-forms/manage_menu_rows.html', context)
+        if new_menu_item:
+            return HttpResponse(
+               status=204,
+               headers={
+                   "HX-Trigger":json.dumps({
+                       "toast-success":{
+                           "message":"You have successfully added a menu item."
+                       }
+                   })
+               }
+           )
     
     categories = Category.objects.all()
     context = {'categories': categories}
@@ -100,7 +124,16 @@ def add_inbuilt_menu_item(request):
             return HttpResponse(html)
 
         except Category.DoesNotExist:
-            return JsonResponse({'status': 'error', 'message': 'Selected category does not exist.'})
+            return HttpResponse(
+                status=204,
+                headers={
+                    "HX-Trigger": json.dumps({
+                        "toast-error": {
+                            "message": "Selected category does not exist."
+                        }
+                    })
+                }
+            )
 
 
     categories = Category.objects.all()
@@ -109,13 +142,60 @@ def add_inbuilt_menu_item(request):
     return render(request, 'admin_templates/partials/menu-forms/add-inbuilt-menu-item-form.html', context)
 
 def add_new_category(request):
-    return render(request, 'admin_templates/partials/menu-forms/add-category.html')
-
-def add_category(request):
+    main_categories = MainCategory.objects.all()
+    context = {'main_categories': main_categories}
+    return render(request, 'admin_templates/partials/menu-forms/add-category.html', context)
+def add_new_main_category(request):
+    return render(request, 'admin_templates/partials/menu-forms/add-main_category.html')
+def add_main_category(request):
     if request.method == 'POST':
         name = request.POST.get('name')
         description = request.POST.get('description')
 
+        # prevent duplication of main categories
+        if MainCategory.objects.filter(name=name).exists():
+           return HttpResponse(
+               status=204,
+               headers={
+                   "HX-Trigger":json.dumps({
+                       "toast-error":{
+                           "message":"This main category already exists."
+                       }
+                   })
+               }
+           )
+
+        new_main_category = MainCategory.objects.create(
+            name=name,
+            description=description
+        )
+
+        if new_main_category:
+            return HttpResponse(
+               status=204,
+               headers={
+                   "HX-Trigger":json.dumps({
+                       "toast-success":{
+                           "message":"You have successfully added a main category."
+                       }
+                   })
+               }
+           )
+
+    return render(request, 'admin_templates/partials/menu-forms/add-main_category.html')
+def add_category(request):
+    if request.method == 'POST':
+        name = request.POST.get('name') 
+        description = request.POST.get('description')
+        main_category = request.POST.get('main_category_id')
+
+        # Get the main category object
+        main_category_obj = get_object_or_404(MainCategory, main_category_id=main_category)
+        if main_category_obj:
+            main_category = main_category_obj
+        else:
+            main_category = None
+        
         # prevent duplication of categories
         if Category.objects.filter(name=name).exists():
            return HttpResponse(
@@ -129,16 +209,23 @@ def add_category(request):
                }
            )
 
-        Category.objects.create(
+        new_category = Category.objects.create(
             name=name,
-            description=description
+            description=description,
+            main_category=main_category
         )
-
-        # Return updated category list
-        categories = Category.objects.all()
-        context = {'categories': categories}
-        html = render_to_string('admin_templates/partials/category-list.html', context)
-        return HttpResponse(html)
+        if new_category:
+            return HttpResponse(
+               status=204,
+               headers={
+                   "HX-Trigger":json.dumps({
+                       "toast-success":{
+                           "message":"You have successfully added a category."
+                       }
+                   })
+               }
+           )
+       
 
     return render(request, 'admin_templates/partials/menu-forms/add-category.html')
 
@@ -149,7 +236,16 @@ def tap_add_inbuilt_menu_item(request,item_id):
 
     #    prevent duplication of items by adding same inbuilt item
     if Menu.objects.filter(title=inbuilt_item.title, description=inbuilt_item.description, price=inbuilt_item.price).exists():
-       return JsonResponse({'status': 'error', 'message': 'This inbuilt menu item already exists in the menu.'})
+       return HttpResponse(
+           status=204,
+           headers={
+               "HX-Trigger": json.dumps({
+                   "toast-error": {
+                       "message": "This inbuilt menu item already exists in the menu."
+                   }
+               })
+           }
+       )
 
     # Get category
     if inbuilt_item.category:
@@ -211,7 +307,16 @@ def edit_menu_item(request, item_id):
         menu_item.category = Category.objects.get(pk=category_id) if category_id else None
         menu_item.save()
 
-        return JsonResponse({'status': 'success', 'message': 'Menu item updated successfully.'})
+        return HttpResponse(
+            status=204,
+            headers={
+                "HX-Trigger": json.dumps({
+                    "toast-success": {
+                        "message": "Menu item updated successfully."
+                    }
+                })
+            }
+        )
 
     categories = Category.objects.all()
     context = {

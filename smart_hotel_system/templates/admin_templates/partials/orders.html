@@ -31,6 +31,15 @@
             </svg>
           </span>
         </div>
+        <!-- Refresh Button -->
+        <button 
+          hx-get="{% url 'order_list_partial' %}"
+          hx-target="#orders-table-body"
+          hx-swap="innerHTML"
+          class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition"
+        >
+          🔄 Refresh
+        </button>
       </div>
 
       <!-- Filters -->
@@ -53,14 +62,14 @@
         {% for payment in payment_statuses %}
           <button 
             class="px-3 py-1 rounded-full transition
-              {% if payment.slug == 'PAID' %} bg-green-100 text-green-700 hover:bg-green-200
-              {% elif payment.slug == 'UNPAID' %} bg-yellow-100 text-yellow-700 hover:bg-yellow-200
+              {% if payment.0 == 'PAID' %} bg-green-100 text-green-700 hover:bg-green-200
+              {% elif payment.0 == 'UNPAID' %} bg-yellow-100 text-yellow-700 hover:bg-yellow-200
               {% endif %}"
-            hx-get="{% url 'payment_status_filter' payment.slug %}"
+            hx-get="{% url 'payment_status_filter' payment.0 %}"
             hx-target="#orders-table-body"
             hx-swap="innerHTML"
           >
-            {{ payment.name }}
+            {{ payment.1 }}
           </button>
         {% endfor %}
       </div>
@@ -82,10 +91,9 @@
           <tbody 
             id="orders-table-body"
             hx-get="{% url 'order_list_partial' %}"
-            hx-trigger="every 60s"
             hx-swap="innerHTML"
           >
-            {% for order in orders %}
+            {% for order in page_obj %}
               <tr class="hover:bg-gray-50 transition-colors duration-200 border-b border-gray-200">
                 <!-- Order ID -->
                 <td class="px-6 py-4 font-semibold text-gray-800">
@@ -159,33 +167,6 @@
 
           </tbody>
         </table>
-      </div>
-
-      <!-- Pagination -->
-      <div class="flex justify-between items-center mt-4 text-sm text-gray-600">
-        <span>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
-        <div class="space-x-2">
-          {% if page_obj.has_previous %}
-            <button 
-              hx-get="{% url 'order_page' page_obj.previous_page_number %}" 
-              hx-target="#orders-table-body" 
-              hx-swap="innerHTML"
-              class="px-3 py-1 rounded bg-gray-100 hover:bg-gray-200 transition"
-            >
-              Previous
-            </button>
-          {% endif %}
-          {% if page_obj.has_next %}
-            <button 
-              hx-get="{% url 'order_page' page_obj.next_page_number %}" 
-              hx-target="#orders-table-body" 
-              hx-swap="innerHTML"
-              class="px-3 py-1 rounded bg-gray-100 hover:bg-gray-200 transition"
-            >
-              Next
-            </button>
-          {% endif %}
-        </div>
       </div>
     </div>
 

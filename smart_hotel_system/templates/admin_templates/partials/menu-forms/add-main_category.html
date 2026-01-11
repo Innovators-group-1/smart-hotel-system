@@ -1,0 +1,75 @@
+<div class="w-full max-w-2xl mx-auto bg-white rounded-2xl shadow-xl animate-fadeIn">
+
+    <!-- Header -->
+    <div class="px-6 py-4 border-b flex items-center justify-between">
+        <h2 class="text-xl font-semibold text-gray-900">Add New Main Category</h2>
+
+        <button 
+            onclick="closeModal()"
+            class="text-gray-500 hover:text-gray-700 text-lg"
+        >
+            ✕
+        </button>
+    </div>
+
+    <!-- FORM -->
+    <form 
+        hx-post="{% url 'add_main_category' %}"
+        hx-target="#modal-content"
+        hx-swap="innerHTML"
+        class="px-6 py-4 space-y-4"
+    >
+
+        <!-- Category Name -->
+        <div>
+            <label class="text-sm font-medium">Main Category Name</label>
+            <input 
+                type="text"
+                name="name"
+                placeholder="e.g. Main Kitchen, Main Bar, etc."
+                class="mt-1 w-full rounded-xl border px-4 py-3 focus:ring-2 focus:ring-blue-500"
+                required
+            >
+        </div>
+
+        <!-- Description -->
+        <div>
+            <label class="text-sm font-medium">Description</label>
+            <textarea 
+                name="description"
+                rows="3"
+                placeholder="Enter a short description for the main category"
+                class="mt-1 w-full rounded-xl border px-4 py-3 focus:ring-2 focus:ring-blue-500"
+            ></textarea>
+        </div>
+       
+        <!-- Footer Buttons -->
+        <div class="flex justify-end gap-3 pt-4 border-t">
+            <button 
+                type="button"
+                onclick="closeModal()"
+                class="px-5 py-2 bg-white border rounded-xl hover:bg-gray-50"
+            >
+                Cancel
+            </button>
+
+            <button 
+                type="submit"
+                class="px-6 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700"
+            >
+                Save Category
+            </button>
+        </div>
+
+    </form>
+</div>
+
+<style>
+@keyframes fadeIn {
+    from { opacity: 0; transform: scale(.98); }
+    to { opacity: 1; transform: scale(1); }
+}
+.animate-fadeIn { animation: fadeIn .2s ease-out; }
+</style>
+
+<script>

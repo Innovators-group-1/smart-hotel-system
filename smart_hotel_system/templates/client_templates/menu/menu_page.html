@@ -11,8 +11,12 @@
   <main class="max-w-md mx-auto pb-6">
 
     <!-- Category navigation (HTMX triggers) -->
-    {% include "client_templates/menu/partials/category_navi.html" %}
-
+    {% include "client_templates/menu/partials/main_category.html" %}
+    <!-- Section for subcategories -->
+    <section id="subcategories" class="px-4 pt-4 space-y-4">
+      {# Initial render = whatever subcategories your menu_view sends (default main category) #}
+      {% include "client_templates/menu/partials/category_navi.html" %}
+    </section>
     <!-- Main content area: THIS is the HTMX target -->
     <section
       id="menu-content"

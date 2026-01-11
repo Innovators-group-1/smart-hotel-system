@@ -30,7 +30,7 @@
            </span>
           </td>
           <td class="px-4 py-2">
-            <button 
+            <button id="view-btn-{{ order.pk }}"
               class="text-blue-600 hover:underline"
               hx-get="{% url 'order_details_partial' order.pk %}"
               hx-target="#order-details-{{ order.pk }}"

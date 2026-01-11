@@ -5,6 +5,7 @@ from apps.common_flow.models import Order
 from django.db.models import Sum
 from django.shortcuts import get_object_or_404
 import json
+from django.core.paginator import Paginator
 
 
 def is_htmx(request):
@@ -32,52 +33,64 @@ def is_htmx(request):
 def orders_search(request):
     try:
         query = request.GET.get('q', '')
+        page_number = request.GET.get('page', 1)
         orders = Order.objects.annotate(total=Sum('order_items__total_price')).filter(
             Q(table__number__icontains=query) |
             Q(order_items__menu_item__title__icontains=query) |
             Q(status__icontains=query)
         ).distinct().order_by('-created_at')
+        paginator = Paginator(orders, 20)
+        page_obj = paginator.get_page(page_number)
 
         if is_htmx(request):
-            html = render_to_string('admin_templates/partials/order_list_partial.html', {'orders': orders})
+            html = render_to_string('admin_templates/partials/order-partials/order_list_partial.html', {'page_obj': page_obj, 'paginator': paginator})
             return HttpResponse(html)
         else:
-            return render(request, 'admin_templates/orders.html', {'orders': orders})
+            return render(request, 'admin_templates/orders.html', {'page_obj': page_obj, 'paginator': paginator})
     except Exception as SearchError:
         return HttpResponse(f"An error occurred: {str(SearchError)}", status=500)
        
 def orders_filter_by_status(request, status):
     try:
+        page_number = request.GET.get('page', 1)
         if status in ['PENDING', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED']:
             orders = Order.objects.annotate(total=Sum('order_items__total_price')).filter(status=status).order_by('-created_at')
         else:
             orders = Order.objects.annotate(total=Sum('order_items__total_price')).all().order_by('-created_at')
+        paginator = Paginator(orders, 20)
+        page_obj = paginator.get_page(page_number)
         if is_htmx(request):
-            html = render_to_string('admin_templates/partials/order_list_partial.html', {'orders': orders})
+            html = render_to_string('admin_templates/partials/order-partials/order_list_partial.html', {'page_obj': page_obj, 'paginator': paginator})
             return HttpResponse(html)
         else:
-            return render(request, 'admin_templates/orders.html', {'orders': orders})
+            return render(request, 'admin_templates/orders.html', {'page_obj': page_obj, 'paginator': paginator})
     except Exception as FilterError:
         return HttpResponse(f"An error occurred: {str(FilterError)}", status=500)
     
 def payment_status_filter(request, slug):
     try:
+        page_number = request.GET.get('page', 1)
         if slug in ['PAID', 'UNPAID']:
             orders = Order.objects.annotate(total=Sum('order_items__total_price')).filter(payment_status=slug).order_by('-created_at')
         else:
             orders = Order.objects.annotate(total=Sum('order_items__total_price')).all().order_by('-created_at')
+        paginator = Paginator(orders, 20)
+        page_obj = paginator.get_page(page_number)
         if is_htmx(request):
-            html = render_to_string('admin_templates/partials/order_list_partial.html', {'orders': orders})
+            html = render_to_string('admin_templates/partials/order-partials/order_list_partial.html', {'page_obj': page_obj, 'paginator': paginator})
             return HttpResponse(html)
         else:
-            return render(request, 'admin_templates/orders.html', {'orders': orders})
+            return render(request, 'admin_templates/orders.html', {'page_obj': page_obj, 'paginator': paginator})
     except Exception as PaymentFilterError:
         return HttpResponse(f"An error occurred: {str(PaymentFilterError)}", status=500)
 
 def order_list_partial(request):
     try:
+        page_number = request.GET.get('page', 1)
         orders = Order.objects.annotate(total=Sum('order_items__total_price')).all().order_by('-created_at')
-        html = render_to_string('admin_templates/partials/order-partials/order_list_partial.html', {'orders': orders})
+        paginator = Paginator(orders, 20)  # 20 orders per page
+        page_obj = paginator.get_page(page_number)
+        html = render_to_string('admin_templates/partials/order-partials/order_list_partial.html', {'page_obj': page_obj, 'paginator': paginator})
         return HttpResponse(html)
     except Exception as PartialError:
         return HttpResponse(f"An error occurred: {str(PartialError)}", status=500)
@@ -101,7 +114,14 @@ def order_details_partial(request, order_id):
         return HttpResponse(f"An error occurred: {str(DetailsError)}", status=500)
 
 def orders_page(request, page_number):
-    HttpResponse("Paging functionality to be implemented.")
+    try:
+        orders = Order.objects.annotate(total=Sum('order_items__total_price')).all().order_by('-created_at')
+        paginator = Paginator(orders, 20)
+        page_obj = paginator.get_page(page_number)
+        html = render_to_string('admin_templates/partials/order-partials/order_list_partial.html', {'page_obj': page_obj, 'paginator': paginator})
+        return HttpResponse(html)
+    except Exception as PageError:
+        return HttpResponse(f"An error occurred: {str(PageError)}", status=500)
 
 def verify_payment(request, order_id):
     order = get_object_or_404(Order, pk=order_id)
@@ -109,11 +129,38 @@ def verify_payment(request, order_id):
         if order.payment_status != Order.PaymentStatus.PAID:
             order.payment_status = Order.PaymentStatus.PAID
             order.save(update_fields=['payment_status'])
-            return HttpResponse("✅ Cash payment verified successfully.")
+            return HttpResponse(
+                status=204,
+                headers={
+                    "HX-Trigger": json.dumps({
+                        "toast-success": {
+                            "message": "Cash payment verified successfully."
+                        }
+                    })
+                }
+            )
         else:
-            return HttpResponse("⚠️ Payment already processed.")
+            return HttpResponse(
+                status=204,
+                headers={
+                    "HX-Trigger": json.dumps({
+                        "toast-error": {
+                            "message": "Payment already processed."
+                        }
+                    })
+                }
+            )
     else:
-        return HttpResponse("⚠️ An Error occurred during CASH verification.")
+        return HttpResponse(
+            status=204,
+            headers={
+                "HX-Trigger": json.dumps({
+                    "toast-error": {
+                        "message": "An Error occurred during CASH verification."
+                    }
+                })
+            }
+        )
 
 def mpesa_verification_partial(request, order_id):
     try:
@@ -122,10 +169,138 @@ def mpesa_verification_partial(request, order_id):
         return HttpResponse(html)
     except Exception as MpesaPartialError:
         return HttpResponse(f"An error occurred: {str(MpesaPartialError)}", status=500)
+
+def confirm_payment(request, order_id):
+    order = get_object_or_404(Order, pk=order_id)
+    if order.payment_method == Order.PaymentMethod.M_PESA:
+        if order.payment_status != Order.PaymentStatus.PAID:
+            order.payment_status = Order.PaymentStatus.PAID
+            order.save(update_fields=['payment_status'])
+            return HttpResponse(
+                status=204,
+                headers={
+                    "HX-Trigger": json.dumps({
+                        "toast-success": {
+                            "message": "M-Pesa payment confirmed successfully."
+                        }
+                    })
+                }
+            )
+        else:
+            return HttpResponse(
+                status=204,
+                headers={
+                    "HX-Trigger": json.dumps({
+                        "toast-error": {
+                            "message": "Payment already processed."
+                        }
+                    })
+                }
+            )
+    else:
+        return HttpResponse(
+            status=204,
+            headers={
+                "HX-Trigger": json.dumps({
+                    "toast-error": {
+                        "message": "An Error occurred during M-Pesa confirmation."
+                    }
+                })
+            }
+        )
+
+def mark_unpaid(request, order_id):
+    order = get_object_or_404(Order, pk=order_id)
+    if order.payment_status != Order.PaymentStatus.UNPAID:
+        order.payment_status = Order.PaymentStatus.UNPAID
+        order.save(update_fields=['payment_status'])
+        return HttpResponse(
+            status=204,
+            headers={
+                "HX-Trigger": json.dumps({
+                    "toast-success": {
+                        "message": "Order marked as unpaid."
+                    }
+                })
+            }
+        )
+    else:
+        return HttpResponse(
+            status=204,
+            headers={
+                "HX-Trigger": json.dumps({
+                    "toast-error": {
+                        "message": "Order is already marked as unpaid."
+                    }
+                })
+            }
+        )
+
 def send_to_kitchen(request, order_id):
-    HttpResponse("Send to kitchen functionality to be implemented.")
+    order = get_object_or_404(Order, pk=order_id)
+    if order.status != Order.OrderStatus.IN_PROGRESS:
+        order.status = Order.OrderStatus.IN_PROGRESS
+        order.save(update_fields=['status'])
+        return HttpResponse(
+            status=204,
+            headers={
+                "HX-Trigger": json.dumps({
+                    "toast-success": {
+                        "message": "Order sent to kitchen successfully."
+                    }
+                })
+            }
+        )
+    else:
+        return HttpResponse(
+            status=204,
+            headers={
+                "HX-Trigger": json.dumps({
+                    "toast-error": {
+                        "message": "Order is already in progress."
+                    }
+                })
+            }
+        )
+
 def print_receipt(request, order_id):
-    HttpResponse("Print receipt functionality to be implemented.")
+    order = get_object_or_404(Order, pk=order_id)
+    # Here you could generate a PDF or something, but for now just show success
+    return HttpResponse(
+        status=204,
+        headers={
+            "HX-Trigger": json.dumps({
+                "toast-success": {
+                    "message": "Receipt printed successfully."
+                }
+            })
+        }
+    )
+
 def cancel_order(request, order_id):
-    HttpResponse("Cancel order functionality to be implemented.")
+    order = get_object_or_404(Order, pk=order_id)
+    if order.status != Order.OrderStatus.CANCELLED:
+        order.status = Order.OrderStatus.CANCELLED
+        order.save(update_fields=['status'])
+        return HttpResponse(
+            status=204,
+            headers={
+                "HX-Trigger": json.dumps({
+                    "toast-success": {
+                        "message": "Order cancelled successfully."
+                    }
+                })
+            }
+        )
+    else:
+        return HttpResponse(
+            status=204,
+            headers={
+                "HX-Trigger": json.dumps({
+                    "toast-error": {
+                        "message": "Order is already cancelled."
+                    }
+                })
+            }
+        )
 

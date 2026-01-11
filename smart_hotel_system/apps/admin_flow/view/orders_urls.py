@@ -26,6 +26,8 @@ urlpatterns = [
     # order details partial urls
     path('verify_payment/<int:order_id>/', orders.verify_payment, name='verify_payment'),
     path('mpesa_verification_partial/<int:order_id>/', orders.mpesa_verification_partial, name='mpesa_verification_partial'),
+    path('confirm_payment/<int:order_id>/', orders.confirm_payment, name='confirm_payment'),
+    path('mark_unpaid/<int:order_id>/', orders.mark_unpaid, name='mark_unpaid'),
     path('send_to_kitchen/<int:order_id>/', orders.send_to_kitchen, name='send_to_kitchen'),
     path('print_receipt/<int:order_id>/', orders.print_receipt, name='print_receipt'),
     path('cancel_order/<int:order_id>/', orders.cancel_order, name='cancel_order'),

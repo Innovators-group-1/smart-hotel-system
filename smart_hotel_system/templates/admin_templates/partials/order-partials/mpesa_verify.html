@@ -32,13 +32,17 @@
   <div class="flex justify-end gap-3">
     <button 
       class="px-4 py-2 rounded bg-green-600 text-white hover:bg-green-700 transition"
-      {% if order.payment_status == 'PAID' %}{% else %}disabled{% endif %}
+      hx-post="{% url 'confirm_payment' order.pk %}"
+      hx-on:htmx:after-request="closeModal(); updatePaymentStatus({{ order.pk }}, 'PAID')"
+      {% if order.payment_status == 'PAID' %}disabled{% endif %}
     >
       Confirm Payment
     </button>
     <button 
       class="px-4 py-2 rounded bg-red-600 text-white hover:bg-red-700 transition"
-      {% if order.payment_status == 'UNPAID' %}{% else %}disabled{% endif %}
+      hx-post="{% url 'mark_unpaid' order.pk %}"
+      hx-on:htmx:after-request="closeModal(); updatePaymentStatus({{ order.pk }}, 'UNPAID')"
+      {% if order.payment_status == 'UNPAID' %}disabled{% endif %}
     >
       Mark Unpaid
     </button>
