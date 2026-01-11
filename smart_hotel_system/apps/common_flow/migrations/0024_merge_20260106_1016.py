@@ -6,7 +6,7 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('common_flow', '0017_alter_orders_options_alter_orders_table'),
+        ('common_flow', '0017_alter_order_table'),
         ('common_flow', '0023_remove_category_main_category'),
     ]
 
