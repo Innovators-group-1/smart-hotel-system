@@ -204,7 +204,7 @@ class Order(models.Model):
 
     # Represent Orders using Queue format FIFO
     class Meta:
-        db_table = 'orders'
+        db_table = 'order'
         ordering = ['created_at']
 
 
