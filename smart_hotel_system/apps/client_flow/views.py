@@ -376,10 +376,23 @@ def order_confirmation_view(request, order_id):
     
 def order_tracking_view(request, order_id):
     order = get_object_or_404(Order, order_id=order_id)
+    # Get related order items and totals for template display
+    order_items = order.order_items.all()
+    total_price = sum(item.total_price for item in order_items) if order_items else 0
+    item_count = order_items.count()
 
-    # Define all steps in the process
+    # Define all steps in the process (lowercase names used for internal matching)
     steps = ['pending', 'paid', 'confirmed', 'preparing', 'ready', 'served']
-    current_index = steps.index(order.status)
+
+    # Robustly find current index: try matching order.status (lowercased),
+    # fall back to payment_status or default to 0 if unknown.
+    try:
+        current_index = steps.index(order.status.lower())
+    except Exception:
+        try:
+            current_index = steps.index(order.payment_status.lower())
+        except Exception:
+            current_index = 0
 
     # Build a list showing progress state
     progress = []
@@ -393,8 +406,11 @@ def order_tracking_view(request, order_id):
 
     return render(request, 'client_templates/order_tracking.html', {
         'order': order,
+        'order_items': order_items,
+        'total_price': total_price,
+        'item_count': item_count,
         'progress': progress
-    }) 
+    })
 
 
 def menu_filter_view(request, category_id):
