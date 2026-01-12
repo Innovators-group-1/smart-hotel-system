@@ -6,15 +6,8 @@
 {% block content %}
   {% include "client_templates/shared/mobile_header.html" %}
 
-<<<<<<< HEAD
-    <!-- Order Info -->
-    <div class="mb-6 rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900/50">
-      <div class="flex items-center justify-between py-2">
-        <p class="text-sm text-slate-500 dark:text-slate-400">Order Number</p>
-        <p class="text-sm font-medium text-slate-900 dark:text-white">#{{ order.pk }}</p>
-=======
   <main class="max-w-md mx-auto px-4 pt-4 pb-6">
-    <header class="mb-4">]
+    <header class="mb-4">
       <p class="text-xs text-slate-500">
         Order #{{ order.order_id }} • Table {{ order.table.number }}
       </p>
@@ -22,8 +15,8 @@
         Order Status
       </h1>
       <p class="text-xs text-slate-500 mt-1">
-        {{ order.menu_item.title }} × {{ order.quantity }} •
-        Ksh {{ order.total_price }}
+        {{ item_count }} item{% if item_count != 1 %}s{% endif %} •
+        Ksh {{ total_price }}
       </p>
     </header>
 
@@ -123,7 +116,6 @@
         >
           Help &amp; Support
         </button>
->>>>>>> 5649375a5d9532254ac22e1fc2741e29b1723cdf
       </div>
     </section>
   </main>
