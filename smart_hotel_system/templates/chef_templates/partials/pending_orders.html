@@ -20,8 +20,8 @@
 
     <form
         hx-post="{% url 'chef_flow:accept_order' order.order_id %}"
-        hx-target="closest div"
-        hx-swap="outerHTML"
+        hx-target="#active_orders_container"
+        hx-swap="innerHTML"
     >
         {% csrf_token %}
         <button class="w-full bg-blue-600 hover:bg-blue-700 py-2 rounded-lg">

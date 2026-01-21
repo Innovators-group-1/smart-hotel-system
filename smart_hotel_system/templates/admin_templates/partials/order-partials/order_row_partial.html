@@ -1,6 +1,6 @@
 <tr 
           hx-get="{% url 'order_row_partial' order.pk %}"
-          hx-trigger="every 10s"
+          hx-trigger="load,every 10s"
           hx-swap="outerHTML"
           class="hover:bg-gray-100 transition"
         >

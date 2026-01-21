@@ -6,6 +6,7 @@ from django.core.files import File
 from django.utils.translation import gettext_lazy as _
 from datetime import datetime, timedelta
 from PIL import Image, ImageDraw , ImageFont
+from django.utils import timezone
 
 from django.utils.text import slugify
 
@@ -199,7 +200,7 @@ class Order(models.Model):
             self.completed_at = datetime.now()
 
         if self.status == self.OrderStatus.IN_PROGRESS:
-            self.in_progress_period = datetime.now() - self.created_at
+            self.in_progress_period = timezone.now() - self.created_at
 
         super().save(*args, **kwargs)
 

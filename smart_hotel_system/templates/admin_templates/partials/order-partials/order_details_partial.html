@@ -131,18 +131,30 @@
             {% endif %}
 
             <!-- Send to Kitchen -->
-            <button 
-              class="flex items-center gap-2 px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700 transition"
-              hx-post="{% url 'send_to_kitchen' order.pk %}"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
-                   viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                      d="M4 3h2v18H4zM8 3h2v18H8zM16 3h2v18h-2zM20 3h2v18h-2z" />
-              </svg>
-              Send to Kitchen
-            </button>
-
+            {% if order.status == 'PENDING' %}
+              <button 
+                class="flex items-center gap-2 px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700 transition"
+                hx-post="{% url 'send_to_kitchen' order.pk %}"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
+                    viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M4 3h2v18H4zM8 3h2v18H8zM16 3h2v18h-2zM20 3h2v18h-2z" />
+                </svg>
+                Send to Kitchen
+              </button>
+            {% else %}
+                <button 
+                  class="flex items-center gap-2 px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700 transition"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
+                      viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M4 3h2v18H4zM8 3h2v18H8zM16 3h2v18h-2zM20 3h2v18h-2z" />
+                  </svg>
+                  Sent to Kitchen
+                </button>
+            {% endif %}
             <!-- Cancel Order -->
             <button 
               class="flex items-center gap-2 px-4 py-2 rounded bg-red-600 text-white hover:bg-red-700 transition"
