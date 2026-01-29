@@ -441,3 +441,36 @@ def load_subcategories(request, main_id):
     }
 
     return render(request, 'client_templates/menu/partials/category_navi.html', context)
+
+
+# views.py
+
+def order_timeline_partial(request, order_id):
+    order = get_object_or_404(Order, order_id=order_id)
+    
+    # These are the 6 steps the user sees
+    steps = [
+        {'name': 'Pending', 'desc': 'Waiting for payment confirmation.'},
+        {'name': 'Paid', 'desc': 'Payment received successfully.'},
+        {'name': 'Confirmed', 'desc': 'Order confirmed by the team.'},
+        {'name': 'Preparing', 'desc': 'Chef is preparing your meal.'},
+        {'name': 'Ready', 'desc': 'Your order is ready to serve!'},
+        {'name': 'Served', 'desc': 'Enjoy your meal!'}
+    ]
+
+    # Get the index (0-5) from your new model method
+    current_step = order.get_tracking_step()
+
+    progress_data = []
+    for i, step in enumerate(steps):
+        progress_data.append({
+            'name': step['name'],
+            'description': step['desc'],
+            'completed': i <= current_step,
+            'active': i == current_step
+        })
+
+    return render(request, 'client_templates/menu/partials/order_timeline.html', {
+        'order': order,
+        'progress': progress_data
+    })

@@ -1,3 +1,4 @@
+
 {% extends "client_templates/base/base.html" %}
 {% load static %}
 
@@ -5,117 +6,41 @@
 
 {% block content %}
   {% include "client_templates/shared/mobile_header.html" %}
+  <script src="https://unpkg.com/htmx.org@1.9.10"></script>
 
   <main class="max-w-md mx-auto px-4 pt-4 pb-6">
     <header class="mb-4">
-      <p class="text-xs text-slate-500">
-        Order #{{ order.order_id }} • Table {{ order.table.number }}
-      </p>
-      <h1 class="text-xl font-semibold text-slate-900">
-        Order Status
-      </h1>
+      <p class="text-xs text-slate-500">Order #{{ order.order_id }} • Table {{ order.table.number }}</p>
+      <h1 class="text-xl font-semibold text-slate-900">Order Status</h1>
       <p class="text-xs text-slate-500 mt-1">
-        {{ item_count }} item{% if item_count != 1 %}s{% endif %} •
-        Ksh {{ total_price }}
+        {{ item_count }} item{% if item_count != 1 %}s{% endif %} • Ksh {{ total_price }}
       </p>
     </header>
 
-    {# Estimated time box – simple approximation based on created_at + in_progress_period #}
     <section class="bg-white rounded-2xl shadow-sm px-4 py-3 mb-5 text-center">
-      <p class="text-[11px] text-slate-500 uppercase tracking-wide">
-        Estimated Ready Time
-      </p>
+      <p class="text-[11px] text-slate-500 uppercase tracking-wide">Estimated Ready Time</p>
       <p class="text-lg font-semibold text-slate-900">
-        {{ order.created_at|time:"g:i A" }}
-        –
-        {{ order.created_at|add:order.in_progress_period|time:"g:i A" }}
+        {{ order.created_at|time:"g:i A" }} – {{ order.created_at|add:order.in_progress_period|time:"g:i A" }}
       </p>
     </section>
 
-    {# Timeline from 'progress' list created in order_tracking_view #}
     <section class="bg-white rounded-2xl shadow-sm px-4 py-4 mb-6">
-      <ol class="relative border-l border-slate-200 ml-3 space-y-4">
-        {% for step in progress %}
-          <li class="ml-4">
-            <span
-              class="absolute -left-[9px] flex h-4 w-4 items-center justify-center
-                     rounded-full border
-                     {% if step.completed %}
-                       bg-orange-500 border-orange-500
-                     {% else %}
-                       bg-white border-slate-300
-                     {% endif %}"
-            >
-              {% if step.completed %}
-                <span class="block w-2 h-2 bg-white rounded-full"></span>
-              {% endif %}
-            </span>
-
-            <div class="flex flex-col gap-0.5">
-              <p class="text-sm font-semibold
-                        {% if step.active %}
-                          text-orange-600
-                        {% else %}
-                          text-slate-900
-                        {% endif %}">
-                {{ step.name }}
-              </p>
-
-              {% if step.name == "Pending" %}
-                <p class="text-xs text-slate-500">
-                  Waiting for M-Pesa confirmation.
-                </p>
-              {% elif step.name == "Paid" %}
-                <p class="text-xs text-slate-500">
-                  Payment received. Your order will be confirmed shortly.
-                </p>
-              {% elif step.name == "Confirmed" %}
-                <p class="text-xs text-slate-500">
-                  Order confirmed by staff.
-                </p>
-              {% elif step.name == "Preparing" %}
-                <p class="text-xs text-slate-500">
-                  The kitchen is preparing your meal.
-                </p>
-              {% elif step.name == "Ready" %}
-                <p class="text-xs text-slate-500">
-                  Your order is ready to be served.
-                </p>
-              {% elif step.name == "Served" %}
-                <p class="text-xs text-slate-500">
-                  Order served. Enjoy your meal!
-                </p>
-              {% endif %}
-            </div>
-          </li>
-        {% endfor %}
-      </ol>
+      <div id="timeline-update-zone" 
+           hx-get="{% url 'client_flow:order_timeline_partial' order.order_id %}" 
+           hx-trigger="every 5s" 
+           hx-swap="innerHTML">
+        
+        {% include "client_templates/menu/partials/order_timeline.html" %}
+      </div>
     </section>
 
     <section class="space-y-2">
-      <button
-        type="button"
-        class="w-full border border-slate-300 text-slate-900
-               py-3 rounded-full text-sm font-medium"
-      >
+      <button type="button" class="w-full border border-slate-300 text-slate-900 py-3 rounded-full text-sm font-medium">
         View Order Details
       </button>
-
       <div class="flex gap-3">
-        <button
-          type="button"
-          class="flex-1 border border-slate-300 text-slate-900
-                 py-3 rounded-full text-sm font-medium"
-        >
-          Call Staff
-        </button>
-        <button
-          type="button"
-          class="flex-1 border border-slate-300 text-slate-900
-                 py-3 rounded-full text-sm font-medium"
-        >
-          Help &amp; Support
-        </button>
+        <button type="button" class="flex-1 border border-slate-300 text-slate-900 py-3 rounded-full text-sm font-medium">Call Staff</button>
+        <button type="button" class="flex-1 border border-slate-300 text-slate-900 py-3 rounded-full text-sm font-medium">Help &amp; Support</button>
       </div>
     </section>
   </main>

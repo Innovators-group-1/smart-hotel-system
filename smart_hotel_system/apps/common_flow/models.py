@@ -11,6 +11,7 @@ from django.utils import timezone
 from django.utils.text import slugify
 
 
+
 # Common model to be used across different apps
 class HotelSettings(models.Model):
     # Define various settings fields
@@ -158,9 +159,16 @@ class Table(models.Model):
 class Order(models.Model):
     class OrderStatus(models.TextChoices):
         PENDING = 'PENDING', _('Pending')
+<<<<<<< HEAD
         SENT_TO_KITCHEN = 'SENT_TO_KITCHEN', _('Sent to Kitchen')
         IN_PROGRESS = 'IN_PROGRESS', _('In Progress')
         COMPLETED = 'COMPLETED', _('Completed')
+=======
+        CONFIRMED = 'CONFIRMED', _('Confirmed')
+        IN_PROGRESS = 'IN_PROGRESS', _('preparing')
+        READY = 'READY', _('Ready')
+        COMPLETED = 'COMPLETED', _('served')
+>>>>>>> Brenda-dev
         CANCELLED = 'CANCELLED', _('Cancelled')
     
     class PaymentStatus(models.TextChoices):
@@ -194,6 +202,32 @@ class Order(models.Model):
     in_progress_period = models.DurationField(blank=True, null=True, default=timedelta(minutes=15))
     special_requests = models.TextField(blank=True, null=True)
 
+
+    # 2. THE TRACKING LOGIC FOR CLIENT SIDE
+    def get_tracking_step(self):
+        """
+        Translates Admin/Internal statuses into Client tracking steps (0-5).
+        This maps your complex backend states to the simple UI timeline.
+        """
+        # STEP 5: SERVED
+        if self.status == self.OrderStatus.COMPLETED:
+            return 5
+            
+        # STEP 3: PREPARING (Kitchen has started)
+        if self.status == self.OrderStatus.IN_PROGRESS:
+            return 3
+            
+        # STEP 2: CONFIRMED (Payment is done and admin saw it)
+        if self.status == self.OrderStatus.PENDING and self.payment_status == self.PaymentStatus.PAID:
+            return 2
+
+        # STEP 1: PAID (M-Pesa callback or Admin manual mark)
+        if self.payment_status == self.PaymentStatus.PAID:
+            return 1
+            
+        # STEP 0: PENDING (Initial state)
+        return 0
+
     # Overriding save method to set completed_at timestamp when status changes
     def save(self, *args, **kwargs):
         if self.status == self.OrderStatus.COMPLETED and not self.completed_at:
@@ -222,6 +256,33 @@ class OrderItem(models.Model):
 
     class Meta:
         db_table = 'order_items'
+
+
+#from django.db.models.signals import post_save
+#from django.dispatch import receiver
+#from channels.layers import get_channel_layer
+#from asgiref.sync import async_to_sync
+#from .models import Order
+
+#@receiver(post_save, sender=Order)
+#def order_status_changed(sender, instance, **kwargs):
+#    if kwargs.get('update_fields') and 'status' in kwargs['update_fields']:
+  #      channel_layer = get_channel_layer()
+   #     async_to_sync(channel_layer.group_send)(
+     #       f'order_{instance.order_id}',
+       #     {
+      #          'type': 'order_status_update',
+       #         'data': {
+       #             'status': instance.status,
+       #             'payment_status': instance.payment_status,
+       #         }
+       #     }
+      #  )
+
+
+
+
+
 
 
 class Reports(models.Model):
