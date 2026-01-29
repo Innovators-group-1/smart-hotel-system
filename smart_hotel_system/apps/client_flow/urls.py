@@ -1,4 +1,4 @@
-from django.urls import path
+from django.urls import include, path
 from . import views
 
 app_name = 'client_flow'
@@ -20,4 +20,6 @@ urlpatterns = [
     path('order-confirmation/<int:order_id>/', views.order_confirmation_view, name='order_confirmation'),
     path('track/<int:order_id>/', views.order_tracking_view, name='order_tracking'),
     path('load_subcategories/<int:main_id>/', views.load_subcategories, name='load_subcategories'),
+   # path('ws/', include('client_flow.routing.websocket_urlpatterns')),
+    path('track/<int:order_id>/timeline/', views.order_timeline_partial, name='order_timeline_partial'),
 ]

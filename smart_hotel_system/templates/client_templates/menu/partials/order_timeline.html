@@ -1,0 +1,21 @@
+<ol class="relative border-l border-slate-200 ml-3 space-y-4">
+    {% for step in progress %}
+      <li class="ml-4">
+        <span class="absolute -left-[9px] flex h-4 w-4 items-center justify-center rounded-full border 
+                     {% if step.completed %}bg-orange-500 border-orange-500{% else %}bg-white border-slate-300{% endif %}">
+          {% if step.completed %}
+            <span class="block w-2 h-2 bg-white rounded-full"></span>
+          {% endif %}
+        </span>
+
+        <div class="flex flex-col gap-0.5">
+          <p class="text-sm font-semibold {% if step.active %}text-orange-600{% else %}text-slate-900{% endif %}">
+            {{ step.name }}
+          </p>
+          {% if step.active or step.completed %}
+             <p class="text-xs text-slate-500">{{ step.description }}</p>
+          {% endif %}
+        </div>
+      </li>
+    {% endfor %}
+</ol>
