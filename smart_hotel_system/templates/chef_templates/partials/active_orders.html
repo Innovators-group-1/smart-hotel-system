@@ -21,8 +21,8 @@
 
     <form
         hx-post="{% url 'chef_flow:complete_order' order.order_id %}"
-        hx-target="closest div"
-        hx-swap="outerHTML"
+        hx-target="#completed_orders_container"
+        hx-swap="innerHTML"
     >
         {% csrf_token %}
         <button class="w-full bg-green-600 hover:bg-green-700 py-2 rounded-lg">

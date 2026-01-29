@@ -317,7 +317,9 @@ def checkout_view(request):
                 total_price=subtotal,
             )
 
-        print(f'this is the order that you have placed {order}')
+        if payment_method == 'cash':
+            request.session['cart'] = {}
+            return redirect('client_flow:order_confirmation', order_id=order.order_id)
         # simulate STK Push for M-Pesa payments
         if payment_method == 'express':
             # Create PaymentIndex record
@@ -342,22 +344,23 @@ def checkout_view(request):
             if response.status_code == 200:
                 response_data = response.json()
                 # Update PaymentIndex with the checkout and merchant request IDs
-                index_record.checkout_request_id = response_data.get('CheckoutRequestID')
-                index_record.merchant_request_id = response_data.get('MerchantRequestID')
-                index_record.save()
-                print(f'STK Push initiated successfully: {response_data}')
+                if response_data.get('ResponseCode') == '0':
+                    index_record.checkout_request_id = response_data.get('CheckoutRequestID')
+                    index_record.merchant_request_id = response_data.get('MerchantRequestID')
+                    index_record.save()
+                else:
+                    return JsonResponse({
+                    "html":"<div class='bg-red-100 text-red-700 p-3 rounded'>Payment failed: insufficient balance</div>"
+                })
             else:
-                print(f'Failed to initiate STK Push: {response.text}')
+                return JsonResponse({
+                    "html":"<div class='bg-red-100 text-red-700 p-3 rounded'>Payment request failed. Please try again.</div>"
+                })
+                
             
         #  Clear cart
         request.session['cart'] = {}
         messages.success(request, f"Order confirmed! Payment reference: {payment_reference}")
-
-        # Redirect to order confirmation with the order id
-        return redirect('client_flow:order_confirmation', order_id=order.order_id)
-        return HttpResponse('you have succcessfu;lly placed your order')
-
-       
 
     # Render checkout page with cart items and total
     context = {'cart_items': cart_items, 'total': total}
