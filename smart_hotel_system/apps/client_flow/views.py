@@ -9,6 +9,8 @@ import json
 from django.db.models import Q 
 from django.contrib import messages
 import requests
+from django.views.decorators.http import require_GET
+# --- Third-Party Libraries ---
 
 from .utils.payload import create_stk_push_payload  
 from .utils.mpesa_utils import get_access_token, generate_password
@@ -110,28 +112,94 @@ def add_to_cart(request, item_id):
         cart[item_id_str] = 1
     _save_cart(request.session, cart)
 
-    # Prepare response data
     cart_count = sum(cart.values())
-    data = {'message': f'{item.title} added to cart.', 'cart_count': cart_count}
 
-    # Detect HTMX or AJAX requests and return JSON so the page isn't redirected/refreshed.
+    # Detect HTMX or AJAX requests
     is_htmx = request.headers.get('HX-Request') == 'true'
     is_ajax = request.headers.get('x-requested-with') == 'XMLHttpRequest'
     accepts_json = 'application/json' in request.headers.get('Accept', '')
 
-    if is_htmx or is_ajax or accepts_json:
-        # For HTMX: return no body but trigger a client event with the new cart count
-        # so the frontend can update the cart count without parsing JSON.
-        headers = {
-            'HX-Trigger': json.dumps({'cartChanged': cart_count})
-        }
-        # 204 No Content is appropriate since we don't send a JSON body
-        return HttpResponse(status=204, headers=headers)
+    if is_htmx:
+        # Return the added response to update the button and reset color of the button and prevent other clicks ie disable the button for good
+        resp = HttpResponse(f'''<span class="text-green-600 font-medium">Added!</span>''')
+        
+        resp['HX-Trigger'] = json.dumps({'cartChanged': cart_count})
+        return resp
+    if is_ajax or accepts_json:
+        resp = JsonResponse({'message': f'{item.title} added to cart.', 'cart_count': cart_count})
+        resp['HX-Trigger'] = json.dumps({'cartChanged': cart_count})
+        return resp
 
-    # Fallback for regular (non-AJAX) requests: keep previous behavior
-    messages.success(request, data['message'])
+    messages.success(request, f'{item.title} added to cart.')
     return redirect('client_flow:menu_redirect')
 
+@require_GET
+def cart_count_view(request):
+    cart = _get_cart(request.session)
+    cart_count = sum(cart.values()) if cart else 0
+    return JsonResponse({'cart_count': cart_count})
+
+def update_cart(request, item_id):
+    if request.method == "POST":
+        cart = _get_cart(request.session)
+        action = request.POST.get('action') or (request.headers.get('HX-Vals') and json.loads(request.headers.get('HX-Vals')).get('action'))
+        item_id_str = str(item_id)
+        if item_id_str not in cart:
+            cart[item_id_str] = 0
+
+        if action == 'increase':
+            cart[item_id_str] += 1
+        elif action == 'decrease':
+            cart[item_id_str] -= 1
+            if cart[item_id_str] <= 0:
+                cart.pop(item_id_str, None)
+
+        _save_cart(request.session, cart)
+
+    # rebuild context
+    cart = _get_cart(request.session)
+    cart_items = []
+    total = 0
+    item_ids = [int(i) for i in cart.keys()] if cart else []
+    items = MenuItem.objects.filter(menu_item_id__in=item_ids) if item_ids else []
+
+    for item in items:
+        qty = cart.get(str(item.menu_item_id), 0)
+        subtotal = item.price * qty
+        total += subtotal
+        cart_items.append({"item": item, "quantity": qty, "subtotal": subtotal})
+
+    resp = render(request, "client_templates/menu/partials/cart_container.html", {
+        "cart_items": cart_items,
+        "total": total,
+    })
+    resp['HX-Trigger'] = json.dumps({'cartChanged': sum(cart.values())})
+    return resp
+
+
+def remove_from_cart(request, item_id):
+    cart = _get_cart(request.session)
+    cart.pop(str(item_id), None)
+    _save_cart(request.session, cart)
+
+    # rebuild context (same as update_cart)
+    cart_items = []
+    total = 0
+    item_ids = [int(i) for i in cart.keys()] if cart else []
+    items = MenuItem.objects.filter(menu_item_id__in=item_ids) if item_ids else []
+
+    for item in items:
+        qty = cart.get(str(item.menu_item_id), 0)
+        subtotal = item.price * qty
+        total += subtotal
+        cart_items.append({"item": item, "quantity": qty, "subtotal": subtotal})
+
+    resp = render(request, "client_templates/menu/partials/cart_container.html", {
+        "cart_items": cart_items,
+        "total": total,
+    })
+    resp['HX-Trigger'] = json.dumps({'cartChanged': sum(cart.values())})
+    return resp
 def cart_view(request):
     cart = _get_cart(request.session)
     item_ids = [int(i) for i in cart.keys()]
@@ -147,73 +215,6 @@ def cart_view(request):
 
     context = {'cart_items': cart_items, 'total': total}
     return render(request, 'client_templates/cart.html', context)
-
-def update_cart(request, item_id):
-    if request.method == "POST":
-        action = request.POST.get("action")
-        cart = request.session.get("cart", {})
-
-        # Ensure item exists in cart
-        if str(item_id) in cart:
-            if action == "increase":
-                cart[str(item_id)] += 1
-            elif action == "decrease":
-                cart[str(item_id)] -= 1
-                # Remove if quantity drops to 0
-                if cart[str(item_id)] <= 0:
-                    cart.pop(str(item_id))
-
-        request.session["cart"] = cart
-        request.session.modified = True
-
-    # Build updated cart context
-    cart_items = []
-    total = 0
-    for item_id, quantity in cart.items():
-        menu_item = get_object_or_404(MenuItem, pk=item_id)
-        subtotal = float(menu_item.price) * quantity
-        total += subtotal
-        cart_items.append({
-            "item": menu_item,
-            "quantity": quantity,
-            "subtotal": subtotal,
-        })
-
-    # Return partial for HTMX swap
-    return render(request, "client_templates/menu/partials/cart_section.html", {
-        "cart_items": cart_items,
-        "total": total,
-    })
-
-def remove_from_cart(request, item_id):
-    cart = request.session.get("cart", {})
-
-    # Remove the item if it exists
-    if str(item_id) in cart:
-        cart.pop(str(item_id))
-
-    request.session["cart"] = cart
-    request.session.modified = True
-
-    # Build updated cart context
-    cart_items = []
-    total = 0
-    for item_id, item in cart.items():
-        menu_item = get_object_or_404(MenuItem, pk=item_id)
-        subtotal = float(item["price"]) * int(item["quantity"])
-        total += subtotal
-        cart_items.append({
-            "item": menu_item,
-            "quantity": item["quantity"],
-            "subtotal": subtotal,
-        })
-
-    # Return partial for HTMX swap
-    return render(request, "client_templates/menu/partials/cart_section.html", {
-        "cart_items": cart_items,
-        "total": total,
-    })
-
 def seat_selector_view(request):
     table_number = request.session.get('table_number')
     table = get_object_or_404(Table, number=table_number)
