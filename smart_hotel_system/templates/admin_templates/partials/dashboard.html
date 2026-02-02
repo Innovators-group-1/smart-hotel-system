@@ -12,19 +12,51 @@
   <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 p-6">
     <div class="bg-white p-6 rounded-xl shadow hover:shadow-md transition">
       <p class="text-gray-500 text-sm font-medium">Pending</p>
-      <h3 class="text-3xl font-bold text-yellow-500 mt-2">{{ pending_orders }}</h3>
+      <h3 
+        class="text-3xl font-bold text-yellow-500 mt-2"
+        hx-get="{% url 'pending-orders-count' %}"
+        hx-trigger="load, every 30s"
+        hx-swap="innerHTML"
+        hx-target="this"
+      >
+        {{ pending_orders }}
+      </h3>
     </div>
     <div class="bg-white p-6 rounded-xl shadow hover:shadow-md transition">
       <p class="text-gray-500 text-sm font-medium">In-Progress</p>
-      <h3 class="text-3xl font-bold text-blue-500 mt-2">{{ in_progress_orders }}</h3>
+      <h3 
+        class="text-3xl font-bold text-blue-500 mt-2"
+        hx-get="{% url 'in-progress-orders-count' %}"
+        hx-trigger="load, every 30s"
+        hx-swap="innerHTML"
+        hx-target="this"
+      >
+      {{ in_progress_orders }}
+    </h3>
     </div>
     <div class="bg-white p-6 rounded-xl shadow hover:shadow-md transition">
       <p class="text-gray-500 text-sm font-medium">Completed</p>
-      <h3 class="text-3xl font-bold text-green-500 mt-2">{{completed_orders}}</h3>
+      <h3 
+        class="text-3xl font-bold text-green-500 mt-2"
+        hx-get="{% url 'completed-orders-count' %}"
+        hx-trigger="load, every 30s"
+        hx-swap="innerHTML"
+        hx-target="this"
+      >
+        {{completed_orders}}
+      </h3>
     </div>
     <div class="bg-white p-6 rounded-xl shadow hover:shadow-md transition">
       <p class="text-gray-500 text-sm font-medium">Canceled</p>
-      <h3 class="text-3xl font-bold text-red-500 mt-2">{{cancelled_orders}}</h3>
+      <h3 
+        class="text-3xl font-bold text-red-500 mt-2"
+        hx-get="{% url 'cancelled-orders-count' %}"
+        hx-trigger="load, every 30s"
+        hx-swap="innerHTML"
+        hx-target="this"
+      >
+        {{cancelled_orders}}
+      </h3>
     </div>
   </section>
 
@@ -34,7 +66,7 @@
       <h2 class="text-lg font-semibold text-gray-700 mb-4">Sales Overview</h2>
       <div 
           hx-get="{% url 'sales-overview' %}"
-          hx-trigger="load, every 20s"
+          hx-trigger="load, every 30s"
           hx-target="#sales-chart-container"
           hx-swap="innerHTML"
           class="bg-gray-100 rounded-lg p-4"

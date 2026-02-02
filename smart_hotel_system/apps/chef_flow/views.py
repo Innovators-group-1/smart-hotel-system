@@ -11,9 +11,8 @@ def chef_dashboard(request):
     with schema_context(request.tenant.schema_name):
         hotel_name = HotelSettings.objects.first().hotel_name if HotelSettings.objects.exists() else 'Smart Hotel'
         pending_orders = Order.objects.select_related("table").prefetch_related("order_items__menu_item").filter(
-            status=Order.OrderStatus.PENDING
+            status=Order.OrderStatus.SENT_TO_KITCHEN
         )
-
         active_orders = Order.objects.select_related("table").prefetch_related("order_items__menu_item").filter(
             status=Order.OrderStatus.IN_PROGRESS
         )
@@ -29,33 +28,50 @@ def chef_dashboard(request):
         )
 
     context = {
-        "hotel_name": hotel_name,
         "pending_orders": pending_orders,
+        "hotel_name": hotel_name,
         "active_orders": active_orders,
         "completed_orders": completed_orders,
         "urgent_orders": urgent_orders,
     }
-
     return render(request, "chef_templates/dashboard.html", context)
 
+def pending_orders_partial(request):
+    """
+    Returns the pending orders partial for HTMX.
+    """
+    with schema_context(request.tenant.schema_name):
+        pending_orders = Order.objects.select_related(
+            "table"
+        ).prefetch_related("order_items__menu_item").filter(status=Order.OrderStatus.SENT_TO_KITCHEN)
+
+    return render(
+        request,
+        "chef_templates/partials/pending_orders.html",
+        {"pending_orders": pending_orders}
+    )
 def accept_order(request, order_id):
     """
     Marks order as IN_PROGRESS (HTMX).
     """
     with schema_context(request.tenant.schema_name):
         order = get_object_or_404(Order, order_id=order_id)
-        order.status = Order.OrderStatus.IN_PROGRESS
-        order.save()
+        if order:
+            print("Order found:", order)
+            order.status = Order.OrderStatus.IN_PROGRESS
+            order.save()
 
         active_orders = Order.objects.select_related(
             "table"
         ).prefetch_related("order_items__menu_item").filter(status=Order.OrderStatus.IN_PROGRESS)
-
-    return render(
-        request,
-        "chef_templates/partials/active_orders.html",
-        {"active_orders": active_orders}
-    )
+        print("Active orders count:", active_orders.count())
+        context = {"active_orders": active_orders}
+        return render(
+            request,
+            "chef_templates/partials/active_orders.html",
+            context
+        )
+        
 
 def get_hotel_name(request):
      with schema_context(request.tenant.schema_name):

@@ -238,8 +238,32 @@ def mark_unpaid(request, order_id):
 
 def send_to_kitchen(request, order_id):
     order = get_object_or_404(Order, pk=order_id)
-    if order.status != Order.OrderStatus.IN_PROGRESS:
-        order.status = Order.OrderStatus.IN_PROGRESS
+    if order:
+        # check if the order payment status is PAID before sending to kitchen
+        if order.payment_status != Order.PaymentStatus.PAID:
+            return HttpResponse(
+                status=204,
+                headers={
+                    "HX-Trigger": json.dumps({
+                        "toast-error": {
+                            "message": "Cannot send to kitchen. Payment not verified."
+                        }
+                    })
+                }
+            )
+        # Check if order is already sent to kitchen
+        if order.status == Order.OrderStatus.SENT_TO_KITCHEN:
+            return HttpResponse(
+                status=204,
+                headers={
+                    "HX-Trigger": json.dumps({
+                        "toast-error": {
+                            "message": "Order is already sent to kitchen."
+                        }
+                    })
+                }
+            )
+        order.status = Order.OrderStatus.SENT_TO_KITCHEN
         order.save(update_fields=['status'])
         return HttpResponse(
             status=204,
@@ -251,17 +275,7 @@ def send_to_kitchen(request, order_id):
                 })
             }
         )
-    else:
-        return HttpResponse(
-            status=204,
-            headers={
-                "HX-Trigger": json.dumps({
-                    "toast-error": {
-                        "message": "Order is already in progress."
-                    }
-                })
-            }
-        )
+    
 
 def print_receipt(request, order_id):
     order = get_object_or_404(Order, pk=order_id)

@@ -14,7 +14,7 @@
     </div>
 
     <ul class="text-sm mb-4">
-        {% for item in order.order_items %}
+        {% for item in order.order_items.all %}
         <li>{{ item.quantity }}× {{ item.menu_item.title }}</li>
         {% endfor %}
     </ul>

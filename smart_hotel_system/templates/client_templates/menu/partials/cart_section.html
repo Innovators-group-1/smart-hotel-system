@@ -22,7 +22,7 @@
             <button
               hx-post="{% url 'client_flow:update_cart' item.menu_item_id %}"
               hx-vals='{"action":"decrease"}'
-              hx-target="#cart-section"
+              hx-target="#cart-container"
               hx-swap="outerHTML"
               class="w-7 h-7 rounded-full border border-slate-300 flex items-center justify-center text-sm"
             >-</button>
@@ -32,7 +32,7 @@
             <button
               hx-post="{% url 'client_flow:update_cart' item.menu_item_id %}"
               hx-vals='{"action":"increase"}'
-              hx-target="#cart-section"
+              hx-target="#cart-container"
               hx-swap="outerHTML"
               class="w-7 h-7 rounded-full border border-slate-300 flex items-center justify-center text-sm"
             >+</button>
@@ -40,7 +40,7 @@
 
           <button
             hx-post="{% url 'client_flow:remove_from_cart' item.menu_item_id %}"
-            hx-target="#cart-section"
+            hx-target="#cart-container"
             hx-swap="outerHTML"
             class="text-[11px] text-red-500"
           >Remove</button>

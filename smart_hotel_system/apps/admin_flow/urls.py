@@ -8,6 +8,12 @@ urlpatterns = [
     # chart data url
     path('sales-overview/', views.sales_overview, name='sales-overview'),
 
+    # count orders urls
+    path('pending-orders-count/', views.pending_orders_count, name='pending-orders-count'),
+    path('in-progress-orders-count/', views.in_progress_orders_count, name='in-progress-orders-count'),
+    path('completed-orders-count/', views.completed_orders_count, name='completed-orders-count'),
+    path('cancelled-orders-count/', views.cancelled_orders_count, name='cancelled-orders-count'),
+
     # PARTIAL URLS
     path('orders/', views.orders_partial, name='orders_partial'),
     path('menu/', views.menu_partial, name='menu_partial'),

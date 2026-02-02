@@ -59,6 +59,21 @@ def adminDashboard(request):
     }
     return render(request, 'admin_templates/dashboard.html', context)
 
+# count orders views
+def pending_orders_count(request):
+    count = Order.objects.filter(status='PENDING').count()
+    return HttpResponse(count)
+
+def in_progress_orders_count(request):
+    count = Order.objects.filter(status='IN_PROGRESS').count()
+    return HttpResponse(count)
+def completed_orders_count(request):
+    count = Order.objects.filter(status='COMPLETED').count()
+    return HttpResponse(count)
+def cancelled_orders_count(request):
+    count = Order.objects.filter(status='CANCELLED').count()
+    return HttpResponse(count) 
+
 # Partial views for different sections
 # These views return HTML snippets for AJAX loading
 # Example: orders_partial, menu_partial, reports_partial, settings_partial
