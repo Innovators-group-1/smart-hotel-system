@@ -11,14 +11,22 @@
 
         <section>
             <h3 class="text-xl font-semibold mb-3">Active Orders</h3>
-            <div id="active_orders_container">
+            <div
+                 hx-get="{% url 'chef_flow:active_orders_partial' %}"
+                 hx-trigger="load,every 10s"
+                 hx-swap="innerHTML"
+                 hx-target="#active_orders_container">
+                <div id="active_orders_container">
                 {% include "chef_templates/partials/active_orders.html" %}
+                </div>
             </div>
         </section>
 
         <section>
             <h3 class="text-xl font-semibold mb-3">Completed Orders Log</h3>
-            {% include "chef_templates/partials/completed_orders.html" %}
+            <div id="completed_orders_container">
+                {% include "chef_templates/partials/completed_orders.html" %}
+            </div>
         </section>
 
     </div>
