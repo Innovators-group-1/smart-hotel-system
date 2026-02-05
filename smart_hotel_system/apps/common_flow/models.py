@@ -222,8 +222,7 @@ class OrderItem(models.Model):
 
     class Meta:
         db_table = 'order_items'
-
-
+        
 class Reports(models.Model):
     report_id = models.AutoField(primary_key=True)
     report_date = models.DateField(auto_now_add=True)
