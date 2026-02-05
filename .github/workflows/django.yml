@@ -1,4 +1,4 @@
-name: Connect-Hub CI/CD Pipeline
+name: Smart_Hotel_system CI/CD Pipeline
 on:
     push:
         branches:
@@ -8,7 +8,7 @@ on:
         - main
     
 jobs:
-    build:
+    backend:
         runs-on: ubuntu-latest
         steps:
         - name: Checkout code
@@ -25,3 +25,21 @@ jobs:
         #   run: |
         #     cd smart_hotel_system
         #     python manage.py test smart_hotel_system.tests
+
+    frontend:
+        runs-on: ubuntu-latest
+        steps:
+        - name: Checkout code
+          uses: actions/checkout@v4
+        - name: Set up Node.js
+          uses: actions/setup-node@v3
+          with:
+            node-version: '16'
+        - name: Install dependencies
+          run: |
+            cd smart_hotel_system
+            npm install
+        # - name: Run tests
+        #   run: |
+        #     cd frontend
+        #     npm test
