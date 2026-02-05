@@ -305,60 +305,12 @@ def checkout_view(request):
             request.session['cart'] = {}
             return redirect('client_flow:order_confirmation', order_id=order.order_id)
         # simulate STK Push for M-Pesa payments
-<<<<<<< HEAD
-        if payment_method == 'express':
-            # Create PaymentIndex record
-            index_record = PaymentIndex.objects.create(
-                tenant=request.tenant,
-                order_ref=order.pk,
-                account_reference=account_number,
-            )
-            # Simulate sending payment request to gateway here
-            payload, headers = create_stk_push_payload(
-                amount=total,
-                phone_number=account_number,
-                account_reference=payment_reference,
-                transaction_desc="Hotel Order Payment"
-            )
-            # Send the STK Push request to M-Pesa
-            response = requests.post(
-                'https://sandbox.safaricom.co.ke/mpesa/stkpush/v1/processrequest',
-                json=payload,
-                headers=headers
-            )
-            if response.status_code == 200:
-                response_data = response.json()
-                # Update PaymentIndex with the checkout and merchant request IDs
-                if response_data.get('ResponseCode') == '0':
-                    index_record.checkout_request_id = response_data.get('CheckoutRequestID')
-                    index_record.merchant_request_id = response_data.get('MerchantRequestID')
-                    index_record.save()
-                else:
-                    return JsonResponse({
-                    "html":"<div class='bg-red-100 text-red-700 p-3 rounded'>Payment failed: insufficient balance</div>"
-                })
-            else:
-                return JsonResponse({
-                    "html":"<div class='bg-red-100 text-red-700 p-3 rounded'>Payment request failed. Please try again.</div>"
-                })
-                
-=======
-        
->>>>>>> development-branch
             
         #  Clear cart
         request.session['cart'] = {}
         messages.success(request, f"Order confirmed! Payment reference: {payment_reference}")
 
-<<<<<<< HEAD
-=======
-        # Redirect to order confirmation with the order id
-        return redirect('client_flow:order_confirmation', order_id=order.order_id)
-        
 
-       
-
->>>>>>> development-branch
     # Render checkout page with cart items and total
     context = {'cart_items': cart_items, 'total': total}
     return render(request, 'client_templates/checkout.html', context)

@@ -248,39 +248,6 @@ class OrderItem(models.Model):
 
     class Meta:
         db_table = 'order_items'
-<<<<<<< HEAD
-
-
-#from django.db.models.signals import post_save
-#from django.dispatch import receiver
-#from channels.layers import get_channel_layer
-#from asgiref.sync import async_to_sync
-#from .models import Order
-
-#@receiver(post_save, sender=Order)
-#def order_status_changed(sender, instance, **kwargs):
-#    if kwargs.get('update_fields') and 'status' in kwargs['update_fields']:
-  #      channel_layer = get_channel_layer()
-   #     async_to_sync(channel_layer.group_send)(
-     #       f'order_{instance.order_id}',
-       #     {
-      #          'type': 'order_status_update',
-       #         'data': {
-       #             'status': instance.status,
-       #             'payment_status': instance.payment_status,
-       #         }
-       #     }
-      #  )
-
-
-
-
-
-
-
-=======
-        
->>>>>>> development-branch
 class Reports(models.Model):
     report_id = models.AutoField(primary_key=True)
     report_date = models.DateField(auto_now_add=True)
