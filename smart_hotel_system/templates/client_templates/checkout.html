@@ -38,9 +38,9 @@
       {% endfor %}
     </section>
 
-    <form 
-      hx-post=""
-      class="space-y-4">
+    <form
+      method="post" 
+      class="space-y-4" id="payment-form"></form>
       {% csrf_token %}
 
       {# payment_method values EXACTLY as used in checkout_view #}
@@ -126,24 +126,133 @@
       </section>
     </form>
   </main>
+  <!-- Processing / Success / Error modals -->
+  <div id="processing-modal" style="display:none;position:fixed;inset:0;align-items:center;justify-content:center;background:rgba(0,0,0,0.45);z-index:60">
+    <div style="background:#fff;padding:20px;border-radius:12px;text-align:center;min-width:260px;display:flex;flex-direction:column;gap:8px">
+      <p id="processing-text" style="font-weight:700">Processing…</p>
+      <p style="font-size:13px;color:#666">Verifying payment with M-Pesa</p>
+    </div>
+  </div>
+  <div id="error-modal" style="display:none;position:fixed;inset:0;align-items:center;justify-content:center;background:rgba(0,0,0,0.45);z-index:60">
+    <div style="background:#fff;padding:20px;border-radius:12px;text-align:center;min-width:260px;display:flex;flex-direction:column;gap:12px">
+      <p style="font-weight:800;color:#DC2626">Payment Failed</p>
+      <p id="error-msg" style="font-size:13px;color:#444;margin:0">Sorry, you have insufficient funds</p>
+      <div style="display:flex;gap:8px;justify-content:center;margin-top:6px">
+        <button id="retry-btn" style="background:#F59E0B;color:#fff;padding:8px 12px;border-radius:8px;border:0">Retry</button>
+        <button id="checkout-btn" style="background:#E5E7EB;padding:8px 12px;border-radius:8px;border:0">Back to Checkout</button>
+      </div>
+    </div>
+  </div>
+  <div id="success-modal" style="display:none;position:fixed;inset:0;align-items:center;justify-content:center;background:rgba(0,0,0,0.45);z-index:60">
+  <div style="background:#fff;padding:20px;border-radius:12px;text-align:center;min-width:260px;display:flex;flex-direction:column;gap:12px">
+    <p style="font-weight:800;color:#16A34A">Congratulations 🎉</p>
+    <p style="font-size:13px;color:#444;margin:0">Your order has been confirmed successfully.</p>
+    <button id="view-order-btn" style="background:#F59E0B;color:#fff;padding:8px 12px;border-radius:8px;border:0">
+      View Order
+    </button>
+  </div>
+</div>
+
 
   <script>
-    // Optional UX: hide phone field when cash is selected
     document.addEventListener("DOMContentLoaded", function () {
-      const methodInputs = document.querySelectorAll("input[name='payment_method']");
-      const mpesaSection = document.getElementById("mpesa-phone-section");
+    const form = document.getElementById("payment-form");
+    const mpesaSection = document.getElementById("mpesa-phone-section");
+    const processingModal = document.getElementById("processing-modal");
+    const errorModal = document.getElementById("error-modal");
+    const successModal = document.getElementById("success-modal");
+    const errorMsg = document.getElementById("error-msg");
 
-      function togglePhone() {
-        const selected = document.querySelector("input[name='payment_method']:checked");
-        if (selected && selected.value === "express") {
-          mpesaSection.style.display = "block";
-        } else {
-          mpesaSection.style.display = "none";
+    // Toggle phone field visibility
+    const methodInputs = document.querySelectorAll("input[name='payment_method']");
+    function togglePhone() {
+      const selected = document.querySelector("input[name='payment_method']:checked");
+      mpesaSection.style.display = (selected && selected.value === "express") ? "block" : "none";
+    }
+    methodInputs.forEach((input) => input.addEventListener("change", togglePhone));
+    togglePhone(); // initial state
+
+    // Polling function for payment status
+    async function pollStatus(reference) {
+      const interval = setInterval(async () => {
+        try {
+          const statusUrl = `/platform/payment/status/${reference}/`;
+          const res = await fetch(statusUrl);
+          const data = await res.json();
+
+          if (data.status === "SUCCESS") {
+            clearInterval(interval);
+            processingModal.style.display = "none";
+            successModal.style.display = "flex";
+          } else if (data.status === "FAILED" || data.status === "CANCELLED") {
+            clearInterval(interval);
+            processingModal.style.display = "none";
+            errorMsg.innerText = data.message || "Payment failed";
+            errorModal.style.display = "flex";
+          }
+        } catch (err) {
+          clearInterval(interval);
+          processingModal.style.display = "none";
+          errorMsg.innerText = "Error checking payment status";
+          errorModal.style.display = "flex";
         }
-      }
+      }, 3000); // poll every 3 seconds
+    }
 
-      methodInputs.forEach((input) => input.addEventListener("change", togglePhone));
-      togglePhone(); // initial state
+    // Form submission handler
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const selectedMethod = document.querySelector("input[name='payment_method']:checked").value;
+
+      if (selectedMethod === "express") {
+        const phoneInput = document.getElementById("payment_account");
+        if (!phoneInput.value.trim()) {
+          alert("Please enter your M-Pesa phone number.");
+          return;
+        }
+
+        processingModal.style.display = "flex";
+
+        try {
+          const res = await fetch("{% url 'client_flow:mpesa_process' %}", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "X-CSRFToken": "{{ csrf_token }}"
+            },
+            body: JSON.stringify({ phone: phoneInput.value.trim() })
+          });
+          const data = await res.json();
+
+          if (data.status === "processing") {
+            pollStatus(data.reference); // start polling backend
+          } else {
+            processingModal.style.display = "none";
+            errorMsg.innerText = data.message || "Payment initiation failed";
+            errorModal.style.display = "flex";
+          }
+        } catch (err) {
+          processingModal.style.display = "none";
+          errorMsg.innerText = "Network error during payment";
+          errorModal.style.display = "flex";
+        }
+      } else {
+        // Cash flow → normal form submission
+        form.submit();
+      }
+    });
+
+    // Modal buttons
+    document.getElementById("retry-btn").addEventListener("click", () => {
+      errorModal.style.display = "none";
+    });
+    document.getElementById("checkout-btn").addEventListener("click", () => {
+      errorModal.style.display = "none";
+      window.location.href = "{% url 'client_flow:checkout' %}";
+    });
+    document.getElementById("view-order-btn").addEventListener("click", () => {
+      successModal.style.display = "none";
+    });
     });
   </script>
 {% endblock %}

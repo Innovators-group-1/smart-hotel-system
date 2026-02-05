@@ -248,6 +248,7 @@ class OrderItem(models.Model):
 
     class Meta:
         db_table = 'order_items'
+<<<<<<< HEAD
 
 
 #from django.db.models.signals import post_save
@@ -277,6 +278,9 @@ class OrderItem(models.Model):
 
 
 
+=======
+        
+>>>>>>> development-branch
 class Reports(models.Model):
     report_id = models.AutoField(primary_key=True)
     report_date = models.DateField(auto_now_add=True)
