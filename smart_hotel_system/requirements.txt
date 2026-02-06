@@ -8,7 +8,7 @@ django-tenants==3.9.0
 idna==3.11
 pillow==3.4.0
 psycopg2-binary==2.9.11
-pytailwindcss==0.3.0    
+pytailwindcss==0.2.0   
 python-dotenv==1.2.1          
 python-slugify==8.0.4          
 qrcode==8.2                     
