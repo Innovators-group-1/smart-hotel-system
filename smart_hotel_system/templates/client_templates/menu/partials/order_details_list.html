@@ -1,0 +1,41 @@
+<div class="space-y-4">
+    <div class="divide-y divide-slate-100">
+        {% for item in items %}
+        <div class="py-3 flex justify-between items-start">
+            <div class="flex flex-col">
+                <span class="text-sm font-semibold text-slate-900">
+                    {{ item.menu_item.title }}
+                </span>
+                <span class="text-xs text-slate-500">
+                    Qty: {{ item.quantity }} × Ksh {{ item.menu_item.price }}
+                </span>
+            </div>
+            <span class="text-sm font-medium text-slate-900">
+                Ksh {{ item.total_price }}
+            </span>
+        </div>
+        {% endfor %}
+    </div>
+
+    <div class="bg-slate-50 rounded-xl p-4 space-y-2">
+        <div class="flex justify-between text-xs text-slate-500">
+            <span>Payment Method</span>
+            <span class="font-medium capitalize">{{ order.payment_method }}</span>
+        </div>
+        <div class="flex justify-between text-xs text-slate-500">
+            <span>Table Number</span>
+            <span class="font-medium">{{ order.table.number }}</span>
+        </div>
+        <div class="pt-2 border-t border-slate-200 flex justify-between items-center">
+            <span class="text-sm font-bold text-slate-900">Total Amount</span>
+            <span class="text-lg font-bold text-orange-600">Ksh {{ total }}</span>
+        </div>
+    </div>
+
+    {% if order.special_requests %}
+    <div class="p-3 bg-orange-50 rounded-lg border border-orange-100">
+        <p class="text-[10px] uppercase font-bold text-orange-800 mb-1">Special Instructions</p>
+        <p class="text-xs text-orange-900 italic">"{{ order.special_requests }}"</p>
+    </div>
+    {% endif %}
+</div>

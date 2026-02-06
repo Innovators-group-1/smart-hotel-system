@@ -51,8 +51,7 @@ SHARED_APPS = [
     'apps.platform_admin_flow',
 ]
 
-INSTALLED_APPS = [ 'daphne', # for ASGI support/channels
-                  ] + SHARED_APPS + TENANT_APPS
+INSTALLED_APPS = [] + SHARED_APPS + TENANT_APPS
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -177,12 +176,3 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # Handling media configuration
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 MEDIA_URL = '/media/'
-
-CHANNEL_LAYERS = {
-    'default': {
-        'BACKEND': 'channels_redis.core.RedisChannelLayer',
-        'CONFIG': {
-            'hosts': [('127.0.0.1', 6379)],
-        },
-    },
-}

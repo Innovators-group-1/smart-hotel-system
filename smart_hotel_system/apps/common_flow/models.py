@@ -159,17 +159,11 @@ class Table(models.Model):
 class Order(models.Model):
     class OrderStatus(models.TextChoices):
         PENDING = 'PENDING', _('Pending')
-<<<<<<< HEAD
         SENT_TO_KITCHEN = 'SENT_TO_KITCHEN', _('Sent to Kitchen')
         IN_PROGRESS = 'IN_PROGRESS', _('In Progress')
         COMPLETED = 'COMPLETED', _('Completed')
-=======
-        CONFIRMED = 'CONFIRMED', _('Confirmed')
-        IN_PROGRESS = 'IN_PROGRESS', _('preparing')
-        READY = 'READY', _('Ready')
-        COMPLETED = 'COMPLETED', _('served')
->>>>>>> Brenda-dev
         CANCELLED = 'CANCELLED', _('Cancelled')
+        READY = 'READY', _('Ready')
     
     class PaymentStatus(models.TextChoices):
         VERIFYING = 'VERIFYING', _('Verifying')
@@ -209,26 +203,27 @@ class Order(models.Model):
         Translates Admin/Internal statuses into Client tracking steps (0-5).
         This maps your complex backend states to the simple UI timeline.
         """
-        # STEP 5: SERVED
+        # 1. If the order is completed, it's the final step
         if self.status == self.OrderStatus.COMPLETED:
-            return 5
-            
-        # STEP 3: PREPARING (Kitchen has started)
-        if self.status == self.OrderStatus.IN_PROGRESS:
+            return 4
+        
+        # 2. If it's ready for pickup
+        if hasattr(self.OrderStatus, 'READY') and self.status == self.OrderStatus.READY:
             return 3
-            
-        # STEP 2: CONFIRMED (Payment is done and admin saw it)
-        if self.status == self.OrderStatus.PENDING and self.payment_status == self.PaymentStatus.PAID:
+
+        # 3. If the chef has accepted it/started (IN_PROGRESS)
+        if self.status == self.OrderStatus.IN_PROGRESS:
             return 2
 
-        # STEP 1: PAID (M-Pesa callback or Admin manual mark)
-        if self.payment_status == self.PaymentStatus.PAID:
+        # 4. If the order is verified/confirmed (SENT_TO_KITCHEN) 
+        # OR if the payment has been verified
+        if self.status == self.OrderStatus.SENT_TO_KITCHEN or self.payment_status == self.PaymentStatus.PAID:
             return 1
-            
-        # STEP 0: PENDING (Initial state)
+
+        # 5. Default/Initial state
         return 0
 
-    # Overriding save method to set completed_at timestamp when status changes
+     # Overriding save method to set completed_at timestamp when status changes
     def save(self, *args, **kwargs):
         if self.status == self.OrderStatus.COMPLETED and not self.completed_at:
             self.completed_at = datetime.now()

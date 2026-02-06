@@ -22,4 +22,7 @@ urlpatterns = [
     path('load_subcategories/<int:main_id>/', views.load_subcategories, name='load_subcategories'),
    # path('ws/', include('client_flow.routing.websocket_urlpatterns')),
     path('track/<int:order_id>/timeline/', views.order_timeline_partial, name='order_timeline_partial'),
+    path('track/<int:order_id>/details/', views.order_details_partial, name='order_details_partial'),
+    path('track/<int:order_id>/support/', views.support_partial, name='support_partial'),
+    
 ]

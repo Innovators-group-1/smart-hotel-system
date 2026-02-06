@@ -1,4 +1,3 @@
-
 {% extends "client_templates/base/base.html" %}
 {% load static %}
 
@@ -17,31 +16,53 @@
       </p>
     </header>
 
-    <section class="bg-white rounded-2xl shadow-sm px-4 py-3 mb-5 text-center">
+    <section class="bg-white rounded-2xl shadow-sm px-4 py-3 mb-5 text-center border border-slate-100">
       <p class="text-[11px] text-slate-500 uppercase tracking-wide">Estimated Ready Time</p>
       <p class="text-lg font-semibold text-slate-900">
         {{ order.created_at|time:"g:i A" }} – {{ order.created_at|add:order.in_progress_period|time:"g:i A" }}
       </p>
     </section>
 
-    <section class="bg-white rounded-2xl shadow-sm px-4 py-4 mb-6">
+    <section class="bg-white rounded-2xl shadow-sm px-4 py-4 mb-6 border border-slate-100">
       <div id="timeline-update-zone" 
            hx-get="{% url 'client_flow:order_timeline_partial' order.order_id %}" 
            hx-trigger="every 5s" 
            hx-swap="innerHTML">
-        
         {% include "client_templates/menu/partials/order_timeline.html" %}
       </div>
     </section>
 
-    <section class="space-y-2">
-      <button type="button" class="w-full border border-slate-300 text-slate-900 py-3 rounded-full text-sm font-medium">
+    <section class="space-y-3">
+      <button hx-get="{% url 'client_flow:order_details_partial' order.order_id %}"
+              hx-target="#modal-content"
+              onclick="document.getElementById('tracking-modal').classList.remove('hidden')"
+              class="w-full border border-slate-300 text-slate-900 py-3.5 rounded-full text-sm font-medium transition-active active:bg-slate-50">
         View Order Details
       </button>
-      <div class="flex gap-3">
-        <button type="button" class="flex-1 border border-slate-300 text-slate-900 py-3 rounded-full text-sm font-medium">Call Staff</button>
-        <button type="button" class="flex-1 border border-slate-300 text-slate-900 py-3 rounded-full text-sm font-medium">Help &amp; Support</button>
-      </div>
+
+      <button hx-get="{% url 'client_flow:support_partial' order.order_id %}"
+              hx-target="#modal-content"
+              onclick="document.getElementById('tracking-modal').classList.remove('hidden')"
+              class="w-full bg-slate-900 text-white py-3.5 rounded-full text-sm font-medium shadow-lg shadow-slate-200 transition-active active:scale-[0.98]">
+        Help & Support
+      </button>
     </section>
+
+    <div id="tracking-modal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center">
+        <div class="bg-white w-full max-w-md rounded-t-3xl sm:rounded-2xl p-6 shadow-2xl animate-in slide-in-from-bottom duration-300 relative">
+            <div class="flex justify-between items-center mb-6">
+                <h3 id="modal-title" class="font-bold text-slate-900 text-lg">Information</h3>
+                <button onclick="document.getElementById('tracking-modal').classList.add('hidden')" 
+                        class="h-10 w-10 flex items-center justify-center rounded-full bg-slate-100 text-slate-500">
+                    ✕
+                </button>
+            </div>
+            
+            <div id="modal-content" class="min-h-[100px]">
+                <p class="text-center text-slate-400 py-4 animate-pulse">Loading...</p>
+            </div>
+        </div>
+    </div>
+    
   </main>
 {% endblock %}

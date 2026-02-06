@@ -10,4 +10,5 @@ urlpatterns = [
     path('hotel_name/', views.get_hotel_name, name='hotel_name'),
     path('accept/<int:order_id>/', views.accept_order, name='accept_order'),
     path('complete/<int:order_id>/', views.complete_order, name='complete_order'),
+    path('ready/<int:order_id>/', views.mark_order_ready, name='mark_order_ready'),
 ]
