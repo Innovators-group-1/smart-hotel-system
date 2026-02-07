@@ -51,7 +51,9 @@ SHARED_APPS = [
     'apps.platform_admin_flow',
 ]
 
-INSTALLED_APPS = [] + SHARED_APPS + TENANT_APPS
+
+INSTALLED_APPS = SHARED_APPS + TENANT_APPS
+
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',

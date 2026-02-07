@@ -24,7 +24,7 @@ urlpatterns = [
     # Respond to Chrome DevTools `.well-known` probe to avoid noisy 404s during development
     re_path(r'^\.well-known/appspecific/com\.chrome\.devtools\.json$', lambda req: JsonResponse({}, status=200)),
     path('admin/', admin.site.urls),
-    path('platform/', include('apps.platform_admin_flow.urls')),
+    path('platform/', include('apps.platform_admin_flow.urls', namespace='platform_admin_flow')),
     path('chef_dashboard/', include('apps.chef_flow.urls', namespace='chef_dashboard')),
     path('admin_dashboard/', include('apps.admin_flow.urls')),
     path('client_flow/',include('apps.client_flow.urls',namespace='client_flow')),

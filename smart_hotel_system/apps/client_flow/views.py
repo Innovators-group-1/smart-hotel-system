@@ -8,16 +8,17 @@ from django.http import JsonResponse, HttpResponse
 from django.urls import reverse
 import json
 from django.db.models import Q 
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_GET
 from django.contrib import messages
 import requests
 from django_tenants.utils import schema_context
 
 from .utils.payload import create_stk_push_payload  
-from .utils.mpesa_utils import get_access_token, generate_password
 
 # --- Local Application Models ---
 from apps.common_flow.models import Menu as MenuItem, Category,MainCategory, Table, Order, OrderItem, HotelSettings
-from apps.platform_admin_flow.models import PaymentIndex
+from apps.platform_admin_flow.models import PaymentIndex, PaymentAttempt
 
 def hotel_name_view(request):
     hotel_name = HotelSettings.objects.get_solo().hotel_name
@@ -137,6 +138,73 @@ def add_to_cart(request, item_id):
         messages.success(request, data['message'])
         return redirect('client_flow:menu_redirect')
 
+@require_GET
+def cart_count_view(request):
+    cart = _get_cart(request.session)
+    cart_count = sum(cart.values()) if cart else 0
+    return JsonResponse({'cart_count': cart_count})
+
+def update_cart(request, item_id):
+    if request.method == "POST":
+        cart = _get_cart(request.session)
+        action = request.POST.get('action') or (request.headers.get('HX-Vals') and json.loads(request.headers.get('HX-Vals')).get('action'))
+        item_id_str = str(item_id)
+        if item_id_str not in cart:
+            cart[item_id_str] = 0
+
+        if action == 'increase':
+            cart[item_id_str] += 1
+        elif action == 'decrease':
+            cart[item_id_str] -= 1
+            if cart[item_id_str] <= 0:
+                cart.pop(item_id_str, None)
+
+        _save_cart(request.session, cart)
+
+    # rebuild context
+    cart = _get_cart(request.session)
+    cart_items = []
+    total = 0
+    item_ids = [int(i) for i in cart.keys()] if cart else []
+    items = MenuItem.objects.filter(menu_item_id__in=item_ids) if item_ids else []
+
+    for item in items:
+        qty = cart.get(str(item.menu_item_id), 0)
+        subtotal = item.price * qty
+        total += subtotal
+        cart_items.append({"item": item, "quantity": qty, "subtotal": subtotal})
+
+    resp = render(request, "client_templates/menu/partials/cart_container.html", {
+        "cart_items": cart_items,
+        "total": total,
+    })
+    resp['HX-Trigger'] = json.dumps({'cartChanged': sum(cart.values())})
+    return resp
+
+
+def remove_from_cart(request, item_id):
+    cart = _get_cart(request.session)
+    cart.pop(str(item_id), None)
+    _save_cart(request.session, cart)
+
+    # rebuild context (same as update_cart)
+    cart_items = []
+    total = 0
+    item_ids = [int(i) for i in cart.keys()] if cart else []
+    items = MenuItem.objects.filter(menu_item_id__in=item_ids) if item_ids else []
+
+    for item in items:
+        qty = cart.get(str(item.menu_item_id), 0)
+        subtotal = item.price * qty
+        total += subtotal
+        cart_items.append({"item": item, "quantity": qty, "subtotal": subtotal})
+
+    resp = render(request, "client_templates/menu/partials/cart_container.html", {
+        "cart_items": cart_items,
+        "total": total,
+    })
+    resp['HX-Trigger'] = json.dumps({'cartChanged': sum(cart.values())})
+    return resp
 def cart_view(request):
     with schema_context(request.tenant.schema_name):
         cart = _get_cart(request.session)
@@ -151,6 +219,7 @@ def cart_view(request):
             total += subtotal
             cart_items.append({'item': item, 'quantity': quantity, 'subtotal': subtotal})
 
+<<<<<<< HEAD
         context = {'cart_items': cart_items, 'total': total}
         return render(request, 'client_templates/cart.html', context)
 
@@ -222,6 +291,10 @@ def remove_from_cart(request, item_id):
             "total": total,
         })
 
+=======
+    context = {'cart_items': cart_items, 'total': total}
+    return render(request, 'client_templates/cart.html', context)
+>>>>>>> 5d212530f9bf7b048452dd201ccf8ae175c88f13
 def seat_selector_view(request):
     with schema_context(request.tenant.schema_name):
         table_number = request.session.get('table_number')
@@ -239,6 +312,7 @@ def set_seat_view(request):
         return redirect('client_flow:checkout')
 
 def checkout_view(request):
+<<<<<<< HEAD
     with schema_context(request.tenant.schema_name):
         # 1 Get cart from session
         cart = request.session.get('cart', {})
@@ -252,6 +326,67 @@ def checkout_view(request):
         cart_items = []
         total = 0
 
+=======
+    # 1 Get cart from session
+    cart = request.session.get('cart', {})
+    if not cart:
+        messages.warning(request, "Your cart is empty.")
+        return redirect('client_flow:menu_redirect')
+    # 2 Retrieve MenuItem objects and calculate totals
+    item_ids = [int(i) for i in cart.keys()]
+    items = MenuItem.objects.filter(menu_item_id__in=item_ids)
+    cart_items = []
+    total = 0
+
+    for item in items:
+        quantity = cart[str(item.menu_item_id)]
+        subtotal = item.price * quantity
+        total += subtotal
+        cart_items.append({'item': item, 'quantity': quantity, 'subtotal': subtotal})
+
+    # 3 Handle POST requests (when payment form is submitted)
+    if request.method == 'POST':
+        payment_method = request.POST.get('payment_method')
+        table_number = request.session.get('table_number')
+        seat = request.session.get('seat')
+
+        try:
+            table = get_object_or_404(Table,number=table_number)
+        except Table.DoesNotExist:
+            return HttpResponse('Table not found')
+
+        if not table:
+            messages.error(request, "No table available. Please add a table first.")
+            return redirect('client_flow:menu')
+
+            
+        # CASH PAYMENT
+        if payment_method == 'cash':
+            payment_reference = f"CASH-{get_random_string(6).upper()}"  # Unique code
+            payment_method_value = Order.PaymentMethod.CASH
+
+        else:
+            messages.error(request, "Invalid payment method selected.")
+            return redirect('client_flow:checkout')
+
+        if not seat:
+            messages.error(request, "Please select a seat before proceeding to checkout.")
+            return redirect('client_flow:checkout')
+
+        # Create the Order
+        order = Order.objects.create(
+            table=table,
+            seat=seat,
+            status=Order.OrderStatus.PENDING,
+            payment_status=Order.PaymentStatus.UNPAID,
+            payment_method=payment_method_value, 
+            payment_number=request.POST.get('payment_account', ''),
+            payment_reference=payment_reference,
+            special_requests=request.POST.get('special_requests', ''),
+        )
+
+        # Create OrderItems
+>>>>>>> 5d212530f9bf7b048452dd201ccf8ae175c88f13
         for item in items:
             quantity = cart[str(item.menu_item_id)]
             subtotal = item.price * quantity
@@ -315,6 +450,7 @@ def checkout_view(request):
                 special_requests=request.POST.get('special_requests', ''),
             )
 
+<<<<<<< HEAD
             # Create OrderItems
             for item in items:
                 quantity = cart[str(item.pk)]
@@ -380,6 +516,117 @@ def checkout_view(request):
         # Render checkout page with cart items and total
         context = {'cart_items': cart_items, 'total': total}
         return render(request, 'client_templates/checkout.html', context)
+=======
+        if payment_method == 'cash':
+            request.session['cart'] = {}
+            return redirect('client_flow:order_confirmation', order_id=order.order_id)
+        # simulate STK Push for M-Pesa payments
+            
+        #  Clear cart
+        request.session['cart'] = {}
+        messages.success(request, f"Order confirmed! Payment reference: {payment_reference}")
+
+
+    # Render checkout page with cart items and total
+    context = {'cart_items': cart_items, 'total': total}
+    return render(request, 'client_templates/checkout.html', context)
+>>>>>>> 5d212530f9bf7b048452dd201ccf8ae175c88f13
+
+def mpesa_checkout_view(request):
+    cart = request.session.get('cart', {})
+    if not cart:
+        messages.warning(request, "Your cart is empty.")
+        return redirect('client_flow:menu_redirect')
+    # 2 Retrieve MenuItem objects and calculate totals
+    item_ids = [int(i) for i in cart.keys()]
+    print(item_ids)
+    items = MenuItem.objects.filter(menu_item_id__in=item_ids)
+    cart_items = []
+    total = 0
+
+    for item in items:
+        quantity = cart[str(item.menu_item_id)]
+        subtotal = item.price * quantity
+        total += subtotal
+        cart_items.append({'item': item, 'quantity': quantity, 'subtotal': subtotal})
+
+    # 3 Handle POST requests (when payment form is submitted)
+    if request.method == 'POST':
+        if request.headers.get('Content-Type') == 'application/json':
+            data = json.loads(request.body.decode('utf-8'))
+            payment_method = data.get('payment_method', 'express') 
+            account_number = data.get('phone', '').strip()
+        else:
+            payment_method = request.POST.get('payment_method')
+            account_number = request.POST.get('payment_account', '').strip()
+        table_number = request.session.get('table_number')
+        seat = request.session.get('seat')
+
+        try:
+            table = get_object_or_404(Table,number=table_number)
+        except Table.DoesNotExist:
+            return HttpResponse('Table not found')
+
+        if not table:
+            messages.error(request, "No table available. Please add a table first.")
+            return redirect('client_flow:menu')
+
+        # EXPRESS PAYMENT
+        if payment_method == 'express':
+            
+            # Make the account number to start with country code if it doesn't and remove leading zeros
+            if account_number and not account_number.startswith('254'):
+                if account_number.startswith('0'):
+                    account_number = '254' + account_number[1:]
+                else:
+                    account_number = '254' + account_number
+            # Simulate sending payment request to gateway here
+            payment_reference = f"EXP-{get_random_string(6).upper()}"  # Unique reference
+
+            # remove cents from the total amount for M-Pesa
+            total = int(total)
+            # Save PaymentAttempt BEFORE sending STK push
+            attempt = PaymentAttempt.objects.create(
+                tenant=request.tenant,
+                reference=payment_reference,
+                phone_number=account_number,
+                amount=int(total),
+                cart_data=cart,  # raw cart snapshot
+                table_number=table_number,
+                seat=seat,
+                status="PENDING"
+            )
+            if payment_method == 'express':
+                # Simulate sending payment request to gateway here
+                payload, headers = create_stk_push_payload(
+                    amount=total,
+                    phone_number=account_number,
+                    account_reference=payment_reference,
+                    transaction_desc="Hotel Order Payment"
+                )
+                # Send the STK Push request to M-Pesa
+                response = requests.post(
+                    'https://sandbox.safaricom.co.ke/mpesa/stkpush/v1/processrequest',
+                    json=payload,
+                    headers=headers
+                )
+                resp_data = response.json()
+                if response.status_code == 200:
+                    attempt.merchant_request_id = resp_data.get('MerchantRequestID')
+                    attempt.checkout_request_id = resp_data.get('CheckoutRequestID')
+                    attempt.save()
+                    return JsonResponse({"status": "processing", "message": "STK Push initiated","reference":payment_reference})
+                else:
+                    attempt.status = "FAILED"
+                    attempt.save()
+                    return JsonResponse({"status": "error", "message": "Failed to initiate STK Push"})
+        else:
+            # Handle unsupported payment methods
+            return JsonResponse({"status": "error", "message": "Unsupported payment method"}, status=400)
+
+    # Render checkout page for GET requests or fallback
+    context = {'cart_items': cart_items, 'total': total}
+    return render(request, 'client_templates/checkout.html', context)
 
 def order_confirmation_view(request, order_id):
     with schema_context(request.tenant.schema_name):
@@ -432,7 +679,17 @@ def order_tracking_view(request, order_id):
             'progress': progress
         })
 
+<<<<<<< HEAD
 
+=======
+    return render(request, 'client_templates/order_tracking.html', {
+        'order': order,
+        'order_items': order_items,
+        'total_price': total_price,
+        'item_count': item_count,
+        'progress': progress
+    })
+>>>>>>> 5d212530f9bf7b048452dd201ccf8ae175c88f13
 def menu_filter_view(request, category_id):
     with schema_context(request.tenant.schema_name):
         menu_items = MenuItem.objects.filter(category_id=category_id)

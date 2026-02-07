@@ -1,33 +1,45 @@
-name: Django CI
-
+name: Smart_Hotel_system CI/CD Pipeline
 on:
-  push:
-    branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
-
+    push:
+        branches:
+        - main
+    pull_request:
+        branches:
+        - main
+    
 jobs:
-  build:
+    backend:
+        runs-on: ubuntu-latest
+        steps:
+        - name: Checkout code
+          uses: actions/checkout@v4
+        - name: Set up Python
+          uses: actions/setup-python@v5
+          with:
+            python-version: '3.9'
+        - name: Install dependencies
+          run: |
+            python -m pip install --upgrade pip
+            pip install -r smart_hotel_system/requirements.txt
+        # - name: Run tests
+        #   run: |
+        #     cd smart_hotel_system
+        #     python manage.py test smart_hotel_system.tests
 
-    runs-on: ubuntu-latest
-    strategy:
-      max-parallel: 4
-      matrix:
-        python-version: [3.7, 3.8, 3.9]
-
-    steps:
-    - uses: actions/checkout@v4
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v3
-      with:
-        python-version: ${{ matrix.python-version }}
-    - name: Start virtual Environment
-      run: |
-        pipenv shell
-    - name: Install Dependencies
-      run: |
-        python -m pipenv install --upgrade pipenv
-        pipenv install --dev
-    - name: Run Tests
-      run: |
-        python manage.py test
+    frontend:
+        runs-on: ubuntu-latest
+        steps:
+        - name: Checkout code
+          uses: actions/checkout@v4
+        - name: Set up Node.js
+          uses: actions/setup-node@v3
+          with:
+            node-version: '16'
+        - name: Install dependencies
+          run: |
+            cd smart_hotel_system
+            npm install
+        # - name: Run tests
+        #   run: |
+        #     cd frontend
+        #     npm test

@@ -5,9 +5,8 @@
 
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{% block title %}Smart Hotel{% endblock %}</title>
-
+    <link rel="stylesheet" href="/static/dist/output.css">
     <script src="https://unpkg.com/htmx.org@1.9.10"></script>
-    <script src="https://cdn.tailwindcss.com"></script>
     {% block extra_head %}{% endblock %}
 </head>
 
@@ -17,43 +16,83 @@
         <div id="modal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
                 <!-- HTMX will swap seat selector content here --> 
         </div>
+        <!-- Cart Count Updater Script  and -->
+                <!-- Cart Count Updater Script  and -->
         <script>
-            document.body.addEventListener('cartChanged', function(evt) {
-                try {
-                    const newValue = evt.detail;
+            document.addEventListener('DOMContentLoaded', function() {
+                const el = document.getElementById('cart-count');
+                if (!el) return;
+                el.classList.add('hidden');
+
+                fetch("{% url 'client_flow:cart_count' %}")
+                    .then(r => r.ok ? r.json() : Promise.reject())
+                    .then(data => {
+                        const value = parseInt(data.cart_count || 0, 10) || 0;
+                        el.textContent = String(value);
+                        if (value > 0) el.classList.remove('hidden'); else el.classList.add('hidden');
+                    })
+                    .catch(() => {/* ignore */});
+            });
+
+            document.body.addEventListener('htmx:afterSwap', function(evt) {
+                // Fire cartChanged event after any HTMX swap on cart section
+                if (evt.detail.target.id === 'cart-section') {
                     const el = document.getElementById('cart-count');
                     if (!el) return;
-                    let value = newValue;
-                    if (value && typeof value === 'object') {
-                        const keys = Object.keys(value);
-                        if (keys.length > 0) {
-                            const k = keys[0];
-                            value = value[k];
-                        }
+
+                    fetch("{% url 'client_flow:cart_count' %}")
+                        .then(r => r.ok ? r.json() : Promise.reject())
+                        .then(data => {
+                            const value = parseInt(data.cart_count || 0, 10) || 0;
+                            el.textContent = String(value);
+                            if (value > 0) el.classList.remove('hidden'); else el.classList.add('hidden');
+                        })
+                        .catch(() => {/* ignore */});
+                }
+            });
+
+            document.body.addEventListener('cartChanged', function(evt) {
+                try {
+                    const el = document.getElementById('cart-count');
+                    if (!el) return;
+
+                    const payload = evt.detail;
+                    let value = 0;
+
+                    if (payload == null) {
+                        value = 0;
+                    } else if (typeof payload === 'number') {
+                        value = payload;
+                    } else if (typeof payload === 'string') {
+                        value = parseInt(payload, 10) || 0;
+                    } else if (Array.isArray(payload)) {
+                        value = payload.reduce((sum, item) => {
+                            const q = item.qty ?? item.quantity ?? item[1] ?? 0;
+                            return sum + (parseInt(q, 10) || 0);
+                        }, 0);
+                    } else if (typeof payload === 'object') {
+                        value = Object.values(payload).reduce((sum, v) => sum + (parseInt(v, 10) || 0), 0);
                     }
 
                     el.textContent = String(value || 0);
-                    if (value > 0) {
-                        el.classList.remove('hidden');
-                    } else {
-                        el.classList.add('hidden');
-                    }
+                    if (value > 0) el.classList.remove('hidden'); else el.classList.add('hidden');
                 } catch (e) {
                     console.warn('Failed to update cart count', e);
                 }
             });
+
             // Grab CSRF token from cookie
             function getCookie(name) {
                 let cookieValue = null;
                 if (document.cookie && document.cookie !== '') {
-                const cookies = document.cookie.split(';');
-                for (let i = 0; i < cookies.length; i++) {
-                    const cookie = cookies[i].trim();
-                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                    break;
+                    const cookies = document.cookie.split(';');
+                    for (let i = 0; i < cookies.length; i++) {
+                        const cookie = cookies[i].trim();
+                        if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                            break;
+                        }
                     }
-                }
                 }
                 return cookieValue;
             }
