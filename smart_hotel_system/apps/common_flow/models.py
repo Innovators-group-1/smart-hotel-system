@@ -159,10 +159,7 @@ class Table(models.Model):
 class Order(models.Model):
     class OrderStatus(models.TextChoices):
         PENDING = 'PENDING', _('Pending')
-<<<<<<< HEAD
         SENT_TO_KITCHEN = 'SENT_TO_KITCHEN', _('Sent to Kitchen')
-=======
->>>>>>> 5d212530f9bf7b048452dd201ccf8ae175c88f13
         IN_PROGRESS = 'IN_PROGRESS', _('In Progress')
         COMPLETED = 'COMPLETED', _('Completed')
         CANCELLED = 'CANCELLED', _('Cancelled')

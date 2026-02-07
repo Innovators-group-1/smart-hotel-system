@@ -219,82 +219,9 @@ def cart_view(request):
             total += subtotal
             cart_items.append({'item': item, 'quantity': quantity, 'subtotal': subtotal})
 
-<<<<<<< HEAD
-        context = {'cart_items': cart_items, 'total': total}
-        return render(request, 'client_templates/cart.html', context)
 
-def update_cart(request, item_id):
-    with schema_context(request.tenant.schema_name):
-        if request.method == "POST":
-            action = request.POST.get("action")
-            cart = request.session.get("cart", {})
-
-            # Ensure item exists in cart
-            if str(item_id) in cart:
-                if action == "increase":
-                    cart[str(item_id)] += 1
-                elif action == "decrease":
-                    cart[str(item_id)] -= 1
-                    # Remove if quantity drops to 0
-                    if cart[str(item_id)] <= 0:
-                        cart.pop(str(item_id))
-
-            request.session["cart"] = cart
-            request.session.modified = True
-
-        # Build updated cart context
-        cart_items = []
-        total = 0
-        for item_id, quantity in cart.items():
-            menu_item = get_object_or_404(MenuItem, pk=item_id)
-            subtotal = float(menu_item.price) * quantity
-            total += subtotal
-            cart_items.append({
-                "item": menu_item,
-                "quantity": quantity,
-                "subtotal": subtotal,
-            })
-
-        # Return partial for HTMX swap
-        return render(request, "client_templates/menu/partials/cart_section.html", {
-            "cart_items": cart_items,
-            "total": total,
-        })
-
-def remove_from_cart(request, item_id):
-    with schema_context(request.tenant.schema_name):
-        cart = request.session.get("cart", {})
-
-        # Remove the item if it exists
-        if str(item_id) in cart:
-            cart.pop(str(item_id))
-
-        request.session["cart"] = cart
-        request.session.modified = True
-
-        # Build updated cart context
-        cart_items = []
-        total = 0
-        for item_id, quantity in cart.items():
-            menu_item = get_object_or_404(MenuItem, pk=item_id)
-            subtotal = float(menu_item.price) * quantity
-            total += subtotal
-            cart_items.append({
-                "item": menu_item,
-                "quantity": quantity,
-                "subtotal": subtotal,
-            })
-
-        # Return partial for HTMX swap
-        return render(request, "client_templates/menu/partials/cart_section.html", {
-            "cart_items": cart_items,
-            "total": total,
-        })
-
-=======
     context = {'cart_items': cart_items, 'total': total}
     return render(request, 'client_templates/cart.html', context)
->>>>>>> 5d212530f9bf7b048452dd201ccf8ae175c88f13
 def seat_selector_view(request):
     with schema_context(request.tenant.schema_name):
         table_number = request.session.get('table_number')
@@ -312,21 +239,6 @@ def set_seat_view(request):
         return redirect('client_flow:checkout')
 
 def checkout_view(request):
-<<<<<<< HEAD
-    with schema_context(request.tenant.schema_name):
-        # 1 Get cart from session
-        cart = request.session.get('cart', {})
-        if not cart:
-            messages.warning(request, "Your cart is empty.")
-            return redirect('client_flow:menu_redirect')
-        # 2 Retrieve MenuItem objects and calculate totals
-        item_ids = [int(i) for i in cart.keys()]
-        print(item_ids)
-        items = MenuItem.objects.filter(menu_item_id__in=item_ids)
-        cart_items = []
-        total = 0
-
-=======
     # 1 Get cart from session
     cart = request.session.get('cart', {})
     if not cart:
@@ -386,7 +298,6 @@ def checkout_view(request):
         )
 
         # Create OrderItems
->>>>>>> 5d212530f9bf7b048452dd201ccf8ae175c88f13
         for item in items:
             quantity = cart[str(item.menu_item_id)]
             subtotal = item.price * quantity
@@ -450,73 +361,6 @@ def checkout_view(request):
                 special_requests=request.POST.get('special_requests', ''),
             )
 
-<<<<<<< HEAD
-            # Create OrderItems
-            for item in items:
-                quantity = cart[str(item.pk)]
-                subtotal = item.price * quantity
-
-                OrderItem.objects.create(
-                    order=order,
-                    menu_item=item,
-                    quantity=quantity,
-                    total_price=subtotal,
-                )
-
-            if payment_method == 'cash':
-                request.session['cart'] = {}
-                return redirect('client_flow:order_confirmation', order_id=order.order_id)
-            # simulate STK Push for M-Pesa payments
-            if payment_method == 'express':
-                # Create PaymentIndex record
-                index_record = PaymentIndex.objects.create(
-                    tenant=request.tenant,
-                    order_ref=order.pk,
-                    account_reference=account_number,
-                )
-                # Simulate sending payment request to gateway here
-                payload, headers = create_stk_push_payload(
-                    amount=total,
-                    phone_number=account_number,
-                    account_reference=payment_reference,
-                    transaction_desc="Hotel Order Payment"
-                )
-                # Send the STK Push request to M-Pesa
-                response = requests.post(
-                    'https://sandbox.safaricom.co.ke/mpesa/stkpush/v1/processrequest',
-                    json=payload,
-                    headers=headers
-                )
-                if response.status_code == 200:
-                    response_data = response.json()
-                    if response_data.get('ResponseCode') == '0':
-                        request.session['cart'] = {}
-                        index_record.checkout_request_id = response_data.get('CheckoutRequestID')
-                        index_record.merchant_request_id = response_data.get('MerchantRequestID')
-                        index_record.save()
-                        if request.headers.get('HX-Request'):
-                            http_response = HttpResponse()
-                            http_response['HX-Redirect'] = reverse('client_flow:order_confirmation', args=[order.order_id])
-                            return http_response 
-                        return redirect('client_flow:order_confirmation', order_id=order.order_id)
-                    else:
-                        return JsonResponse({
-                            "html": "<div class='bg-red-100 text-red-700 p-3 rounded'>Payment failed: insufficient balance</div>"
-                        })
-                else:
-                    return JsonResponse({
-                        "html": "<div class='bg-red-100 text-red-700 p-3 rounded'>Payment request failed. Please try again.</div>"
-                    })
-                    
-                
-            #  Clear cart
-            request.session['cart'] = {}
-            messages.success(request, f"Order confirmed! Payment reference: {payment_reference}")
-
-        # Render checkout page with cart items and total
-        context = {'cart_items': cart_items, 'total': total}
-        return render(request, 'client_templates/checkout.html', context)
-=======
         if payment_method == 'cash':
             request.session['cart'] = {}
             return redirect('client_flow:order_confirmation', order_id=order.order_id)
@@ -530,7 +374,7 @@ def checkout_view(request):
     # Render checkout page with cart items and total
     context = {'cart_items': cart_items, 'total': total}
     return render(request, 'client_templates/checkout.html', context)
->>>>>>> 5d212530f9bf7b048452dd201ccf8ae175c88f13
+
 
 def mpesa_checkout_view(request):
     cart = request.session.get('cart', {})
@@ -679,9 +523,7 @@ def order_tracking_view(request, order_id):
             'progress': progress
         })
 
-<<<<<<< HEAD
 
-=======
     return render(request, 'client_templates/order_tracking.html', {
         'order': order,
         'order_items': order_items,
@@ -689,7 +531,6 @@ def order_tracking_view(request, order_id):
         'item_count': item_count,
         'progress': progress
     })
->>>>>>> 5d212530f9bf7b048452dd201ccf8ae175c88f13
 def menu_filter_view(request, category_id):
     with schema_context(request.tenant.schema_name):
         menu_items = MenuItem.objects.filter(category_id=category_id)
