@@ -43,3 +43,4 @@ jobs:
         #   run: |
         #     cd frontend
         #     npm test
+        # pip freeze > requirements.txt
