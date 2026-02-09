@@ -32,8 +32,8 @@
 </div>
 
 <!-- Success Modal -->
-<div id="success-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
-  <div class="bg-white rounded-2xl shadow-2xl max-w-lg mx-4 p-8 relative">
+<div id="success-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50" onclick="closeModal()">
+  <div class="bg-white rounded-2xl shadow-2xl max-w-lg mx-4 p-8 relative" onclick="event.stopPropagation()">
     <button onclick="closeModal()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600">
       <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
@@ -51,19 +51,21 @@
       <div class="text-sm text-gray-700 space-y-1">
         <p><span class="font-medium">Order ID:</span> {{ order.order_id }}</p>
         <p><span class="font-medium">Table:</span> {{ order.table }}</p>
-        <p><span class="font-medium">Total:</span> KSH {{ order.total_price|floatformat:2 }}</p>
+        <p><span class="font-medium">Total:</span> KSH {{ total_price|floatformat:2 }}</p>
       </div>
     </div>
 
     <div class="space-y-3">
+      
       <a href="{% url 'client_flow:order_tracking' order.order_id %}"
-         class="w-full block text-center bg-orange-500 hover:bg-orange-600 text-white font-semibold py-3 px-6 rounded-xl transition duration-300">
-        Proceed to Order Tracking
-      </a>
-      <a href="{% url 'client_flow:menu_redirect' %}"
-         class="w-full block text-center text-gray-600 hover:text-gray-800 font-medium py-2">
-        ← Back to Menu
-      </a>
+     class="w-full block text-center bg-orange-500 hover:bg-orange-600 text-white font-semibold py-3 px-6 rounded-xl transition duration-300">
+    Proceed to Order Tracking
+  </a>
+  
+  <a href="{% url 'client_flow:menu_redirect' %}"
+     class="w-full block text-center text-gray-600 hover:text-gray-800 font-medium py-2">
+    ← Back to Menu
+  </a>
     </div>
   </div>
 </div>
@@ -71,26 +73,29 @@
 <script>
 function showSuccessModal() {
   const modal = document.getElementById('success-modal');
-  modal.classList.remove('hidden');
-  modal.classList.add('flex');
+  if (modal && modal.classList.contains('hidden')) {
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
 
-  // Trigger confetti
-  confetti({
-    particleCount: 100,
-    spread: 70,
-    origin: { y: 0.6 }
-  });
+    // Trigger confetti
+    if (typeof confetti === 'function') {
+      confetti({
+        particleCount: 100,
+        spread: 70,
+        origin: { y: 0.6 }
+      });
+    }
+  }
 }
 
-function closeModal() {
-  const modal = document.getElementById('success-modal');
-  modal.classList.add('hidden');
-  modal.classList.remove('flex');
-}
+// Ensure the modal shows up regardless of how the page was reached
+document.addEventListener('DOMContentLoaded', () => {
+  setTimeout(showSuccessModal, 300);
+});
 
-// Auto-show modal on page load
-document.addEventListener('DOMContentLoaded', function() {
-  setTimeout(showSuccessModal, 500); // Small delay for smooth transition
+// If using HTMX to load this page into a container
+document.addEventListener('htmx:afterSettle', () => {
+  setTimeout(showSuccessModal, 300);
 });
 </script>
 {% endblock %}

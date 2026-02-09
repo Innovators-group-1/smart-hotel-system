@@ -19,6 +19,18 @@
         {% endfor %}
     </ul>
 
+    {% if order.status == 'IN_PROGRESS' %}
+    <form
+        hx-post="{% url 'chef_flow:mark_order_ready' order.order_id %}"
+        hx-target="#active_orders_container"
+        hx-swap="innerHTML"
+    >
+        {% csrf_token %}
+        <button class="w-full bg-blue-600 hover:bg-blue-700 py-2 rounded-lg mb-2">
+            Mark as Ready
+        </button>
+    </form>
+    {% elif order.status == 'READY' %}
     <form
         hx-post="{% url 'chef_flow:complete_order' order.order_id %}"
         hx-target="#completed_orders_container"
@@ -26,9 +38,10 @@
     >
         {% csrf_token %}
         <button class="w-full bg-green-600 hover:bg-green-700 py-2 rounded-lg">
-            Mark Order Complete
+            Mark as Served
         </button>
     </form>
+    {% endif %}
 </div>
 {% empty %}
 <p class="text-slate-400">No active orders </p>

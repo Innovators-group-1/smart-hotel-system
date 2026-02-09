@@ -14,7 +14,7 @@ def chef_dashboard(request):
             status=Order.OrderStatus.SENT_TO_KITCHEN
         )
         active_orders = Order.objects.select_related("table").prefetch_related("order_items__menu_item").filter(
-            status=Order.OrderStatus.IN_PROGRESS
+            status__in=[Order.OrderStatus.IN_PROGRESS, Order.OrderStatus.READY]
         )
 
         completed_orders = Order.objects.select_related("table").prefetch_related("order_items__menu_item").filter(
@@ -94,6 +94,29 @@ def complete_order(request, order_id):
         "chef_templates/partials/completed_orders.html",
         {"completed_orders": completed_orders}
     )
+
+def mark_order_ready(request, order_id):
+    """
+    Marks order as READY for pickup (HTMX).
+    """
+    with schema_context(request.tenant.schema_name):
+        order = get_object_or_404(Order, order_id=order_id)
+        if order.status == Order.OrderStatus.IN_PROGRESS:
+            order.status = Order.OrderStatus.READY
+            order.save()
+
+        # Return updated active orders (orders that are still IN_PROGRESS or READY)
+        active_orders = Order.objects.select_related(
+            "table"
+        ).prefetch_related("order_items__menu_item").filter(
+            status__in=[Order.OrderStatus.IN_PROGRESS, Order.OrderStatus.READY]
+        )
+        context = {"active_orders": active_orders}
+        return render(
+            request,
+            "chef_templates/partials/active_orders.html",
+            context
+        )
 def active_orders_partial(request):
     """
     Returns the active orders partial for HTMX.
@@ -101,7 +124,9 @@ def active_orders_partial(request):
     with schema_context(request.tenant.schema_name):
         active_orders = Order.objects.select_related(
             "table"
-        ).prefetch_related("order_items__menu_item").filter(status=Order.OrderStatus.IN_PROGRESS)
+        ).prefetch_related("order_items__menu_item").filter(
+            status__in=[Order.OrderStatus.IN_PROGRESS, Order.OrderStatus.READY]
+        )
 
     return render(
         request,

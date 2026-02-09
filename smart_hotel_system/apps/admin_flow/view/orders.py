@@ -129,13 +129,15 @@ def verify_payment(request, order_id):
     if order.payment_method == Order.PaymentMethod.CASH:
         if order.payment_status != Order.PaymentStatus.PAID:
             order.payment_status = Order.PaymentStatus.PAID
-            order.save(update_fields=['payment_status'])
+            # Automatically send to kitchen when payment is verified
+            order.status = Order.OrderStatus.SENT_TO_KITCHEN
+            order.save(update_fields=['payment_status', 'status'])
             return HttpResponse(
                 status=204,
                 headers={
                     "HX-Trigger": json.dumps({
                         "toast-success": {
-                            "message": "Cash payment verified successfully."
+                            "message": "Cash payment verified and order sent to kitchen."
                         }
                     })
                 }
@@ -176,13 +178,15 @@ def confirm_payment(request, order_id):
     if order.payment_method == Order.PaymentMethod.M_PESA:
         if order.payment_status != Order.PaymentStatus.PAID:
             order.payment_status = Order.PaymentStatus.PAID
-            order.save(update_fields=['payment_status'])
+            # Automatically send to kitchen when payment is verified
+            order.status = Order.OrderStatus.SENT_TO_KITCHEN
+            order.save(update_fields=['payment_status', 'status'])
             return HttpResponse(
                 status=204,
                 headers={
                     "HX-Trigger": json.dumps({
                         "toast-success": {
-                            "message": "M-Pesa payment confirmed successfully."
+                            "message": "M-Pesa payment confirmed and order sent to kitchen."
                         }
                     })
                 }
