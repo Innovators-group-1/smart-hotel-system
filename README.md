@@ -44,14 +44,15 @@ It enables customers to easily scan a QR code at their table, explore the menu, 
 ## 🛠️ Tech Stack
 
 - **Backend:** Django (Python)
-- **Frontend:** Django Templates, HTML5, CSS3, JavaScript
-- **Database:** Supabase
+- **Frontend:** Django Templates, HTML5, CSS3, JavaScript, HTMX
+- **Database:** Postgres
 - **Version Control:** Git & GitHub
-- **Deployment:** (To be added later: Render / Railway / Heroku / AWS)
+-** Containerization:** Docker
+- **Deployment:** Control PLane
 
 ---
 
 ## 🤝 Team Collaboration
 
-This project is developed collaboratively by a team of 7 members.  
+This project is developed collaboratively by a team of 2 members.  
 Each developer works on separate feature branches following the structure:
