@@ -1,48 +1,69 @@
-# Build the CSS tailwind using node
+############################
+# 1️⃣ FRONTEND BUILD STAGE
+############################
 FROM node:20-slim AS frontend
-# set the working dir
+
 WORKDIR /app
-# copy dependencies to allow caching
+
 COPY smart_hotel_system/package.json smart_hotel_system/package-lock.json ./
-# install dependencies
 RUN npm ci
-# copy the tailwind source files
+
 COPY smart_hotel_system/static ./static
 COPY smart_hotel_system/tailwind.config.js smart_hotel_system/postcss.config.js ./
-# build the css using tailwind script
+
 RUN npm run tailwind:build
 
 
+############################
+# 2️⃣ BACKEND STAGE
+############################
+FROM python:3.11-slim
 
-# Build the Django app that serves the frontend
-FROM python:3.11-slim AS backend
-# Environment variables
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 ENV PYTHONPATH=/app:$PYTHONPATH
-# setting up the working directory
+
 WORKDIR /app
+
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
     curl \
     postgresql-client \
+    libpq-dev \
+    build-essential \
     && rm -rf /var/lib/apt/lists/*
-# Copy dependencies to allow caching
-COPY smart_hotel_system/requirements.txt ./requirements.txt
-# install dependencies
-ENV PIP_DEFAULT_TIMEOUT=100
+
+# Install Python dependencies
+COPY smart_hotel_system/requirements.txt .
+RUN pip install --upgrade pip
 RUN pip install -r requirements.txt
-# Copy the Django application files
-COPY smart_hotel_system/ ./
-# copy the built css from the frontend stage
+
+# Copy app
+COPY smart_hotel_system/ .
+
+# Copy built CSS
 COPY --from=frontend /app/static/dist ./static/dist
-# collect static files
+
+# Collect static files
 RUN python manage.py collectstatic --noinput
-# expose the port
-EXPOSE 8000
-# Security: run as non-root
+
+# Create non-root user
 RUN groupadd -r appgroup && useradd -r -g appgroup appuser && \
     chown -R appuser:appgroup /app
+
 USER appuser
-# run the server
-CMD ["gunicorn", "--chdir", "/app", "smart_hotel_system.wsgi:application", "--bind", "0.0.0.0:8000", "--workers", "3", "--timeout", "120"]
+
+############################
+# ENTRYPOINT (MIGRATIONS)
+############################
+COPY smart_hotel_system/entrypoint.sh /entrypoint.sh
+USER root
+RUN chmod +x /entrypoint.sh
+USER appuser
+
+EXPOSE 8000
+
+ENTRYPOINT ["/entrypoint.sh"]
+
+CMD ["gunicorn","smart_hotel_system.wsgi:application","--bind", "0.0.0.0:8000","--workers", "3","--timeout", "120","--access-logfile", "-","--error-logfile", "-"
+]
