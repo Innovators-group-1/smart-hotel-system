@@ -1,0 +1,39 @@
+# Git
+.git
+.gitignore
+
+# Python / Django
+__pycache__/
+*.py[cod]
+*$py.class
+.env
+.venv
+env/
+venv/
+ENV/
+db.sqlite3
+media/
+staticfiles/
+
+# App-specific (Client/Admin)
+# Exclude local test logs or temporary assets
+apps/*/tests/logs/
+
+# Docker
+Dockerfile
+docker-compose.yml
+.dockerignore
+
+# IDEs and OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Build tools / Node (if applicable to your client app)
+node_modules/
+npm-debug.log
+__pycache__
+*.pyc
+*.pyo
+*.pyd

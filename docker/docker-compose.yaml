@@ -1,0 +1,49 @@
+services:
+  web:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    command: gunicorn smart_hotel_system.wsgi:application --bind 0.0.0.0:8000 --workers 3 --timeout 120
+    container_name: smart_hotel_web
+    ports:
+      - "8000:8000"
+    volumes:
+      # - ./smart_hotel_system:/app
+      - static_volume:/app/staticfiles
+      - media_volume:/app/media
+    env_file:
+      - ../smart_hotel_system/.env
+    environment:
+      - DJANGO_SETTINGS_MODULE=smart_hotel_system.settings
+    restart: unless-stopped
+    depends_on:
+      - db
+    networks: 
+        - smart_hotel_network
+
+  # Local PostgreSQL database service
+  db:
+    image: postgres:15-alpine
+    container_name: smart_hotel_db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_DB=${DB_NAME:-smarthotel}
+      - POSTGRES_USER=${DB_USER:-postgres}
+      - POSTGRES_PASSWORD=${DB_PASSWORD:-postgres}
+    ports:
+      - "5432:5432"
+    restart: unless-stopped
+    networks:
+      - smart_hotel_network
+
+  
+
+volumes:
+  postgres_data:
+  static_volume:
+  media_volume:
+
+networks: 
+  smart_hotel_network:
+    driver: bridge
