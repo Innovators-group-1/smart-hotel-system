@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: smart-hotel-config
+data:
+  # Database configuration
+  DB_NAME: smarthotel
+  DB_USER: postgres
+  DB_PASSWORD: postgres
+  DB_HOST: smart-hotel-db
+  DB_PORT: "5432"
+  # Django settings
+  DJANGO_SETTINGS_MODULE: smart_hotel_system.settings
+  # Allowed hosts for Django
+  ALLOWED_HOSTS: "*.localhost,*.yourdomain.com,localhost,127.0.0.1"
+  
+

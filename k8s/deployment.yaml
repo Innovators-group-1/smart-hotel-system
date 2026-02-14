@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: smart-hotel-deployment
+  lebels:
+    app: smart-hotel
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: smart-hotel
+  template:
+    metadata:
+      labels:
+        app: smart-hotel
+    spec:
+      containers:
+        - name: smart-hotel-container
+          image: smart-hotel:latest
+          ports:
+            - containerPort: 8000
+          env:
+            - name: DJANGO_SETTINGS_MODULE
+              value: "smart_hotel_system.settings"
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+          resources:
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+            requests:
+              memory: "256Mi"
+              cpu: "250m"
+          readinessProbe:
+            httpGet:
+              path: /health/
+              port: 8000      
+            initialDelaySeconds: 10
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /health/
+              port: 8000
+            initialDelaySeconds: 15
+            periodSeconds: 20
