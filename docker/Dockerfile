@@ -21,7 +21,7 @@ FROM python:3.11-slim
 
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
-ENV PYTHONPATH=/app:$PYTHONPATH
+ENV PYTHONPATH=/app
 
 WORKDIR /app
 
@@ -44,8 +44,7 @@ COPY smart_hotel_system/ .
 # Copy built CSS
 COPY --from=frontend /app/static/dist ./static/dist
 
-# Collect static files
-RUN python manage.py collectstatic --noinput
+
 
 # Create non-root user
 RUN groupadd -r appgroup && useradd -r -g appgroup appuser && \
@@ -65,5 +64,5 @@ EXPOSE 8000
 
 ENTRYPOINT ["/entrypoint.sh"]
 
-CMD ["gunicorn","smart_hotel_system.wsgi:application","--bind", "0.0.0.0:8000","--workers", "3","--timeout", "120","--access-logfile", "-","--error-logfile", "-"
-]
+CMD ["gunicorn","smart_hotel_system.wsgi:application","--bind","0.0.0.0:8000","--workers","3","--timeout","120","--access-logfile","-","--error-logfile","-"]
+

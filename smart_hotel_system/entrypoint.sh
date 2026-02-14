@@ -1,4 +1,6 @@
 #!/bin/sh
+echo "Collecting static files..."
+python manage.py collectstatic --noinput
 
 echo "Running shared migrations..."
 python manage.py migrate_schemas --shared --noinput
