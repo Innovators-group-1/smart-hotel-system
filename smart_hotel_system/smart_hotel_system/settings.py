@@ -127,9 +127,54 @@ STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
+
 # ============================================================
 # PASSWORD VALIDATION
 # ============================================================
+
+
+WSGI_APPLICATION = 'smart_hotel_system.wsgi.application'
+
+ASGI_APPLICATION = 'smart_hotel_system.asgi.application'
+
+
+# Database
+# https://docs.djangoproject.com/en/5.2/ref/settings/#databases
+# Configure my postgresql with django-tenants settings here
+# Add these at the top of your settings.py
+import os
+from dotenv import load_dotenv
+from urllib.parse import urlparse, parse_qsl
+
+load_dotenv()
+
+# Parse the DATABASE_URL environment variable
+tmpPostgres = urlparse(os.getenv("DATABASE_URL"))
+
+DATABASES = {
+    'default': {
+        'ENGINE': 'django_tenants.postgresql_backend',
+        'NAME': tmpPostgres.path.replace('/', ''),
+        'USER': tmpPostgres.username,
+        'PASSWORD': tmpPostgres.password,
+        'HOST': tmpPostgres.hostname,
+        'PORT': 5432,
+        'OPTIONS': dict(parse_qsl(tmpPostgres.query)),
+    }
+}
+
+# Database router for django-tenants
+DATABASE_ROUTERS = (
+    'django_tenants.routers.TenantSyncRouter',
+)
+
+# Tenant settings for django-tenants
+TENANT_MODEL = "platform_admin_flow.HotelTenant"  # app.Model
+TENANT_DOMAIN_MODEL = "platform_admin_flow.HotelDomain"  # app.Model
+
+
+# Password validation
+# https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
 
 AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},

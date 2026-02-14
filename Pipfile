@@ -13,6 +13,7 @@ python-dotenv = "*"
 pillow = "*"
 django-extensions = "*"
 requests = "*"
+whitenoise = "*"
 
 [dev-packages]
 
