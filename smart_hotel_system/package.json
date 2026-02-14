@@ -2,9 +2,9 @@
   "name": "smart-hotel-system",
   "version": "1.0.0",
   "scripts": {
-    "tailwind:build": "tailwindcss -i ./input.css -o ./static/dist/output.css",
-    "tailwind:watch": "tailwindcss -i ./input.css -o ./static/dist/output.css --watch"
-  },
+  "tailwind:build": "tailwindcss -i ./static/src/input.css -o ./static/dist/output.css",
+  "tailwind:watch": "tailwindcss -i ./static/src/input.css -o ./static/dist/output.css --watch"
+},
   "devDependencies": {
     "@tailwindcss/container-queries": "^0.1.1",
     "@tailwindcss/forms": "^0.5.7",
