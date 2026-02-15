@@ -1,27 +1,21 @@
-"""
-URL configuration for smart_hotel_system project.
 
-The `urlpatterns` list routes URLs to views. For more information please see:
-    https://docs.djangoproject.com/en/5.2/topics/http/urls/
-Examples:
-Function views
-    1. Add an import:  from my_app import views
-    2. Add a URL to urlpatterns:  path('', views.home, name='home')
-Class-based views
-    1. Add an import:  from other_app.views import Home
-    2. Add a URL to urlpatterns:  path('', Home.as_view(), name='home')
-Including another URLconf
-    1. Import the include() function: from django.urls import include, path
-    2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
-"""
+"""smart_hotel_system URL Configuration"""
 from django.contrib import admin
 from django.urls import path, include, re_path
 from django.conf import settings
 from django.conf.urls.static import static
 from django.http import JsonResponse
+from django.views.decorators.cache import never_cache
+
+# Health check view that doesn't require tenant context
+@never_cache
+def health_check(request):
+    """Simple health check that doesn't require tenant context"""
+    return JsonResponse({"status": "ok"}, status=200)
 
 urlpatterns = [
     # Respond to Chrome DevTools `.well-known` probe to avoid noisy 404s during development
+    path('health/', health_check, name='health'),
     re_path(r'^\.well-known/appspecific/com\.chrome\.devtools\.json$', lambda req: JsonResponse({}, status=200)),
     path('admin/', admin.site.urls),
     path('platform/', include('apps.platform_admin_flow.urls', namespace='platform_admin_flow')),
