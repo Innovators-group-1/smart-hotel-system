@@ -10,13 +10,25 @@ from django.views.decorators.cache import never_cache
 # Health check view that doesn't require tenant context
 @never_cache
 def health_check(request):
-    """Simple health check that doesn't require tenant context"""
-    return JsonResponse({"status": "ok"}, status=200)
+    """Health check endpoint for Control Plane"""
+    return JsonResponse({
+        "status": "healthy",
+        "service": "quickdine"
+    }, status=200)
+
+@never_cache
+def root_view(request):
+    """Root endpoint - redirect or info page"""
+    return JsonResponse({
+        "message": "QuickDine Multi-Tenant Platform",
+        "status": "running"
+    }, status=200)
 
 urlpatterns = [
     # Respond to Chrome DevTools `.well-known` probe to avoid noisy 404s during development
-    path('health/', health_check, name='health'),
     re_path(r'^\.well-known/appspecific/com\.chrome\.devtools\.json$', lambda req: JsonResponse({}, status=200)),
+    path('health/', health_check, name='health'),
+    path('', root_view, name='root'),
     path('admin/', admin.site.urls),
     path('platform/', include('apps.platform_admin_flow.urls', namespace='platform_admin_flow')),
     path('chef_dashboard/', include('apps.chef_flow.urls', namespace='chef_dashboard')),
