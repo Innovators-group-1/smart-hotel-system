@@ -49,7 +49,7 @@ COPY smart_hotel_system/ .
 COPY --from=frontend /app/static/dist ./static/dist
 
 # Copy and setup entrypoint script (do this as root)
-COPY smart_hotel_system/entrypoint.sh /entrypoint.sh
+COPY smart_hotel_system/smart_hotel_system/entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
 # Create directories for static and media files
