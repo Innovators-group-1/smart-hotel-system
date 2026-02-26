@@ -1,5 +1,5 @@
 from django.core.management.base import BaseCommand
-from django.db import connection
+from django.db import connection, transaction
 from apps.platform_admin_flow.models import HotelTenant, HotelDomain
 from datetime import datetime, timedelta
 
@@ -20,6 +20,127 @@ class Command(BaseCommand):
             help='Run in interactive mode to create multiple tenants',
         )
 
+    def create_postgres_schema(self, schema_name):
+        """Create PostgreSQL schema if it doesn't exist"""
+        with connection.cursor() as cursor:
+            try:
+                cursor.execute(f'CREATE SCHEMA IF NOT EXISTS "{schema_name}"')
+                self.stdout.write(self.style.SUCCESS(f'✅ Created PostgreSQL schema: {schema_name}'))
+                return True
+            except Exception as e:
+                self.stdout.write(self.style.ERROR(f'❌ Failed to create schema {schema_name}: {e}'))
+                return False
+
+    def migrate_tenant_schema(self, schema_name):
+        """Run migrations for a specific tenant schema with guaranteed clean state"""
+        from django.core.management import call_command
+        from io import StringIO
+        
+        try:
+            self.stdout.write(f'🔄 Running migrations for schema: {schema_name}...')
+            
+            # CRITICAL FIX: Drop and recreate schema to ensure clean state
+            # This prevents duplicate key errors from partial migrations
+            with connection.cursor() as cursor:
+                cursor.execute(f'DROP SCHEMA IF EXISTS "{schema_name}" CASCADE')
+                cursor.execute(f'CREATE SCHEMA "{schema_name}"')
+                self.stdout.write(f'   🧹 Ensured clean schema')
+            
+            # Capture migration output
+            migration_output = StringIO()
+            
+            # Run migrations
+            call_command(
+                'migrate_schemas', 
+                schema=schema_name, 
+                verbosity=1,
+                stdout=migration_output,
+                stderr=migration_output
+            )
+            
+            # Show condensed migration output
+            output = migration_output.getvalue()
+            if output:
+                lines = [l.strip() for l in output.split('\n') if l.strip()]
+                # Show only important lines
+                for line in lines[-5:]:  # Last 5 lines usually show completion
+                    self.stdout.write(f'   {line}')
+            
+            self.stdout.write(self.style.SUCCESS(f'✅ Migrated schema: {schema_name}'))
+            return True
+            
+        except Exception as e:
+            self.stdout.write(self.style.ERROR(f'❌ Migration failed for {schema_name}'))
+            error_msg = str(e)
+            # Show first 300 chars of error
+            self.stdout.write(self.style.ERROR(f'   Error: {error_msg[:300]}'))
+            
+            # Rollback: Drop the schema
+            self.stdout.write(self.style.WARNING(f'⚠️  Rolling back schema: {schema_name}'))
+            try:
+                with connection.cursor() as cursor:
+                    cursor.execute(f'DROP SCHEMA IF EXISTS "{schema_name}" CASCADE')
+                self.stdout.write(self.style.SUCCESS(f'✅ Rolled back schema: {schema_name}'))
+            except Exception as rollback_error:
+                self.stdout.write(self.style.ERROR(f'Failed to rollback: {rollback_error}'))
+            
+            return False
+
+    def create_complete_tenant(self, schema_name, tenant_name, paid_until, domain_name_input):
+        """Create tenant with schema, record, domain, and migrations - all in one"""
+        
+        self.stdout.write(self.style.NOTICE(f'\n🏗️  Creating tenant: {tenant_name}'))
+        
+        # Step 1: Create PostgreSQL schema (will be recreated during migration)
+        if not self.create_postgres_schema(schema_name):
+            return False
+        
+        # Step 2: Create tenant record (with rollback on failure)
+        try:
+            with transaction.atomic():
+                tenant = HotelTenant.objects.create(
+                    schema_name=schema_name,
+                    name=tenant_name,
+                    paid_until=paid_until,
+                )
+                self.stdout.write(self.style.SUCCESS(f'✅ Created tenant record: {tenant.name}'))
+                
+                # Create domain
+                domain = HotelDomain.objects.create(
+                    domain=domain_name_input,
+                    tenant=tenant,
+                    is_primary=True,
+                )
+                self.stdout.write(self.style.SUCCESS(f'✅ Created domain: {domain.domain}'))
+                
+        except Exception as e:
+            self.stdout.write(self.style.ERROR(f'❌ Error creating tenant record: {e}'))
+            # Rollback: Drop schema
+            with connection.cursor() as cursor:
+                cursor.execute(f'DROP SCHEMA IF EXISTS "{schema_name}" CASCADE')
+            self.stdout.write(self.style.WARNING(f'⚠️  Rolled back schema: {schema_name}'))
+            return False
+        
+        # Step 3: Run migrations (schema will be cleaned and recreated inside this method)
+        if not self.migrate_tenant_schema(schema_name):
+            # Delete tenant and domain records if migration fails
+            self.stdout.write(self.style.WARNING(f'⚠️  Cleaning up tenant records for {schema_name}'))
+            HotelTenant.objects.filter(schema_name=schema_name).delete()
+            return False
+        
+        # Step 4: Verify tables were created
+        with connection.cursor() as cursor:
+            cursor.execute(f"""
+                SELECT COUNT(*) 
+                FROM information_schema.tables 
+                WHERE table_schema = '{schema_name}'
+            """)
+            table_count = cursor.fetchone()[0]
+            self.stdout.write(f'   📊 Created {table_count} tables')
+        
+        self.stdout.write(self.style.SUCCESS(f'🎉 Successfully created complete tenant: {tenant_name}\n'))
+        return True
+
     def handle(self, *args, **options):
         domain_name = options['domain']
         interactive = options['interactive']
@@ -29,11 +150,14 @@ class Command(BaseCommand):
         # ==========================================
         self.stdout.write(self.style.NOTICE('Setting up public schema...'))
         
+        # Ensure public schema exists
+        self.create_postgres_schema('public')
+        
         public_tenant, created = HotelTenant.objects.get_or_create(
             schema_name='public',
             defaults={
                 'name': 'Platform Admin',
-                'paid_until': '2099-12-31',  # Far future date
+                'paid_until': '2099-12-31',
             }
         )
         
@@ -58,45 +182,16 @@ class Command(BaseCommand):
         # 2. Create Default Production Tenant
         # ==========================================
         if not interactive:
-            self.stdout.write(self.style.NOTICE(f'\nCreating default tenant for domain: {domain_name}'))
-            
-            # Skip if domain is localhost (already handled above)
             if domain_name != 'localhost':
-                tenant, tenant_created = HotelTenant.objects.get_or_create(
-                    schema_name='default',
-                    defaults={
-                        'name': 'Default Hotel',
-                        'paid_until': (datetime.now() + timedelta(days=365)).strftime('%Y-%m-%d'),
-                    }
-                )
-                
-                domain, domain_created = HotelDomain.objects.get_or_create(
-                    domain=domain_name,
-                    defaults={
-                        'tenant': tenant,
-                        'is_primary': True,
-                    }
-                )
-
-                if tenant_created:
-                    self.stdout.write(self.style.SUCCESS(f'✅ Created tenant: {tenant.name}'))
-                    self.stdout.write(self.style.SUCCESS(f'   Schema: {tenant.schema_name}'))
+                # Check if default tenant already exists
+                if HotelTenant.objects.filter(schema_name='default').exists():
+                    self.stdout.write(self.style.WARNING('⚠️  Default tenant already exists'))
                 else:
-                    self.stdout.write(self.style.WARNING(f'⚠️  Tenant already exists: {tenant.name}'))
-                
-                if domain_created:
-                    self.stdout.write(self.style.SUCCESS(f'✅ Created domain: {domain_name}'))
-                else:
-                    # Update domain if it exists but points to different tenant
-                    if domain.tenant != tenant:
-                        domain.tenant = tenant
-                        domain.save()
-                        self.stdout.write(self.style.SUCCESS(f'✅ Updated domain to point to {tenant.name}'))
-                    else:
-                        self.stdout.write(self.style.WARNING(f'⚠️  Domain already exists: {domain_name}'))
+                    paid_until = (datetime.now() + timedelta(days=365)).strftime('%Y-%m-%d')
+                    self.create_complete_tenant('default', 'Default Hotel', paid_until, domain_name)
 
         # ==========================================
-        # 3. Interactive Mode (for local development)
+        # 3. Interactive Mode
         # ==========================================
         if interactive:
             self.stdout.write(self.style.NOTICE('\n' + '='*50))
@@ -106,66 +201,49 @@ class Command(BaseCommand):
             while True:
                 self.stdout.write(self.style.NOTICE("Creating a new tenant..."))
 
-                # Get schema name
-                schema_name = input('Enter schema name (e.g., "calvidas_hotel") or "exit" to stop: ').strip()
+                schema_name = input('Enter schema name or "exit": ').strip()
                 if schema_name.lower() == 'exit':
                     break
                 
-                # Validate schema name
                 if not schema_name or ' ' in schema_name:
-                    self.stdout.write(self.style.ERROR('Schema name cannot be empty or contain spaces.'))
+                    self.stdout.write(self.style.ERROR('Invalid schema name.'))
                     continue
                 
-                # Check if schema already exists
                 if HotelTenant.objects.filter(schema_name=schema_name).exists():
-                    self.stdout.write(self.style.ERROR(f'Tenant with schema "{schema_name}" already exists.'))
+                    self.stdout.write(self.style.ERROR(f'Tenant "{schema_name}" already exists.'))
                     continue
                 
-                # Get tenant name
-                tenant_name = input('Enter tenant name (e.g., "Calvidas Hotel"): ').strip()
+                tenant_name = input('Enter tenant name: ').strip()
                 if not tenant_name:
-                    self.stdout.write(self.style.ERROR('Tenant name cannot be empty.'))
+                    self.stdout.write(self.style.ERROR('Tenant name required.'))
                     continue
                 
-                # Get paid until date
-                paid_until = input('Enter paid until date (YYYY-MM-DD, default: 1 year): ').strip()
+                paid_until = input('Paid until (YYYY-MM-DD, default 1 year): ').strip()
                 if not paid_until:
                     paid_until = (datetime.now() + timedelta(days=365)).strftime('%Y-%m-%d')
                 
-                # Get domain name
-                domain_name_input = input(f'Enter domain name (e.g., "{schema_name}.localhost"): ').strip()
+                domain_name_input = input(f'Domain (e.g., {schema_name}.localhost): ').strip()
                 if not domain_name_input:
-                    self.stdout.write(self.style.ERROR('Domain name cannot be empty.'))
+                    self.stdout.write(self.style.ERROR('Domain required.'))
                     continue
                 
-                # Check if domain already exists
                 if HotelDomain.objects.filter(domain=domain_name_input).exists():
-                    self.stdout.write(self.style.ERROR(f'Domain "{domain_name_input}" already exists.'))
+                    self.stdout.write(self.style.ERROR(f'Domain "{domain_name_input}" exists.'))
                     continue
 
-                # Create tenant
-                try:
-                    tenant = HotelTenant.objects.create(
-                        schema_name=schema_name,
-                        name=tenant_name,
-                        paid_until=paid_until,
-                    )
-                    self.stdout.write(self.style.SUCCESS(f'✅ Created tenant: {tenant.name}'))
-                    
-                    # Create domain
-                    domain = HotelDomain.objects.create(
-                        domain=domain_name_input,
-                        tenant=tenant,
-                        is_primary=True,
-                    )
-                    self.stdout.write(self.style.SUCCESS(f'✅ Created domain: {domain.domain}'))
-                    
-                except Exception as e:
-                    self.stdout.write(self.style.ERROR(f'❌ Error creating tenant: {e}'))
+                # Create complete tenant
+                success = self.create_complete_tenant(
+                    schema_name, 
+                    tenant_name, 
+                    paid_until, 
+                    domain_name_input
+                )
+                
+                if not success:
+                    self.stdout.write(self.style.ERROR('❌ Failed. Try again.\n'))
                     continue
 
-                # Ask if they want to create another
-                another = input('\nCreate another tenant? (yes/no): ').strip().lower()
+                another = input('Create another? (yes/no): ').strip().lower()
                 if another not in ['yes', 'y']:
                     break
 
@@ -173,14 +251,35 @@ class Command(BaseCommand):
         # 4. Summary
         # ==========================================
         self.stdout.write(self.style.NOTICE('\n' + '='*50))
-        self.stdout.write(self.style.NOTICE('Tenant Summary'))
+        self.stdout.write(self.style.NOTICE('Final Summary'))
         self.stdout.write(self.style.NOTICE('='*50))
         
+        # Show tenants
         tenants = HotelTenant.objects.all()
         for tenant in tenants:
             domains = HotelDomain.objects.filter(tenant=tenant)
             self.stdout.write(f'\n📦 {tenant.name}')
             self.stdout.write(f'   Schema: {tenant.schema_name}')
             self.stdout.write(f'   Domains: {", ".join([d.domain for d in domains])}')
+        
+        # Show PostgreSQL schemas with table counts
+        self.stdout.write(self.style.NOTICE('\n' + '='*50))
+        self.stdout.write(self.style.NOTICE('PostgreSQL Schemas'))
+        self.stdout.write(self.style.NOTICE('='*50))
+        
+        with connection.cursor() as cursor:
+            cursor.execute("""
+                SELECT 
+                    s.schema_name,
+                    COUNT(t.table_name) as table_count
+                FROM information_schema.schemata s
+                LEFT JOIN information_schema.tables t 
+                    ON s.schema_name = t.table_schema
+                WHERE s.schema_name NOT IN ('information_schema', 'pg_catalog', 'pg_toast')
+                GROUP BY s.schema_name
+                ORDER BY s.schema_name
+            """)
+            for row in cursor.fetchall():
+                self.stdout.write(f'   - {row[0]}: {row[1]} tables')
         
         self.stdout.write(self.style.SUCCESS(f'\n✅ Setup complete! Total tenants: {tenants.count()}'))

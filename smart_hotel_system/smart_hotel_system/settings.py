@@ -46,7 +46,7 @@ SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 # Shared apps (available to all tenants and public schema)
 SHARED_APPS = [
-    'django_tenants',  # Must be first
+    'django_tenants',  
     'django_extensions',
     
     # Django built-in apps
@@ -102,7 +102,7 @@ MIDDLEWARE = [
 # ===============================
 
 # Public schema uses this URL config (for tenant creation, health checks, etc.)
-PUBLIC_SCHEMA_URLCONF = 'smart_hotel_system.urls'
+PUBLIC_SCHEMA_URLCONF = 'smart_hotel_system.public_urls'
 
 # Tenant schemas use this URL config
 ROOT_URLCONF = 'smart_hotel_system.urls'
@@ -152,9 +152,13 @@ DATABASES = {
         'OPTIONS': {
             'sslmode': 'require',
             'connect_timeout': 10,
+            # Fix for Neon pooling issues with django-tenants
+            'options': '-c statement_timeout=30000',
         },
-        'CONN_MAX_AGE': 0,  # Don't pool connections (Neon has its own pooler)
-        'CONN_HEALTH_CHECKS': True,
+        # CRITICAL: These settings prevent connection pooling issues
+        'CONN_MAX_AGE': 0,  # Don't reuse connections
+        'CONN_HEALTH_CHECKS': True,  # Check connection health
+        'DISABLE_SERVER_SIDE_CURSORS': True,  # Avoid cursor issues with pooling
     }
 }
 
