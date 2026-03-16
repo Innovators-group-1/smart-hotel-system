@@ -35,12 +35,12 @@ def orders_search(request):
     try:
         query = request.GET.get('q', '')
         page_number = request.GET.get('page', 1)
-        orders = Order.objects.annotate(total=Sum('order_items__total_price')).filter(
+        orders = Order.objects.annotate(order_total=Sum('order_items__total_price')).filter(
             Q(table__number__icontains=query) |
             Q(order_items__menu_item__title__icontains=query) |
             Q(status__icontains=query)
         ).distinct().order_by('-created_at')
-        paginator = Paginator(orders, 20)
+        paginator = Paginator(orders, 10)
         page_obj = paginator.get_page(page_number)
 
         if is_htmx(request):
@@ -55,10 +55,10 @@ def orders_filter_by_status(request, status):
     try:
         page_number = request.GET.get('page', 1)
         if status in ['PENDING', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED']:
-            orders = Order.objects.annotate(total=Sum('order_items__total_price')).filter(status=status).order_by('-created_at')
+            orders = Order.objects.annotate(order_total=Sum('order_items__total_price')).filter(status=status).order_by('-created_at')
         else:
-            orders = Order.objects.annotate(total=Sum('order_items__total_price')).all().order_by('-created_at')
-        paginator = Paginator(orders, 20)
+            orders = Order.objects.annotate(order_total=Sum('order_items__total_price')).all().order_by('-created_at')
+        paginator = Paginator(orders, 10)
         page_obj = paginator.get_page(page_number)
         if is_htmx(request):
             html = render_to_string('admin_templates/partials/order-partials/order_list_partial.html', {'page_obj': page_obj, 'paginator': paginator})
@@ -72,10 +72,10 @@ def payment_status_filter(request, slug):
     try:
         page_number = request.GET.get('page', 1)
         if slug in ['PAID', 'UNPAID']:
-            orders = Order.objects.annotate(total=Sum('order_items__total_price')).filter(payment_status=slug).order_by('-created_at')
+            orders = Order.objects.annotate(order_total=Sum('order_items__total_price')).filter(payment_status=slug).order_by('-created_at')
         else:
-            orders = Order.objects.annotate(total=Sum('order_items__total_price')).all().order_by('-created_at')
-        paginator = Paginator(orders, 20)
+            orders = Order.objects.annotate(order_total=Sum('order_items__total_price')).all().order_by('-created_at')
+        paginator = Paginator(orders, 10)
         page_obj = paginator.get_page(page_number)
         if is_htmx(request):
             html = render_to_string('admin_templates/partials/order-partials/order_list_partial.html', {'page_obj': page_obj, 'paginator': paginator})
@@ -88,8 +88,8 @@ def payment_status_filter(request, slug):
 def order_list_partial(request):
     try:
         page_number = request.GET.get('page', 1)
-        orders = Order.objects.annotate(total=Sum('order_items__total_price')).all().order_by('-created_at')
-        paginator = Paginator(orders, 20)  # 20 orders per page
+        orders = Order.objects.annotate(order_total=Sum('order_items__total_price')).all().order_by('-created_at')
+        paginator = Paginator(orders, 10)  # 10 orders per page
         page_obj = paginator.get_page(page_number)
         html = render_to_string('admin_templates/partials/order-partials/order_list_partial.html', {'page_obj': page_obj, 'paginator': paginator})
         return HttpResponse(html)
@@ -107,7 +107,7 @@ def order_row_partial(request,order_id):
 
 def order_details_partial(request, order_id):
     try:
-        order = get_object_or_404(Order, pk=order_id)
+        order = get_object_or_404(Order.objects.prefetch_related('order_items__menu_item', 'table'), pk=order_id)
         total = sum(item.total_price for item in order.order_items.all())
         html = render_to_string('admin_templates/partials/order-partials/order_details_partial.html', {'order': order, 'total': total})
         return HttpResponse(html)
@@ -116,8 +116,8 @@ def order_details_partial(request, order_id):
 
 def orders_page(request, page_number):
     try:
-        orders = Order.objects.annotate(total=Sum('order_items__total_price')).all().order_by('-created_at')
-        paginator = Paginator(orders, 20)
+        orders = Order.objects.annotate(order_total=Sum('order_items__total_price')).all().order_by('-created_at')
+        paginator = Paginator(orders, 10)
         page_obj = paginator.get_page(page_number)
         html = render_to_string('admin_templates/partials/order-partials/order_list_partial.html', {'page_obj': page_obj, 'paginator': paginator})
         return HttpResponse(html)

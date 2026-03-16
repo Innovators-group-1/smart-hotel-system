@@ -79,20 +79,29 @@ def get_hotel_name(request):
 def complete_order(request, order_id):
     """
     Marks order as COMPLETED (HTMX).
+    Returns both completed orders and active orders to update both containers.
     """
     with schema_context(request.tenant.schema_name):
         order = get_object_or_404(Order, order_id=order_id)
         order.status = Order.OrderStatus.COMPLETED
         order.save()
 
+        # Get completed orders
         completed_orders = Order.objects.select_related(
             "table"
         ).prefetch_related("order_items__menu_item").filter(status=Order.OrderStatus.COMPLETED)
 
+        # Get updated active orders (exclude completed)
+        active_orders = Order.objects.select_related(
+            "table"
+        ).prefetch_related("order_items__menu_item").filter(
+            status__in=[Order.OrderStatus.PENDING, Order.OrderStatus.SENT_TO_KITCHEN, Order.OrderStatus.IN_PROGRESS, Order.OrderStatus.READY]
+        )
+
     return render(
         request,
-        "chef_templates/partials/completed_orders.html",
-        {"completed_orders": completed_orders}
+        "chef_templates/partials/complete_order_response.html",
+        {"completed_orders": completed_orders, "active_orders": active_orders}
     )
 
 def mark_order_ready(request, order_id):
@@ -132,4 +141,21 @@ def active_orders_partial(request):
         request,
         "chef_templates/partials/active_orders.html",
         {"active_orders": active_orders}
+    )
+
+def completed_orders_partial(request):
+    """
+    Returns completed orders (HTMX partial).
+    """
+    with schema_context(request.tenant.schema_name):
+        completed_orders = Order.objects.select_related(
+            "table"
+        ).prefetch_related("order_items__menu_item").filter(
+            status=Order.OrderStatus.COMPLETED
+        ).order_by("-completed_at")[:5]
+
+    return render(
+        request,
+        "chef_templates/partials/completed_orders.html",
+        {"completed_orders": completed_orders}
     )

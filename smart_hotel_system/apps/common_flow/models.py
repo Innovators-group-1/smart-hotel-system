@@ -9,6 +9,8 @@ from PIL import Image, ImageDraw , ImageFont
 from django.utils import timezone
 
 from django.utils.text import slugify
+from django.db import connection
+from django_tenants.utils import get_tenant
 
 
 
@@ -111,8 +113,15 @@ class Table(models.Model):
      
     # Overriding save method to generate QR code upon creating a new table
     def save(self, *args, **kwargs):
+        # Get tenant name for the QR code URL
+        try:
+            tenant = get_tenant(connection.schema_name)
+            tenant_name = tenant.name.lower().replace(' ', '')
+        except Exception:
+            tenant_name = 'public'
+        
         #  Generate QR code that will redirect the customer to the menu page as well us identify the table uniquely
-        qr_data = f'http://localhost:8000/client_flow/menu/{self.number}/'
+        qr_data = f'https://demo.quickdine.ink/client_flow/menu/{self.number}/'
         qr = qrcode.QRCode(
             version = 1,
             box_size = 10,
@@ -222,6 +231,18 @@ class Order(models.Model):
 
         # 5. Default/Initial state
         return 0
+
+    @property
+    def total(self):
+        """Calculate total price from order items"""
+        # If there's an annotated order_total (from queryset annotations), use it
+        if hasattr(self, 'order_total'):
+            return self.order_total
+        # Otherwise calculate from order items
+        try:
+            return sum(item.total_price for item in self.order_items.all())
+        except Exception:
+            return 0
 
      # Overriding save method to set completed_at timestamp when status changes
     def save(self, *args, **kwargs):

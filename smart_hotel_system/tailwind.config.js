@@ -1,6 +1,7 @@
-import colors from 'tailwindcss/colors'
+const colors = require('tailwindcss/colors')
+
 /** @type {import('tailwindcss').Config} */
-export default {
+module.exports = {
   darkMode: 'class',
   content: [
     './templates/**/*.html',

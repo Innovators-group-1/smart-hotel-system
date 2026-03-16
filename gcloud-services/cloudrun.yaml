@@ -1,0 +1,73 @@
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  name: quickdine
+  annotations:
+    run.googleapis.com/ingress: all
+spec:
+  template:
+    metadata:
+      annotations:
+        autoscaling.knative.dev/minScale: '0'
+        autoscaling.knative.dev/maxScale: '5'
+        run.googleapis.com/cloudsql-instances: quickdine-489018:us-central1:quickdine-attempt-1
+    spec:
+      containers:
+        - image: us-central1-docker.pkg.dev/quickdine-489018/quickdine/quickdine
+          ports:
+            - containerPort: 8000
+          env:
+            - name: SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: SECRET_KEY
+                  key: latest
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: DATABASE_URL
+                  key: latest
+            - name: DEBUG
+              valueFrom:
+                secretKeyRef:
+                  name: DEBUG
+                  key: latest
+            - name: ALLOWED_HOSTS
+              valueFrom:
+                secretKeyRef:
+                  name: ALLOWED_HOSTS
+                  key: latest
+            - name: DJANGO_SETTINGS_MODULE
+              valueFrom:
+                secretKeyRef:
+                  name: DJANGO_SETTINGS_MODULE
+                  key: latest
+            - name: CONSUMER_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: CONSUMER_KEY
+                  key: latest
+            - name: CONSUMER_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: CONSUMER_SECRET
+                  key: latest
+            - name: PASSKEY
+              valueFrom:
+                secretKeyRef:
+                  name: PASSKEY
+                  key: latest
+            - name: BUSINESS_SHORTCODE
+              valueFrom:
+                secretKeyRef:
+                  name: BUSINESS_SHORTCODE
+                  key: latest
+            - name: PRODUCTION_DOMAIN
+              valueFrom:
+                secretKeyRef:
+                  name: PRODUCTION_DOMAIN
+                  key: latest
+          resources:
+            limits:
+              cpu: '1'
+              memory: 512Mi

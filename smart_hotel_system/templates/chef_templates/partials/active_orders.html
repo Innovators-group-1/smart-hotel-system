@@ -31,16 +31,15 @@
         </button>
     </form>
     {% elif order.status == 'READY' %}
-    <form
+    <button 
+        class="w-full bg-green-600 hover:bg-green-700 py-2 rounded-lg"
         hx-post="{% url 'chef_flow:complete_order' order.order_id %}"
-        hx-target="#completed_orders_container"
-        hx-swap="innerHTML"
+        hx-target="#active_orders_container"
+        hx-swap="outerHTML"
+        hx-on::after-request="htmx.ajax('GET', '{% url 'chef_flow:completed_orders_partial' %}', {target:'#completed_orders_container', swap:'innerHTML'})"
     >
-        {% csrf_token %}
-        <button class="w-full bg-green-600 hover:bg-green-700 py-2 rounded-lg">
-            Mark as Served
-        </button>
-    </form>
+        Mark as Served
+    </button>
     {% endif %}
 </div>
 {% empty %}

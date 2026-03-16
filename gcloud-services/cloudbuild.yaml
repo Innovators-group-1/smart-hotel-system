@@ -1,0 +1,30 @@
+steps:
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'build'
+      - '--no-cache'
+      - '-t'
+      - 'us-central1-docker.pkg.dev/quickdine-489018/quickdine/quickdine'
+      - '-f'
+      - 'docker/Dockerfile'
+      - '.'
+
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'push'
+      - 'us-central1-docker.pkg.dev/quickdine-489018/quickdine/quickdine'
+
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: gcloud
+    args:
+      - 'run'
+      - 'services'
+      - 'replace'
+      - 'gcloud-services/cloudrun.yaml'
+      - '--region=us-central1'
+
+images:
+  - 'us-central1-docker.pkg.dev/quickdine-489018/quickdine/quickdine'
+
+options:
+  logging: CLOUD_LOGGING_ONLY

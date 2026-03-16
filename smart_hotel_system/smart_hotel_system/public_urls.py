@@ -1,4 +1,3 @@
-# Create public_urls.py
 """
 Public URLs - accessible without tenant context
 """

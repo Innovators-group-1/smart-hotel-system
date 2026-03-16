@@ -21,7 +21,7 @@ def create_stk_push_payload(amount, phone_number, account_reference="Test", tran
         "PartyA": phone_number,
         "PartyB": short_code,
         "PhoneNumber": phone_number,
-        "CallBackURL": "https://ellan-basifixed-meadow.ngrok-free.dev/platform/mpesa/callback/",
+        "CallBackURL": "https://quickdine.ink/platform/mpesa/callback/",
         "AccountReference": account_reference,
         "TransactionDesc": transaction_desc
     }

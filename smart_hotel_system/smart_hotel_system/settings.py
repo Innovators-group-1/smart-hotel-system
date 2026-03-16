@@ -133,34 +133,38 @@ TEMPLATES = [
 # DATABASE CONFIGURATION
 # ===============================
 
-# Parse DATABASE_URL from environment
 DATABASE_URL = os.getenv("DATABASE_URL")
 
 if not DATABASE_URL:
     raise ValueError("DATABASE_URL environment variable is not set!")
 
-tmpPostgres = urlparse(DATABASE_URL)
-
-DATABASES = {
-    'default': {
-        'ENGINE': 'django_tenants.postgresql_backend',
-        'NAME': tmpPostgres.path.replace('/', ''),
-        'USER': tmpPostgres.username,
-        'PASSWORD': tmpPostgres.password,
-        'HOST': tmpPostgres.hostname,
-        'PORT': tmpPostgres.port or 5432,
-        'OPTIONS': {
-            'sslmode': 'require',
-            'connect_timeout': 10,
-            # Fix for Neon pooling issues with django-tenants
-            'options': '-c statement_timeout=30000',
-        },
-        # CRITICAL: These settings prevent connection pooling issues
-        'CONN_MAX_AGE': 0,  # Don't reuse connections
-        'CONN_HEALTH_CHECKS': True,  # Check connection health
-        'DISABLE_SERVER_SIDE_CURSORS': True,  # Avoid cursor issues with pooling
+# Detect if using Cloud SQL Unix socket or regular TCP connection
+if '/cloudsql/' in DATABASE_URL:
+    # Cloud SQL Unix socket connection
+    # Format: postgresql://user:password@/dbname?host=/cloudsql/project:region:instance
+    tmpPostgres = urlparse(DATABASE_URL)
+    
+    # Extract query params to get the socket host
+    query_params = dict(parse_qsl(tmpPostgres.query))
+    socket_path = query_params.get('host', '')
+    
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django_tenants.postgresql_backend',
+            'NAME': tmpPostgres.path.replace('/', ''),
+            'USER': tmpPostgres.username,
+            'PASSWORD': tmpPostgres.password,
+            'HOST': socket_path,   # Unix socket path
+            'PORT': '',            # No port for Unix socket
+            'OPTIONS': {
+                # No sslmode for Unix socket
+                'connect_timeout': 10,
+            },
+            'CONN_MAX_AGE': 0,
+            'CONN_HEALTH_CHECKS': True,
+            'DISABLE_SERVER_SIDE_CURSORS': True,
+        }
     }
-}
 
 # Database router for django-tenants
 DATABASE_ROUTERS = (
@@ -183,14 +187,19 @@ STATICFILES_DIRS = [
 ]
 
 # WhiteNoise configuration for serving static files
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+# Using CompressedStaticFilesStorage (simpler, doesn't require manifest)
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
 
 # ===============================
 # MEDIA FILES
 # ===============================
-
-MEDIA_URL = '/media/'
-MEDIA_ROOT = BASE_DIR / 'media'
+DEFAULT_FILE_STORAGE = 'storages.backends.gcloud.GoogleCloudStorage'
+GS_BUCKET_NAME = 'quickdine-media'
+# Disable querystring authentication for public files (if using publicRead ACL)
+GS_QUERYSTRING_AUTH = False
+ 
+MEDIA_URL = f'https://storage.googleapis.com/quickdine-media/'
+MEDIA_ROOT = ''
 
 # ===============================
 # WSGI/ASGI

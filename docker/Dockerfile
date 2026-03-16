@@ -13,8 +13,12 @@ RUN npm ci
 COPY smart_hotel_system/static ./static
 COPY smart_hotel_system/tailwind.config.js smart_hotel_system/postcss.config.js ./
 
+# Copy templates and apps for potential use in frontend build (e.g., for Tailwind scanning)
+COPY smart_hotel_system/templates ./templates
+COPY smart_hotel_system/apps ./apps
+
 # Build Tailwind CSS
-RUN npm run tailwind:build
+RUN npm run tailwind:build && ls -la static/dist/
 
 
 ############################
@@ -35,6 +39,7 @@ RUN apt-get update && apt-get install -y \
     postgresql-client \
     libpq-dev \
     build-essential \
+    fonts-dejavu-core \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Python dependencies

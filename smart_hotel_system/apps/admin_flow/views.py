@@ -109,8 +109,8 @@ def get_hotel_name(request):
 
 def orders_partial(request):
     hotel_name = HotelSettings.objects.first().hotel_name if HotelSettings.objects.exists() else 'Smart Hotel'
-    orders = Order.objects.annotate(total=Sum('order_items__total_price')).all().order_by('-created_at')
-    paginator = Paginator(orders, 20)
+    orders = Order.objects.annotate(order_total=Sum('order_items__total_price')).all().order_by('-created_at')
+    paginator = Paginator(orders, 10)
     page_obj = paginator.get_page(1)  # Default to page 1
     order_statuses = Order.OrderStatus.choices
     payment_statuses = Order.PaymentStatus.choices
@@ -345,18 +345,13 @@ def add_table(request):
         capacity = int(seats)
 
         # Create a new Table instance
-        Table.objects.create(number=table_number, seats=capacity)
-
-        return HttpResponse(
-            status=204,
-            headers={
-                "HX-Trigger": json.dumps({
-                    "toast-success": {
-                        "message": "Table added successfully."
-                    }
-                })
-            }
-        )
+        table = Table.objects.create(number=table_number, seats=capacity)
+        
+        # Return the updated table settings partial to refresh the list with QR code
+        tables = Table.objects.all()
+        context = {'tables': tables}
+        return render(request, 'admin_templates/partials/setting-partials/table.html', context)
+    
     return render(request, 'admin_templates/partials/setting-forms/add-table-form.html')
 
 def update_payment_settings(request):

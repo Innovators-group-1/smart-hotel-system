@@ -255,6 +255,7 @@ def checkout_view(request):
         subtotal = item.price * quantity
         total += subtotal
         cart_items.append({'item': item, 'quantity': quantity, 'subtotal': subtotal})
+        
 
     # 3 Handle POST requests (when payment form is submitted)
     if request.method == 'POST':
@@ -303,6 +304,13 @@ def checkout_view(request):
             subtotal = item.price * quantity
             total += subtotal
             cart_items.append({'item': item, 'quantity': quantity, 'subtotal': subtotal})
+
+            OrderItem.objects.create(
+                order=order,
+                menu_item=item,
+                quantity=quantity,
+                total_price=subtotal
+            )
 
         # 3 Handle POST requests (when payment form is submitted)
         if request.method == 'POST':

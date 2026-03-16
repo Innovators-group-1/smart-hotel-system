@@ -91,6 +91,7 @@
           <tbody 
             id="orders-table-body"
             hx-get="{% url 'order_list_partial' %}"
+            hx-trigger="load, every 5m"
             hx-swap="innerHTML"
           >
             {% for order in page_obj %}
@@ -112,7 +113,7 @@
 
                 <!-- Total Price -->
                 <td class="px-6 py-4 font-medium text-gray-900">
-                  <span class="text-gray-600">KSH</span> {{ order.total_price|floatformat:2 }}
+                  <span class="text-gray-600">KSH</span> {{ order.order_total|floatformat:2 }}
                 </td>
 
                 <!-- Payment Status -->
@@ -146,10 +147,12 @@
                 <!-- Actions -->
                 <td class="px-6 py-4 text-right">
                   <button 
+                    id="view-btn-{{ order.pk }}"
                     class="inline-flex items-center gap-1 text-sm font-medium text-blue-600 hover:text-blue-800 transition-colors"
                     hx-get="{% url 'order_details_partial' order.pk %}"
                     hx-target="#order-details-{{ order.pk }}"
-                    hx-swap="outerHTML"
+                    hx-swap="outerHTML swap:500ms"
+                    onclick="toggleOrderDetails(this, '{{ order.pk }}')"
                   >
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none"
                         viewBox="0 0 24 24" stroke="currentColor">
