@@ -39,7 +39,7 @@ jobs:
       - name: Install Node dependencies and build CSS
         run: |
           cd smart_hotel_system
-          npm install
+          npm ci
           npx tailwindcss -i ./static/src/input.css -o ./static/dist/output.css --minify
 
       # Uncomment when you have tests ready
