@@ -17,7 +17,7 @@
           {% if table.qr_code %}
           <div class="text-center">
             <img src="{{ table.qr_code.url }}" alt="QR Code for Table {{ table.number }}" class="w-16 h-16 mx-auto mb-1">
-            <a href="{{ table.qr_code.url }}" download="table_{{ table.number }}_qrcode.png" class="text-xs text-blue-600 hover:text-blue-800">Download</a>
+            <button onclick="downloadQR('{{ table.qr_code.url }}', 'table_{{ table.number }}_qrcode.png')" class="text-xs text-blue-600 hover:text-blue-800">Download</button>
           </div>
           {% endif %}
         </div>
@@ -81,5 +81,20 @@
 
   function hideAddTableModal() {
     document.getElementById('add-table-modal').classList.add('hidden');
+  }
+
+  function downloadQR(url, filename) {
+    fetch(url)
+      .then(response => response.blob())
+      .then(blob => {
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(link.href);
+      })
+      .catch(error => console.error('Download failed:', error));
   }
 </script>

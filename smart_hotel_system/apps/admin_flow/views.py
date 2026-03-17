@@ -10,6 +10,7 @@ from django.db.models import Sum,Value,DecimalField
 from django.db.models.functions import TruncDay,Coalesce
 from django.core.paginator import Paginator
 from django.db import models
+from django_tenants.utils import schema_context
 
 
 def is_htmx(request):
@@ -61,17 +62,21 @@ def adminDashboard(request):
 
 # count orders views
 def pending_orders_count(request):
-    count = Order.objects.filter(status='PENDING').count()
+    with schema_context(request.tenant.schema_name):
+        count = Order.objects.filter(status='PENDING').count()
     return HttpResponse(count)
 
 def in_progress_orders_count(request):
-    count = Order.objects.filter(status='IN_PROGRESS').count()
+    with schema_context(request.tenant.schema_name):
+        count = Order.objects.filter(status='IN_PROGRESS').count()
     return HttpResponse(count)
 def completed_orders_count(request):
-    count = Order.objects.filter(status='COMPLETED').count()
+    with schema_context(request.tenant.schema_name):
+        count = Order.objects.filter(status='COMPLETED').count()
     return HttpResponse(count)
 def cancelled_orders_count(request):
-    count = Order.objects.filter(status='CANCELLED').count()
+    with schema_context(request.tenant.schema_name):
+        count = Order.objects.filter(status='CANCELLED').count()
     return HttpResponse(count) 
 
 # Partial views for different sections
