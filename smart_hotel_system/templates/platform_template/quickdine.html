@@ -1,0 +1,1015 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>QuickDine — Smart Hotel & Restaurant Management</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+  :root {
+    --navy: #0f172a;
+    --navy-light: #1e293b;
+    --navy-mid: #0d1f35;
+    --gold: #f59e0b;
+    --gold-light: #fbbf24;
+    --gold-dark: #d97706;
+    --emerald: #10b981;
+    --emerald-dark: #059669;
+    --white: #ffffff;
+    --slate: #94a3b8;
+    --teal-dark: #0a2540;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--navy);
+    color: var(--white);
+    overflow-x: hidden;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+  }
+
+  /* ─── NAVBAR ─── */
+  #navbar {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    transition: all 0.4s ease;
+    padding: 1.25rem 0;
+  }
+  #navbar.scrolled {
+    background: rgba(15,23,42,0.82);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-bottom: 1px solid rgba(245,158,11,0.12);
+    padding: 0.75rem 0;
+    box-shadow: 0 4px 32px rgba(0,0,0,0.3);
+  }
+  .nav-link {
+    color: rgba(255,255,255,0.72);
+    font-size: 0.9rem;
+    font-weight: 500;
+    letter-spacing: 0.01em;
+    transition: color 0.2s;
+    cursor: pointer;
+    text-decoration: none;
+  }
+  .nav-link:hover { color: var(--gold); }
+
+  /* ─── HERO ─── */
+  #hero {
+    min-height: 100vh;
+    position: relative;
+    display: flex;
+    align-items: center;
+    overflow: hidden;
+  }
+  .hero-gradient {
+    position: absolute; inset: 0;
+    background: linear-gradient(135deg, #0f172a 0%, #0a2540 40%, #0d2b3e 60%, #0f172a 100%);
+    animation: gradientShift 10s ease infinite;
+  }
+  @keyframes gradientShift {
+    0%   { background: linear-gradient(135deg, #0f172a 0%, #0a2540 45%, #071e30 100%); }
+    33%  { background: linear-gradient(160deg, #071e30 0%, #0d2b3e 40%, #0f2d3a 70%, #0f172a 100%); }
+    66%  { background: linear-gradient(120deg, #0f172a 0%, #0a1f35 35%, #0c2c3a 65%, #091a2e 100%); }
+    100% { background: linear-gradient(135deg, #0f172a 0%, #0a2540 45%, #071e30 100%); }
+  }
+  .hero-orb {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(80px);
+    opacity: 0.18;
+    animation: orbFloat 12s ease-in-out infinite;
+  }
+  .hero-orb-1 {
+    width: 600px; height: 600px;
+    background: radial-gradient(circle, #f59e0b, transparent);
+    top: -100px; right: -100px;
+    animation-delay: 0s;
+  }
+  .hero-orb-2 {
+    width: 400px; height: 400px;
+    background: radial-gradient(circle, #10b981, transparent);
+    bottom: -80px; left: 10%;
+    opacity: 0.12;
+    animation-delay: -4s;
+  }
+  @keyframes orbFloat {
+    0%, 100% { transform: translate(0,0) scale(1); }
+    50% { transform: translate(30px, -30px) scale(1.08); }
+  }
+
+  /* Grid overlay */
+  .hero-grid {
+    position: absolute; inset: 0;
+    background-image: 
+      linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
+    background-size: 60px 60px;
+  }
+
+  /* ─── CTA BUTTON ─── */
+  .btn-demo {
+    display: inline-flex; align-items: center; gap: 0.5rem;
+    background: linear-gradient(135deg, var(--gold), var(--gold-dark));
+    color: var(--navy);
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-weight: 700;
+    font-size: 1rem;
+    padding: 0.875rem 2.25rem;
+    border-radius: 50px;
+    border: none;
+    cursor: pointer;
+    position: relative;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    text-decoration: none;
+    box-shadow: 0 0 0 0 rgba(245,158,11,0.5);
+    animation: ctaPulse 2.5s ease-out infinite;
+  }
+  .btn-demo:hover {
+    transform: scale(1.05);
+    box-shadow: 0 8px 40px rgba(245,158,11,0.45);
+    animation: none;
+  }
+  @keyframes ctaPulse {
+    0%   { box-shadow: 0 0 0 0 rgba(245,158,11,0.55); }
+    70%  { box-shadow: 0 0 0 18px rgba(245,158,11,0); }
+    100% { box-shadow: 0 0 0 0 rgba(245,158,11,0); }
+  }
+  .btn-outline {
+    display: inline-flex; align-items: center; gap: 0.5rem;
+    background: transparent;
+    color: var(--white);
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-weight: 600;
+    font-size: 0.95rem;
+    padding: 0.8rem 2rem;
+    border-radius: 50px;
+    border: 1.5px solid rgba(255,255,255,0.25);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-decoration: none;
+  }
+  .btn-outline:hover {
+    border-color: var(--gold);
+    color: var(--gold);
+    transform: scale(1.04);
+  }
+
+  /* ─── FLOATING DASHBOARD ─── */
+  .dashboard-float {
+    animation: floatBob 4s ease-in-out infinite;
+  }
+  @keyframes floatBob {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-16px); }
+  }
+  .dashboard-mock {
+    background: rgba(30, 41, 59, 0.95);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 
+      0 40px 80px rgba(0,0,0,0.6),
+      0 0 0 1px rgba(245,158,11,0.08),
+      inset 0 1px 0 rgba(255,255,255,0.08);
+    width: 100%;
+    max-width: 540px;
+  }
+  .mock-topbar {
+    background: rgba(15,23,42,0.9);
+    padding: 0.75rem 1rem;
+    display: flex; align-items: center; gap: 0.5rem;
+    border-bottom: 1px solid rgba(255,255,255,0.07);
+  }
+  .mock-dot { width: 10px; height: 10px; border-radius: 50%; }
+
+  /* ─── SECTION FADE-IN ─── */
+  .fade-up {
+    opacity: 0;
+    transform: translateY(36px);
+    transition: opacity 0.65s ease, transform 0.65s ease;
+  }
+  .fade-up.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  .fade-up-delay-1 { transition-delay: 0.1s; }
+  .fade-up-delay-2 { transition-delay: 0.2s; }
+  .fade-up-delay-3 { transition-delay: 0.3s; }
+  .fade-up-delay-4 { transition-delay: 0.4s; }
+  .fade-up-delay-5 { transition-delay: 0.5s; }
+  .fade-up-delay-6 { transition-delay: 0.6s; }
+
+  /* ─── FEATURE CARDS ─── */
+  .feature-card {
+    background: rgba(30, 41, 59, 0.6);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 20px;
+    padding: 2rem;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+  }
+  .feature-card::before {
+    content: '';
+    position: absolute; inset: 0;
+    border-radius: 20px;
+    background: linear-gradient(135deg, rgba(245,158,11,0.06), transparent);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+  .feature-card:hover {
+    transform: translateY(-6px);
+    border-color: rgba(245,158,11,0.3);
+    box-shadow: 0 20px 50px rgba(0,0,0,0.4), 0 0 0 1px rgba(245,158,11,0.15);
+  }
+  .feature-card:hover::before { opacity: 1; }
+
+  .icon-wrap {
+    width: 52px; height: 52px;
+    border-radius: 14px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.4rem;
+    margin-bottom: 1.25rem;
+  }
+
+  /* ─── STEP LINE ─── */
+  .step-line {
+    flex: 1;
+    height: 2px;
+    background: repeating-linear-gradient(90deg, rgba(245,158,11,0.5) 0px, rgba(245,158,11,0.5) 8px, transparent 8px, transparent 16px);
+    background-size: 200% 100%;
+    animation: dashMove 3s linear infinite;
+  }
+  @keyframes dashMove {
+    0% { background-position: 0% 0%; }
+    100% { background-position: -200% 0%; }
+  }
+
+  /* ─── STATS ─── */
+  .stats-section {
+    background: linear-gradient(135deg, #0a1628 0%, #0d1f35 50%, #071520 100%);
+    position: relative;
+  }
+  .stats-section::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: radial-gradient(ellipse at 50% 0%, rgba(245,158,11,0.08), transparent 70%);
+  }
+
+  /* ─── TESTIMONIALS ─── */
+  .testimonial-track {
+    display: flex; gap: 1.5rem;
+    animation: scrollLeft 35s linear infinite;
+    width: max-content;
+  }
+  .testimonial-track:hover { animation-play-state: paused; }
+  @keyframes scrollLeft {
+    0%   { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+  }
+  .testi-card {
+    background: rgba(30,41,59,0.7);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(245,158,11,0.18);
+    border-radius: 20px;
+    padding: 2rem;
+    width: 340px; flex-shrink: 0;
+    position: relative;
+  }
+  .testi-card::before {
+    content: '"';
+    position: absolute;
+    top: 1rem; right: 1.5rem;
+    font-size: 5rem;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-weight: 900;
+    color: rgba(245,158,11,0.15);
+    line-height: 1;
+  }
+
+  /* ─── MODAL ─── */
+  .modal-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.75);
+    backdrop-filter: blur(6px);
+    z-index: 999;
+    display: none;
+    align-items: center;
+    justify-content: center;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal-box {
+    background: var(--navy-light);
+    border: 1px solid rgba(245,158,11,0.2);
+    border-radius: 24px;
+    padding: 2.5rem;
+    width: 100%;
+    max-width: 480px;
+    position: relative;
+    box-shadow: 0 40px 80px rgba(0,0,0,0.6);
+    animation: modalIn 0.3s ease;
+  }
+  @keyframes modalIn {
+    from { opacity: 0; transform: scale(0.95) translateY(20px); }
+    to   { opacity: 1; transform: scale(1) translateY(0); }
+  }
+  .form-input {
+    width: 100%;
+    background: rgba(15,23,42,0.8);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 10px;
+    padding: 0.75rem 1rem;
+    color: white;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.95rem;
+    transition: border-color 0.2s;
+    outline: none;
+  }
+  .form-input:focus { border-color: var(--gold); }
+  .form-input::placeholder { color: rgba(255,255,255,0.35); }
+  .btn-submit {
+    width: 100%;
+    background: linear-gradient(135deg, var(--emerald), var(--emerald-dark));
+    color: white;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-weight: 700;
+    font-size: 1rem;
+    padding: 0.9rem;
+    border-radius: 50px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex; align-items: center; justify-content: center; gap: 0.5rem;
+  }
+  .btn-submit:hover {
+    transform: scale(1.02);
+    box-shadow: 0 8px 32px rgba(16,185,129,0.4);
+  }
+  .spinner {
+    width: 18px; height: 18px;
+    border: 2px solid rgba(255,255,255,0.3);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    display: none;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ─── BADGE ─── */
+  .badge {
+    display: inline-flex; align-items: center; gap: 0.4rem;
+    background: rgba(245,158,11,0.12);
+    border: 1px solid rgba(245,158,11,0.3);
+    color: var(--gold);
+    font-size: 0.78rem;
+    font-weight: 600;
+    padding: 0.3rem 0.9rem;
+    border-radius: 50px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+
+  /* ─── SECTION LABEL ─── */
+  .section-label {
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 0.75rem;
+  }
+
+  /* ─── GRADIENT TEXT ─── */
+  .gold-text {
+    background: linear-gradient(135deg, var(--gold-light), var(--gold-dark));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .emerald-text {
+    background: linear-gradient(135deg, #34d399, var(--emerald));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* ─── FOOTER ─── */
+  footer { background: #060d18; }
+  .social-icon {
+    width: 38px; height: 38px;
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    color: rgba(255,255,255,0.5);
+    font-size: 0.9rem;
+    transition: all 0.2s ease;
+    cursor: pointer;
+  }
+  .social-icon:hover {
+    border-color: var(--gold);
+    color: var(--gold);
+    transform: translateY(-2px);
+  }
+
+  /* Misc */
+  section { position: relative; }
+  .container { max-width: 1200px; margin: 0 auto; padding: 0 2rem; }
+  .section-pad { padding: 6rem 0; }
+
+  @media (max-width: 768px) {
+    .section-pad { padding: 4rem 0; }
+    .hide-mobile { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ─── NAVBAR ─── -->
+<nav id="navbar">
+  <div class="container" style="display:flex;align-items:center;justify-content:space-between;">
+    <div style="display:flex;align-items:center;gap:0.6rem;">
+      <div style="width:34px;height:34px;background:linear-gradient(135deg,#f59e0b,#d97706);border-radius:9px;display:flex;align-items:center;justify-content:center;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0f172a" stroke-width="2.5"><path d="M3 11l19-9-9 19-2-8-8-2z"/></svg>
+      </div>
+      <span style="font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;font-size:1.15rem;letter-spacing:-0.02em;">QuickDine</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:2.5rem;" class="hide-mobile">
+      <a class="nav-link" href="#features">Features</a>
+      <a class="nav-link" href="#how-it-works">How It Works</a>
+      <a class="nav-link" href="#pricing-section">Tenants</a>
+      <a class="nav-link" href="#testimonials">About</a>
+    </div>
+    <button onclick="openModal()" style="background:transparent;border:1.5px solid rgba(245,158,11,0.6);color:var(--gold);font-family:'Plus Jakarta Sans',sans-serif;font-weight:700;font-size:0.85rem;padding:0.55rem 1.4rem;border-radius:50px;cursor:pointer;transition:all 0.2s ease;letter-spacing:0.01em;"
+      onmouseover="this.style.background='rgba(245,158,11,0.12)';this.style.transform='scale(1.04)'"
+      onmouseout="this.style.background='transparent';this.style.transform='scale(1)'">
+      Get Started →
+    </button>
+  </div>
+</nav>
+
+<!-- ─── HERO ─── -->
+<section id="hero">
+  <div class="hero-gradient"></div>
+  <div class="hero-grid"></div>
+  <div class="hero-orb hero-orb-1"></div>
+  <div class="hero-orb hero-orb-2"></div>
+  <div class="container" style="position:relative;z-index:2;display:grid;grid-template-columns:1fr 1fr;gap:4rem;align-items:center;padding-top:6rem;" id="hero-inner">
+    <!-- Left -->
+    <div>
+      <div class="badge" style="margin-bottom:1.5rem;">
+        <span style="width:6px;height:6px;background:var(--gold);border-radius:50%;display:inline-block;animation:ctaPulse 2s ease-out infinite;"></span>
+        Trusted by 500+ Hotels
+      </div>
+      <h1 style="font-size:clamp(2.4rem,5vw,3.6rem);font-weight:900;line-height:1.1;letter-spacing:-0.03em;margin-bottom:1.25rem;">
+        Redefine Your<br>
+        <span class="gold-text">Hotel Experience</span><br>
+        From Within.
+      </h1>
+      <p style="color:rgba(255,255,255,0.62);font-size:1.05rem;line-height:1.7;max-width:480px;margin-bottom:2.25rem;">
+        QuickDine streamlines every touchpoint — from QR ordering and chef dashboards to real-time analytics. One platform. Total control.
+      </p>
+      <div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap;">
+        <button class="btn-demo" onclick="openModal()">
+          Book a Demo
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </button>
+        <a href="#features" class="btn-outline">Explore Features</a>
+      </div>
+      <div style="display:flex;align-items:center;gap:2rem;margin-top:2.5rem;">
+        <div>
+          <div style="font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;font-size:1.5rem;" class="gold-text">99.9%</div>
+          <div style="font-size:0.78rem;color:rgba(255,255,255,0.45);margin-top:0.2rem;">Uptime SLA</div>
+        </div>
+        <div style="width:1px;height:36px;background:rgba(255,255,255,0.1);"></div>
+        <div>
+          <div style="font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;font-size:1.5rem;color:white;">500+</div>
+          <div style="font-size:0.78rem;color:rgba(255,255,255,0.45);margin-top:0.2rem;">Hotels Live</div>
+        </div>
+        <div style="width:1px;height:36px;background:rgba(255,255,255,0.1);"></div>
+        <div>
+          <div style="font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;font-size:1.5rem;" class="emerald-text">4.9★</div>
+          <div style="font-size:0.78rem;color:rgba(255,255,255,0.45);margin-top:0.2rem;">Avg Rating</div>
+        </div>
+      </div>
+    </div>
+    <!-- Right: Dashboard mockup -->
+    <div class="hide-mobile" style="display:flex;justify-content:center;">
+      <div class="dashboard-float">
+        <div class="dashboard-mock">
+          <div class="mock-topbar">
+            <div class="mock-dot" style="background:#ff5f57;"></div>
+            <div class="mock-dot" style="background:#ffbd2e;"></div>
+            <div class="mock-dot" style="background:#28c840;"></div>
+            <span style="margin-left:0.75rem;font-size:0.72rem;color:rgba(255,255,255,0.35);font-family:'Inter',sans-serif;">QuickDine Dashboard — Serena Hotel Nairobi</span>
+          </div>
+          <div style="padding:1.25rem 1.25rem 0.75rem;">
+            <!-- Stat row -->
+            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:0.75rem;margin-bottom:1rem;">
+              <div style="background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.2);border-radius:12px;padding:0.9rem;">
+                <div style="font-size:0.68rem;color:rgba(255,255,255,0.45);margin-bottom:0.3rem;">Revenue Today</div>
+                <div style="font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;font-size:1.1rem;color:#fbbf24;">$4,820</div>
+                <div style="font-size:0.65rem;color:#10b981;margin-top:0.2rem;">↑ 12.4%</div>
+              </div>
+              <div style="background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.2);border-radius:12px;padding:0.9rem;">
+                <div style="font-size:0.68rem;color:rgba(255,255,255,0.45);margin-bottom:0.3rem;">Active Orders</div>
+                <div style="font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;font-size:1.1rem;color:#34d399;">24</div>
+                <div style="font-size:0.65rem;color:#10b981;margin-top:0.2rem;">↑ Live</div>
+              </div>
+              <div style="background:rgba(99,102,241,0.08);border:1px solid rgba(99,102,241,0.2);border-radius:12px;padding:0.9rem;">
+                <div style="font-size:0.68rem;color:rgba(255,255,255,0.45);margin-bottom:0.3rem;">Tables Busy</div>
+                <div style="font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;font-size:1.1rem;color:#a5b4fc;">18/24</div>
+                <div style="font-size:0.65rem;color:#f59e0b;margin-top:0.2rem;">75% full</div>
+              </div>
+            </div>
+            <!-- Chart -->
+            <div style="background:rgba(15,23,42,0.6);border-radius:12px;padding:1rem;margin-bottom:1rem;">
+              <div style="font-size:0.7rem;color:rgba(255,255,255,0.4);margin-bottom:0.6rem;">Weekly Revenue</div>
+              <canvas id="heroChart" style="max-height:110px;"></canvas>
+            </div>
+            <!-- Order list -->
+            <div style="space-y:0.5rem;">
+              <div style="font-size:0.7rem;color:rgba(255,255,255,0.4);margin-bottom:0.6rem;">Recent Orders</div>
+              <div id="order-list"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- Scroll indicator -->
+  <div style="position:absolute;bottom:2rem;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:0.5rem;z-index:2;">
+    <span style="font-size:0.7rem;color:rgba(255,255,255,0.3);letter-spacing:0.1em;text-transform:uppercase;">Scroll</span>
+    <div style="width:1px;height:36px;background:linear-gradient(to bottom,rgba(245,158,11,0.6),transparent);animation:scrollPulse 1.6s ease-in-out infinite;"></div>
+  </div>
+  <style>
+    @keyframes scrollPulse{0%,100%{opacity:1;transform:scaleY(1);}50%{opacity:0.4;transform:scaleY(0.7);}}
+    @media(max-width:768px){#hero-inner{grid-template-columns:1fr;}}
+  </style>
+</section>
+
+<!-- ─── FEATURES ─── -->
+<section id="features" class="section-pad">
+  <div class="container">
+    <div style="text-align:center;max-width:600px;margin:0 auto 4rem;" class="fade-up">
+      <div class="section-label">Platform Features</div>
+      <h2 style="font-size:clamp(2rem,4vw,2.8rem);font-weight:800;letter-spacing:-0.02em;line-height:1.15;margin-bottom:1rem;">
+        Everything a modern hotel needs
+      </h2>
+      <p style="color:rgba(255,255,255,0.55);font-size:1rem;line-height:1.7;">
+        From kitchen to checkout, QuickDine gives your team the tools to deliver exceptional service at every touchpoint.
+      </p>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:1.5rem;">
+      <!-- Feature cards -->
+      <div class="feature-card fade-up fade-up-delay-1">
+        <div class="icon-wrap" style="background:linear-gradient(135deg,rgba(245,158,11,0.2),rgba(245,158,11,0.06));">
+          <span>🏨</span>
+        </div>
+        <h3 style="font-size:1.1rem;font-weight:700;margin-bottom:0.6rem;">Multi-Tenant Management</h3>
+        <p style="color:rgba(255,255,255,0.5);font-size:0.9rem;line-height:1.65;">Manage multiple properties from a single dashboard. Each tenant gets their own isolated environment, branding, and analytics.</p>
+      </div>
+      <div class="feature-card fade-up fade-up-delay-2">
+        <div class="icon-wrap" style="background:linear-gradient(135deg,rgba(16,185,129,0.2),rgba(16,185,129,0.06));">
+          <span>⚡</span>
+        </div>
+        <h3 style="font-size:1.1rem;font-weight:700;margin-bottom:0.6rem;">Real-Time Order Tracking</h3>
+        <p style="color:rgba(255,255,255,0.5);font-size:0.9rem;line-height:1.65;">Watch orders flow from table to kitchen in real time. Live status updates keep guests informed and staff coordinated.</p>
+      </div>
+      <div class="feature-card fade-up fade-up-delay-3">
+        <div class="icon-wrap" style="background:linear-gradient(135deg,rgba(99,102,241,0.2),rgba(99,102,241,0.06));">
+          <span>📱</span>
+        </div>
+        <h3 style="font-size:1.1rem;font-weight:700;margin-bottom:0.6rem;">QR Code Table Ordering</h3>
+        <p style="color:rgba(255,255,255,0.5);font-size:0.9rem;line-height:1.65;">Guests scan, browse, and order from beautiful digital menus — no app download needed. Reduce wait times by 60%.</p>
+      </div>
+      <div class="feature-card fade-up fade-up-delay-4">
+        <div class="icon-wrap" style="background:linear-gradient(135deg,rgba(239,68,68,0.2),rgba(239,68,68,0.06));">
+          <span>👨‍🍳</span>
+        </div>
+        <h3 style="font-size:1.1rem;font-weight:700;margin-bottom:0.6rem;">Chef Dashboard</h3>
+        <p style="color:rgba(255,255,255,0.5);font-size:0.9rem;line-height:1.65;">Kitchen display system built for speed. Prioritize orders, manage courses, and reduce ticket errors with smart queuing.</p>
+      </div>
+      <div class="feature-card fade-up fade-up-delay-5">
+        <div class="icon-wrap" style="background:linear-gradient(135deg,rgba(245,158,11,0.2),rgba(245,158,11,0.06));">
+          <span>📊</span>
+        </div>
+        <h3 style="font-size:1.1rem;font-weight:700;margin-bottom:0.6rem;">Sales Analytics</h3>
+        <p style="color:rgba(255,255,255,0.5);font-size:0.9rem;line-height:1.65;">Deep insights into your revenue, top-selling dishes, peak hours, and staff performance. Make data-driven decisions daily.</p>
+      </div>
+      <div class="feature-card fade-up fade-up-delay-6">
+        <div class="icon-wrap" style="background:linear-gradient(135deg,rgba(16,185,129,0.2),rgba(16,185,129,0.06));">
+          <span>📲</span>
+        </div>
+        <h3 style="font-size:1.1rem;font-weight:700;margin-bottom:0.6rem;">Mobile-Friendly Design</h3>
+        <p style="color:rgba(255,255,255,0.5);font-size:0.9rem;line-height:1.65;">Fully responsive across all devices. Staff can manage operations from any smartphone, tablet, or desktop browser.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── HOW IT WORKS ─── -->
+<section id="how-it-works" class="section-pad" style="background:linear-gradient(180deg,rgba(10,20,40,0.8),transparent);">
+  <div class="container">
+    <div style="text-align:center;max-width:600px;margin:0 auto 4rem;" class="fade-up">
+      <div class="section-label">Getting Started</div>
+      <h2 style="font-size:clamp(2rem,4vw,2.8rem);font-weight:800;letter-spacing:-0.02em;line-height:1.15;margin-bottom:1rem;">
+        Up and running in <span class="gold-text">minutes</span>
+      </h2>
+      <p style="color:rgba(255,255,255,0.55);font-size:1rem;line-height:1.7;">
+        No complex onboarding. No IT team required. Just three simple steps to transform your hotel.
+      </p>
+    </div>
+    <!-- Steps -->
+    <div style="display:flex;align-items:flex-start;gap:0;max-width:900px;margin:0 auto;" id="steps-row">
+      <!-- Step 1 -->
+      <div style="flex:1;text-align:center;" class="fade-up fade-up-delay-1">
+        <div style="width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,rgba(245,158,11,0.2),rgba(245,158,11,0.05));border:2px solid rgba(245,158,11,0.4);display:flex;align-items:center;justify-content:center;margin:0 auto 1.5rem;font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;font-size:1.3rem;color:var(--gold);">1</div>
+        <div style="font-size:2rem;margin-bottom:0.75rem;">🏨</div>
+        <h3 style="font-weight:700;font-size:1.05rem;margin-bottom:0.5rem;">Create Your Hotel</h3>
+        <p style="color:rgba(255,255,255,0.5);font-size:0.875rem;line-height:1.6;max-width:200px;margin:0 auto;">Register your property and set up your team in minutes.</p>
+      </div>
+      <!-- Line 1 -->
+      <div class="step-line" style="margin-top:32px;"></div>
+      <!-- Step 2 -->
+      <div style="flex:1;text-align:center;" class="fade-up fade-up-delay-2">
+        <div style="width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,rgba(16,185,129,0.2),rgba(16,185,129,0.05));border:2px solid rgba(16,185,129,0.4);display:flex;align-items:center;justify-content:center;margin:0 auto 1.5rem;font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;font-size:1.3rem;color:var(--emerald);">2</div>
+        <div style="font-size:2rem;margin-bottom:0.75rem;">🍽️</div>
+        <h3 style="font-weight:700;font-size:1.05rem;margin-bottom:0.5rem;">Configure Your Menu</h3>
+        <p style="color:rgba(255,255,255,0.5);font-size:0.875rem;line-height:1.6;max-width:200px;margin:0 auto;">Upload your dishes, prices, and customizations with our drag-and-drop builder.</p>
+      </div>
+      <!-- Line 2 -->
+      <div class="step-line" style="margin-top:32px;"></div>
+      <!-- Step 3 -->
+      <div style="flex:1;text-align:center;" class="fade-up fade-up-delay-3">
+        <div style="width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,rgba(99,102,241,0.2),rgba(99,102,241,0.05));border:2px solid rgba(99,102,241,0.4);display:flex;align-items:center;justify-content:center;margin:0 auto 1.5rem;font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;font-size:1.3rem;color:#a5b4fc;">3</div>
+        <div style="font-size:2rem;margin-bottom:0.75rem;">🚀</div>
+        <h3 style="font-weight:700;font-size:1.05rem;margin-bottom:0.5rem;">Start Accepting Orders</h3>
+        <p style="color:rgba(255,255,255,0.5);font-size:0.875rem;line-height:1.6;max-width:200px;margin:0 auto;">Print your QR codes, place them on tables, and watch orders roll in.</p>
+      </div>
+    </div>
+    <style>
+      @media(max-width:640px){
+        #steps-row{flex-direction:column;align-items:center;gap:2rem;}
+        .step-line{display:none;}
+      }
+    </style>
+  </div>
+</section>
+
+<!-- ─── STATS ─── -->
+<section class="stats-section section-pad">
+  <div class="container" style="position:relative;z-index:1;">
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:2rem;text-align:center;">
+      <div class="fade-up">
+        <div class="stat-num" data-target="500" style="font-family:'Plus Jakarta Sans',sans-serif;font-weight:900;font-size:3rem;letter-spacing:-0.03em;" class="gold-text">
+          <span class="counter" data-target="500">0</span>+
+        </div>
+        <div style="color:rgba(255,255,255,0.5);font-size:0.9rem;margin-top:0.4rem;">Hotels Onboarded</div>
+        <div style="width:40px;height:3px;background:linear-gradient(90deg,var(--gold),transparent);margin:0.75rem auto 0;border-radius:2px;"></div>
+      </div>
+      <div class="fade-up fade-up-delay-1">
+        <div style="font-family:'Plus Jakarta Sans',sans-serif;font-weight:900;font-size:3rem;letter-spacing:-0.03em;color:white;">
+          <span class="counter" data-target="2400000">0</span>+
+        </div>
+        <div style="color:rgba(255,255,255,0.5);font-size:0.9rem;margin-top:0.4rem;">Orders Processed</div>
+        <div style="width:40px;height:3px;background:linear-gradient(90deg,var(--emerald),transparent);margin:0.75rem auto 0;border-radius:2px;"></div>
+      </div>
+      <div class="fade-up fade-up-delay-2">
+        <div style="font-family:'Plus Jakarta Sans',sans-serif;font-weight:900;font-size:3rem;letter-spacing:-0.03em;" class="emerald-text">
+          <span class="counter" data-target="99">0</span>.9%
+        </div>
+        <div style="color:rgba(255,255,255,0.5);font-size:0.9rem;margin-top:0.4rem;">Uptime Guaranteed</div>
+        <div style="width:40px;height:3px;background:linear-gradient(90deg,#a5b4fc,transparent);margin:0.75rem auto 0;border-radius:2px;"></div>
+      </div>
+      <div class="fade-up fade-up-delay-3">
+        <div style="font-family:'Plus Jakarta Sans',sans-serif;font-weight:900;font-size:3rem;letter-spacing:-0.03em;color:white;">
+          <span class="counter" data-target="49">0</span>/5 ★
+        </div>
+        <div style="color:rgba(255,255,255,0.5);font-size:0.9rem;margin-top:0.4rem;">Average Rating</div>
+        <div style="width:40px;height:3px;background:linear-gradient(90deg,var(--gold),transparent);margin:0.75rem auto 0;border-radius:2px;"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── TESTIMONIALS ─── -->
+<section id="testimonials" class="section-pad">
+  <div style="text-align:center;max-width:600px;margin:0 auto 3.5rem;padding:0 2rem;" class="fade-up">
+    <div class="section-label">What Hoteliers Say</div>
+    <h2 style="font-size:clamp(2rem,4vw,2.8rem);font-weight:800;letter-spacing:-0.02em;line-height:1.15;">
+      Loved by hotel managers <span class="gold-text">worldwide</span>
+    </h2>
+  </div>
+  <div style="overflow:hidden;position:relative;">
+    <div style="position:absolute;left:0;top:0;bottom:0;width:80px;background:linear-gradient(90deg,var(--navy),transparent);z-index:2;pointer-events:none;"></div>
+    <div style="position:absolute;right:0;top:0;bottom:0;width:80px;background:linear-gradient(-90deg,var(--navy),transparent);z-index:2;pointer-events:none;"></div>
+    <div class="testimonial-track" id="testi-track">
+      <!-- Cards will be duplicated by JS for infinite scroll -->
+    </div>
+  </div>
+</section>
+
+<!-- ─── CTA SECTION ─── -->
+<section id="pricing-section" class="section-pad">
+  <div class="container">
+    <div style="background:linear-gradient(135deg,#92400e,#b45309,#d97706,#f59e0b);border-radius:28px;padding:5rem 4rem;text-align:center;position:relative;overflow:hidden;" class="fade-up">
+      <!-- Decorative orbs inside CTA -->
+      <div style="position:absolute;width:300px;height:300px;border-radius:50%;background:rgba(255,255,255,0.07);top:-80px;right:-80px;"></div>
+      <div style="position:absolute;width:200px;height:200px;border-radius:50%;background:rgba(255,255,255,0.05);bottom:-60px;left:5%;"></div>
+      <div style="position:relative;z-index:1;">
+        <div style="display:inline-flex;align-items:center;gap:0.4rem;background:rgba(0,0,0,0.2);border:1px solid rgba(255,255,255,0.25);color:rgba(255,255,255,0.9);font-size:0.75rem;font-weight:700;padding:0.3rem 0.9rem;border-radius:50px;letter-spacing:0.08em;text-transform:uppercase;margin-bottom:1.5rem;">
+          🎯 Limited Onboarding Slots
+        </div>
+        <h2 style="font-size:clamp(2rem,4vw,3rem);font-weight:900;letter-spacing:-0.02em;color:var(--navy);line-height:1.1;margin-bottom:1rem;">
+          Ready to Transform<br>Your Hotel?
+        </h2>
+        <p style="color:rgba(15,23,42,0.7);font-size:1.05rem;max-width:480px;margin:0 auto 2.5rem;line-height:1.7;">
+          Join 500+ hotels already using QuickDine to deliver 5-star service with half the effort. Book your personalized demo today.
+        </p>
+        <button onclick="openModal()" style="background:var(--navy);color:white;font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;font-size:1.05rem;padding:1rem 2.75rem;border-radius:50px;border:none;cursor:pointer;transition:all 0.2s ease;display:inline-flex;align-items:center;gap:0.5rem;box-shadow:0 8px 32px rgba(0,0,0,0.3);"
+          onmouseover="this.style.transform='scale(1.05)';this.style.boxShadow='0 12px 40px rgba(0,0,0,0.4)'"
+          onmouseout="this.style.transform='scale(1)';this.style.boxShadow='0 8px 32px rgba(0,0,0,0.3)'">
+          Book a Demo Free
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </button>
+        <p style="color:rgba(15,23,42,0.55);font-size:0.8rem;margin-top:1rem;">No credit card required · 14-day free trial · Cancel anytime</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── FOOTER ─── -->
+<footer style="padding:4rem 0 2rem;">
+  <div class="container">
+    <div style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:3rem;margin-bottom:3rem;">
+      <div>
+        <div style="display:flex;align-items:center;gap:0.6rem;margin-bottom:1rem;">
+          <div style="width:34px;height:34px;background:linear-gradient(135deg,#f59e0b,#d97706);border-radius:9px;display:flex;align-items:center;justify-content:center;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0f172a" stroke-width="2.5"><path d="M3 11l19-9-9 19-2-8-8-2z"/></svg>
+          </div>
+          <span style="font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;font-size:1.15rem;">QuickDine</span>
+        </div>
+        <p style="color:rgba(255,255,255,0.45);font-size:0.88rem;line-height:1.7;max-width:280px;margin-bottom:1.5rem;">
+          The all-in-one hospitality management platform built for modern hotels and restaurants.
+        </p>
+        <div style="display:flex;gap:0.75rem;">
+          <div class="social-icon">𝕏</div>
+          <div class="social-icon">in</div>
+          <div class="social-icon">▶</div>
+          <div class="social-icon">f</div>
+        </div>
+      </div>
+      <div>
+        <h4 style="font-size:0.8rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:rgba(255,255,255,0.35);margin-bottom:1.25rem;">Product</h4>
+        <div style="display:flex;flex-direction:column;gap:0.75rem;">
+          <a href="#" style="color:rgba(255,255,255,0.55);font-size:0.9rem;text-decoration:none;transition:color 0.2s;" onmouseover="this.style.color='#f59e0b'" onmouseout="this.style.color='rgba(255,255,255,0.55)'">Features</a>
+          <a href="#" style="color:rgba(255,255,255,0.55);font-size:0.9rem;text-decoration:none;transition:color 0.2s;" onmouseover="this.style.color='#f59e0b'" onmouseout="this.style.color='rgba(255,255,255,0.55)'">Pricing</a>
+          <a href="#" style="color:rgba(255,255,255,0.55);font-size:0.9rem;text-decoration:none;transition:color 0.2s;" onmouseover="this.style.color='#f59e0b'" onmouseout="this.style.color='rgba(255,255,255,0.55)'">Changelog</a>
+          <a href="#" style="color:rgba(255,255,255,0.55);font-size:0.9rem;text-decoration:none;transition:color 0.2s;" onmouseover="this.style.color='#f59e0b'" onmouseout="this.style.color='rgba(255,255,255,0.55)'">API Docs</a>
+        </div>
+      </div>
+      <div>
+        <h4 style="font-size:0.8rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:rgba(255,255,255,0.35);margin-bottom:1.25rem;">Company</h4>
+        <div style="display:flex;flex-direction:column;gap:0.75rem;">
+          <a href="#" style="color:rgba(255,255,255,0.55);font-size:0.9rem;text-decoration:none;transition:color 0.2s;" onmouseover="this.style.color='#f59e0b'" onmouseout="this.style.color='rgba(255,255,255,0.55)'">About</a>
+          <a href="#" style="color:rgba(255,255,255,0.55);font-size:0.9rem;text-decoration:none;transition:color 0.2s;" onmouseover="this.style.color='#f59e0b'" onmouseout="this.style.color='rgba(255,255,255,0.55)'">Blog</a>
+          <a href="#" style="color:rgba(255,255,255,0.55);font-size:0.9rem;text-decoration:none;transition:color 0.2s;" onmouseover="this.style.color='#f59e0b'" onmouseout="this.style.color='rgba(255,255,255,0.55)'">Careers</a>
+          <a href="#" style="color:rgba(255,255,255,0.55);font-size:0.9rem;text-decoration:none;transition:color 0.2s;" onmouseover="this.style.color='#f59e0b'" onmouseout="this.style.color='rgba(255,255,255,0.55)'">Contact</a>
+        </div>
+      </div>
+      <div>
+        <h4 style="font-size:0.8rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:rgba(255,255,255,0.35);margin-bottom:1.25rem;">Legal</h4>
+        <div style="display:flex;flex-direction:column;gap:0.75rem;">
+          <a href="#" style="color:rgba(255,255,255,0.55);font-size:0.9rem;text-decoration:none;transition:color 0.2s;" onmouseover="this.style.color='#f59e0b'" onmouseout="this.style.color='rgba(255,255,255,0.55)'">Privacy Policy</a>
+          <a href="#" style="color:rgba(255,255,255,0.55);font-size:0.9rem;text-decoration:none;transition:color 0.2s;" onmouseover="this.style.color='#f59e0b'" onmouseout="this.style.color='rgba(255,255,255,0.55)'">Terms of Service</a>
+          <a href="#" style="color:rgba(255,255,255,0.55);font-size:0.9rem;text-decoration:none;transition:color 0.2s;" onmouseover="this.style.color='#f59e0b'" onmouseout="this.style.color='rgba(255,255,255,0.55)'">Cookie Policy</a>
+        </div>
+      </div>
+    </div>
+    <div style="border-top:1px solid rgba(255,255,255,0.08);padding-top:2rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem;">
+      <p style="color:rgba(255,255,255,0.3);font-size:0.82rem;">© 2025 QuickDine Inc. All rights reserved.</p>
+      <p style="color:rgba(255,255,255,0.3);font-size:0.82rem;">Powered by <span style="color:var(--gold);font-weight:600;">QuickDine</span> · Built with ❤️ for hospitality</p>
+    </div>
+  </div>
+</footer>
+
+<!-- ─── MODAL ─── -->
+<div class="modal-overlay" id="modal" onclick="closeModalOnOverlay(event)">
+  <div class="modal-box">
+    <button onclick="closeModal()" style="position:absolute;top:1.25rem;right:1.25rem;background:rgba(255,255,255,0.07);border:none;color:rgba(255,255,255,0.5);width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:1rem;display:flex;align-items:center;justify-content:center;transition:all 0.2s;"
+      onmouseover="this.style.background='rgba(255,255,255,0.12)';this.style.color='white'"
+      onmouseout="this.style.background='rgba(255,255,255,0.07)';this.style.color='rgba(255,255,255,0.5)'">✕</button>
+    <div style="margin-bottom:1.75rem;">
+      <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.4rem;">
+        <div style="width:28px;height:28px;background:linear-gradient(135deg,#f59e0b,#d97706);border-radius:7px;display:flex;align-items:center;justify-content:center;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#0f172a" stroke-width="2.5"><path d="M3 11l19-9-9 19-2-8-8-2z"/></svg>
+        </div>
+        <span style="font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;font-size:1rem;">QuickDine</span>
+      </div>
+      <h3 style="font-size:1.5rem;font-weight:800;letter-spacing:-0.02em;margin-bottom:0.4rem;">Book Your Free Demo</h3>
+      <p style="color:rgba(255,255,255,0.45);font-size:0.875rem;">We'll reach out within 2 hours to schedule your personalized walkthrough.</p>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:0.9rem;">
+      <input type="text" class="form-input" placeholder="Your Full Name" id="f-name">
+      <input type="text" class="form-input" placeholder="Hotel / Restaurant Name" id="f-hotel">
+      <input type="email" class="form-input" placeholder="Work Email" id="f-email">
+      <input type="tel" class="form-input" placeholder="Phone Number" id="f-phone">
+      <input type="number" class="form-input" placeholder="Number of Tables" id="f-tables" min="1">
+      <button class="btn-submit" id="submit-btn" onclick="submitForm()">
+        <div class="spinner" id="spinner"></div>
+        <span id="submit-text">Request Demo →</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ─── SUCCESS TOAST ─── -->
+<div id="toast" style="position:fixed;bottom:2rem;right:2rem;background:linear-gradient(135deg,var(--emerald),var(--emerald-dark));color:white;padding:1rem 1.5rem;border-radius:14px;font-family:'Plus Jakarta Sans',sans-serif;font-weight:600;font-size:0.9rem;box-shadow:0 8px 32px rgba(0,0,0,0.4);z-index:9999;transform:translateY(100px);opacity:0;transition:all 0.4s ease;display:flex;align-items:center;gap:0.6rem;">
+  ✅ Demo booked! We'll contact you soon.
+</div>
+
+<script>
+// ─── NAVBAR SCROLL ───
+window.addEventListener('scroll', () => {
+  const nav = document.getElementById('navbar');
+  if (window.scrollY > 40) nav.classList.add('scrolled');
+  else nav.classList.remove('scrolled');
+});
+
+// ─── INTERSECTION OBSERVER for fade-up ───
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if (e.isIntersecting) { e.target.classList.add('visible'); }
+  });
+}, { threshold: 0.12 });
+document.querySelectorAll('.fade-up').forEach(el => observer.observe(el));
+
+// ─── COUNTER ANIMATION ───
+function animateCounter(el) {
+  const target = parseInt(el.dataset.target);
+  const duration = 1800;
+  const start = performance.now();
+  const easeOut = t => 1 - Math.pow(1-t, 3);
+  function step(now) {
+    const progress = Math.min((now - start) / duration, 1);
+    const val = Math.floor(easeOut(progress) * target);
+    // Format large numbers
+    if (target >= 1000000) {
+      el.textContent = (val / 1000000).toFixed(1) + 'M';
+    } else if (target >= 1000) {
+      el.textContent = val.toLocaleString();
+    } else if (target === 49) {
+      el.textContent = (val / 10).toFixed(1);
+    } else {
+      el.textContent = val;
+    }
+    if (progress < 1) requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+}
+const counterObserver = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      document.querySelectorAll('.counter').forEach(c => animateCounter(c));
+      counterObserver.disconnect();
+    }
+  });
+}, { threshold: 0.3 });
+const statsSection = document.querySelector('.stats-section');
+if (statsSection) counterObserver.observe(statsSection);
+
+// ─── HERO CHART ───
+window.addEventListener('load', () => {
+  const ctx = document.getElementById('heroChart');
+  if (!ctx) return;
+  new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'],
+      datasets: [{
+        data: [3200, 4100, 3800, 4900, 4200, 5800, 4820],
+        borderColor: '#f59e0b',
+        backgroundColor: 'rgba(245,158,11,0.08)',
+        fill: true,
+        tension: 0.4,
+        pointRadius: 3,
+        pointBackgroundColor: '#f59e0b',
+        borderWidth: 2,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: true,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { grid: { display: false }, ticks: { color: 'rgba(255,255,255,0.3)', font: { size: 9 } } },
+        y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: 'rgba(255,255,255,0.3)', font: { size: 9 }, callback: v => '$' + (v/1000).toFixed(1)+'k' } }
+      }
+    }
+  });
+});
+
+// ─── ORDER LIST ANIMATION ───
+const orders = [
+  { table: 'T-03', item: 'Grilled Salmon', status: 'Preparing', color: '#f59e0b' },
+  { table: 'T-07', item: 'Caesar Salad', status: 'Ready', color: '#10b981' },
+  { table: 'T-12', item: 'Ribeye Steak', status: 'New', color: '#a5b4fc' },
+];
+const list = document.getElementById('order-list');
+if (list) {
+  orders.forEach(o => {
+    list.innerHTML += `<div style="display:flex;align-items:center;justify-content:space-between;padding:0.45rem 0;border-bottom:1px solid rgba(255,255,255,0.05);">
+      <div style="display:flex;align-items:center;gap:0.5rem;">
+        <div style="width:6px;height:6px;border-radius:50%;background:${o.color};"></div>
+        <span style="font-size:0.7rem;color:rgba(255,255,255,0.35);">${o.table}</span>
+        <span style="font-size:0.72rem;color:rgba(255,255,255,0.65);">${o.item}</span>
+      </div>
+      <span style="font-size:0.65rem;color:${o.color};font-weight:600;">${o.status}</span>
+    </div>`;
+  });
+}
+
+// ─── TESTIMONIALS ───
+const testimonials = [
+  { name: 'Amara Osei', role: 'GM · Kempinski Gold Coast', text: 'QuickDine cut our order errors by 80% in the first week. The chef dashboard is a game-changer.', stars: 5 },
+  { name: 'Priya Sharma', role: 'F&B Manager · Taj Hotels', text: 'Setup took 20 minutes. Our guests love the QR menus. Revenue is up 18% month over month.', stars: 5 },
+  { name: 'Carlos Mendes', role: 'Owner · Restaurante Lisboa', text: 'I manage 3 locations from my phone now. The analytics alone are worth the subscription.', stars: 5 },
+  { name: 'Fatima Al-Hassan', role: 'Director · Sheraton Abuja', text: 'The multi-tenant dashboard gave our regional team complete visibility. Exceptional product.', stars: 5 },
+  { name: 'David Kim', role: 'COO · Park Hyatt Seoul', text: 'QuickDine\'s uptime is incredible. We\'ve had zero downtime in 8 months. Absolutely reliable.', stars: 5 },
+  { name: 'Sophie Laurent', role: 'Ops Lead · Novotel Paris', text: 'Our waitstaff love how simple the interface is. Training new hires takes 10 minutes now.', stars: 5 },
+];
+
+const track = document.getElementById('testi-track');
+if (track) {
+  const all = [...testimonials, ...testimonials]; // duplicate for infinite scroll
+  all.forEach(t => {
+    const stars = '★'.repeat(t.stars);
+    track.innerHTML += `<div class="testi-card">
+      <div style="color:#f59e0b;font-size:0.85rem;margin-bottom:1rem;letter-spacing:0.05em;">${stars}</div>
+      <p style="color:rgba(255,255,255,0.72);font-size:0.9rem;line-height:1.65;margin-bottom:1.5rem;">"${t.text}"</p>
+      <div style="display:flex;align-items:center;gap:0.75rem;">
+        <div style="width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,rgba(245,158,11,0.3),rgba(245,158,11,0.1));display:flex;align-items:center;justify-content:center;font-family:'Plus Jakarta Sans',sans-serif;font-weight:700;font-size:0.9rem;color:var(--gold);">${t.name[0]}</div>
+        <div>
+          <div style="font-family:'Plus Jakarta Sans',sans-serif;font-weight:700;font-size:0.9rem;">${t.name}</div>
+          <div style="color:rgba(255,255,255,0.4);font-size:0.75rem;margin-top:0.1rem;">${t.role}</div>
+        </div>
+      </div>
+    </div>`;
+  });
+}
+
+// ─── MODAL ───
+function openModal() {
+  document.getElementById('modal').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeModal() {
+  document.getElementById('modal').classList.remove('open');
+  document.body.style.overflow = '';
+}
+function closeModalOnOverlay(e) {
+  if (e.target === document.getElementById('modal')) closeModal();
+}
+
+function submitForm() {
+  const btn = document.getElementById('submit-btn');
+  const spinner = document.getElementById('spinner');
+  const text = document.getElementById('submit-text');
+  spinner.style.display = 'block';
+  text.textContent = 'Booking demo...';
+  btn.disabled = true;
+  setTimeout(() => {
+    spinner.style.display = 'none';
+    text.textContent = '✓ Demo booked!';
+    btn.style.background = 'linear-gradient(135deg,#10b981,#059669)';
+    setTimeout(() => {
+      closeModal();
+      btn.disabled = false;
+      text.textContent = 'Request Demo →';
+      btn.style.background = '';
+      // Show toast
+      const toast = document.getElementById('toast');
+      toast.style.transform = 'translateY(0)';
+      toast.style.opacity = '1';
+      setTimeout(() => {
+        toast.style.transform = 'translateY(100px)';
+        toast.style.opacity = '0';
+      }, 3500);
+    }, 800);
+  }, 1800);
+}
+
+// Keyboard close
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+</script>
+</body>
+</html>
