@@ -80,12 +80,14 @@ jobs:
 
       - name: Deploy to Cloud Run
         run: |
+          SHORT_SHA=${GITHUB_SHA::7}
+          
           gcloud run services update $SERVICE \
             --image=$IMAGE:$GITHUB_SHA \
             --region=$REGION \
             --project=$PROJECT_ID \
             --no-traffic \
-            --tag=sha-$GITHUB_SHA
+            --tag=sha-$SHORT_SHA
 
           gcloud run services update-traffic $SERVICE \
             --region=$REGION \
