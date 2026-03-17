@@ -20,6 +20,8 @@ def health_check(request):
 def root_view(request):
     """Root endpoint - welcome page"""
     return render(request, 'platform_template/quickdine.html')
+
+
 urlpatterns = [
     # Respond to Chrome DevTools `.well-known` probe to avoid noisy 404s during development
     re_path(r'^\.well-known/appspecific/com\.chrome\.devtools\.json$', lambda req: JsonResponse({}, status=200)),
