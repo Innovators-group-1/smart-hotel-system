@@ -36,5 +36,5 @@ urlpatterns = [
     path('', root_view, name='root'),
     path('health/', health_check, name='health'),
     path('admin/', admin_view, name='admin'),
-    path('auth/', auth_view, name='auth'),
+    path('login/', auth_view, name='auth'),
 ]
