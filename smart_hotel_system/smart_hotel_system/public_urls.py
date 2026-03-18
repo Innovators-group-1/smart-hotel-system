@@ -21,8 +21,13 @@ def root_view(request):
     """Root endpoint - welcome page"""
     return render(request, 'platform_template/quickdine.html')
 
+@never_cache
+def admin_view(request):
+    """Admin endpoint - for demonstration purposes"""
+    return render(request, 'platform_template/quickdine-admin.html')
+
 urlpatterns = [
     path('', root_view, name='root'),
     path('health/', health_check, name='health'),
-    path('admin/', admin.site.urls),
+    path('admin/', admin_view, name='admin'),
 ]

@@ -1,0 +1,2036 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>QuickDine — Platform Admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+<style>
+:root {
+  --navy: #0f172a;
+  --navy2: #1e293b;
+  --navy3: #334155;
+  --gold: #f59e0b;
+  --gold-light: #fbbf24;
+  --emerald: #10b981;
+  --red: #ef4444;
+  --blue: #3b82f6;
+  --bg: #f1f5f9;
+  --card: #ffffff;
+  --text: #0f172a;
+  --text2: #64748b;
+  --border: #e2e8f0;
+  --sidebar-w: 268px;
+  --sidebar-collapsed: 68px;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+html,body { height:100%; font-family:'Inter',sans-serif; background:var(--bg); color:var(--text); overflow:hidden; }
+h1,h2,h3,h4,h5 { font-family:'Plus Jakarta Sans',sans-serif; }
+
+/* ── SIDEBAR ── */
+#sidebar {
+  position:fixed; left:0; top:0; bottom:0; width:var(--sidebar-w);
+  background:var(--navy);
+  display:flex; flex-direction:column;
+  transition:width 0.3s cubic-bezier(.4,0,.2,1);
+  z-index:50; overflow:hidden;
+  border-right:1px solid rgba(255,255,255,0.04);
+}
+#sidebar.collapsed { width:var(--sidebar-collapsed); }
+.sidebar-logo {
+  padding:1.25rem 1.1rem;
+  display:flex; align-items:center; gap:0.75rem;
+  border-bottom:1px solid rgba(255,255,255,0.06);
+  min-height:64px; flex-shrink:0;
+}
+.logo-icon {
+  width:36px; height:36px; flex-shrink:0;
+  background:linear-gradient(135deg,var(--gold),#d97706);
+  border-radius:10px;
+  display:flex; align-items:center; justify-content:center;
+}
+.logo-text { font-family:'Plus Jakarta Sans',sans-serif; font-weight:800; font-size:1rem; color:white; white-space:nowrap; transition:opacity 0.2s,width 0.3s; }
+#sidebar.collapsed .logo-text { opacity:0; width:0; overflow:hidden; }
+
+.nav-section-label {
+  font-size:0.65rem; font-weight:700; letter-spacing:0.1em; text-transform:uppercase;
+  color:rgba(255,255,255,0.25); padding:1rem 1.1rem 0.4rem;
+  white-space:nowrap; transition:opacity 0.2s;
+}
+#sidebar.collapsed .nav-section-label { opacity:0; }
+
+.nav-item {
+  display:flex; align-items:center; gap:0.75rem;
+  padding:0.65rem 1.1rem; margin:0.1rem 0.6rem;
+  border-radius:10px; cursor:pointer;
+  transition:all 0.18s ease;
+  position:relative; min-height:42px;
+  color:rgba(255,255,255,0.55);
+  font-size:0.875rem; font-weight:500;
+  white-space:nowrap; overflow:hidden;
+}
+.nav-item:hover { background:rgba(255,255,255,0.07); color:rgba(255,255,255,0.9); }
+.nav-item.active {
+  background:rgba(245,158,11,0.1);
+  color:var(--gold);
+}
+.nav-item.active::before {
+  content:''; position:absolute; left:-0.6rem; top:50%; transform:translateY(-50%);
+  width:3px; height:22px; background:var(--gold); border-radius:0 2px 2px 0;
+}
+.nav-item .nav-icon { width:18px; height:18px; flex-shrink:0; }
+.nav-label { transition:opacity 0.2s,width 0.3s; }
+#sidebar.collapsed .nav-label { opacity:0; width:0; overflow:hidden; }
+.nav-badge {
+  margin-left:auto; background:var(--red); color:white;
+  font-size:0.65rem; font-weight:700; padding:0.1rem 0.45rem;
+  border-radius:10px; flex-shrink:0;
+}
+#sidebar.collapsed .nav-badge { display:none; }
+.nav-item.danger { color:rgba(239,68,68,0.7); }
+.nav-item.danger:hover { background:rgba(239,68,68,0.08); color:var(--red); }
+
+.sidebar-bottom { margin-top:auto; padding:1rem 0.6rem; border-top:1px solid rgba(255,255,255,0.06); }
+.sidebar-user {
+  display:flex; align-items:center; gap:0.75rem;
+  padding:0.65rem 0.5rem; border-radius:10px; cursor:pointer;
+  transition:background 0.18s;
+}
+.sidebar-user:hover { background:rgba(255,255,255,0.06); }
+.avatar-sm {
+  width:32px; height:32px; border-radius:50%; flex-shrink:0;
+  background:linear-gradient(135deg,var(--gold),#d97706);
+  display:flex; align-items:center; justify-content:center;
+  font-family:'Plus Jakarta Sans',sans-serif; font-weight:700; font-size:0.75rem; color:var(--navy);
+}
+.user-info { transition:opacity 0.2s,width 0.3s; }
+#sidebar.collapsed .user-info { opacity:0; width:0; overflow:hidden; }
+
+/* ── MAIN LAYOUT ── */
+#main-wrap {
+  margin-left:var(--sidebar-w);
+  height:100vh; display:flex; flex-direction:column;
+  transition:margin-left 0.3s cubic-bezier(.4,0,.2,1);
+  overflow:hidden;
+}
+#main-wrap.expanded { margin-left:var(--sidebar-collapsed); }
+
+/* ── TOPBAR ── */
+#topbar {
+  height:64px; background:white; border-bottom:1px solid var(--border);
+  display:flex; align-items:center; gap:1rem; padding:0 1.75rem;
+  flex-shrink:0; position:sticky; top:0; z-index:40;
+}
+#toggle-sidebar {
+  width:36px; height:36px; border-radius:9px; border:1px solid var(--border);
+  background:white; cursor:pointer; display:flex; align-items:center; justify-content:center;
+  transition:all 0.18s ease; color:var(--text2);
+}
+#toggle-sidebar:hover { background:var(--bg); border-color:var(--navy3); color:var(--text); }
+#page-title { font-family:'Plus Jakarta Sans',sans-serif; font-weight:700; font-size:1.1rem; color:var(--text); }
+.topbar-search {
+  margin-left:auto; position:relative;
+  transition:all 0.3s ease;
+}
+.topbar-search input {
+  width:220px; padding:0.5rem 1rem 0.5rem 2.4rem;
+  background:var(--bg); border:1px solid var(--border); border-radius:10px;
+  font-family:'Inter',sans-serif; font-size:0.875rem; color:var(--text); outline:none;
+  transition:all 0.25s ease;
+}
+.topbar-search input:focus { width:280px; border-color:var(--gold); background:white; box-shadow:0 0 0 3px rgba(245,158,11,0.1); }
+.topbar-search .search-icon { position:absolute; left:0.7rem; top:50%; transform:translateY(-50%); color:var(--text2); }
+.topbar-actions { display:flex; align-items:center; gap:0.75rem; }
+.topbar-btn {
+  width:38px; height:38px; border-radius:9px; border:1px solid var(--border);
+  background:white; cursor:pointer; display:flex; align-items:center; justify-content:center;
+  position:relative; transition:all 0.18s ease; color:var(--text2);
+}
+.topbar-btn:hover { background:var(--bg); border-color:var(--navy3); color:var(--text); }
+.notif-badge {
+  position:absolute; top:-4px; right:-4px; width:17px; height:17px;
+  background:var(--red); border-radius:50%; border:2px solid white;
+  font-size:0.6rem; font-weight:700; color:white;
+  display:flex; align-items:center; justify-content:center;
+}
+.avatar-lg {
+  width:38px; height:38px; border-radius:50%; flex-shrink:0;
+  background:linear-gradient(135deg,var(--gold),#d97706);
+  display:flex; align-items:center; justify-content:center;
+  font-family:'Plus Jakarta Sans',sans-serif; font-weight:700; font-size:0.875rem; color:var(--navy);
+  cursor:pointer; border:2px solid transparent; transition:border-color 0.2s;
+}
+.avatar-lg:hover { border-color:var(--gold); }
+
+/* ── CONTENT ── */
+#content { flex:1; overflow-y:auto; padding:1.75rem; }
+.page { display:none; animation:fadeIn 0.3s ease; }
+.page.active { display:block; }
+@keyframes fadeIn { from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);} }
+
+/* ── STAT CARDS ── */
+.stat-card {
+  background:white; border-radius:16px; padding:1.5rem;
+  border:1px solid var(--border);
+  position:relative; overflow:hidden;
+  transition:transform 0.2s,box-shadow 0.2s;
+}
+.stat-card:hover { transform:translateY(-2px); box-shadow:0 8px 30px rgba(0,0,0,0.08); }
+.stat-card .card-icon {
+  width:44px; height:44px; border-radius:12px;
+  display:flex; align-items:center; justify-content:center;
+  margin-bottom:1rem;
+}
+.stat-card .card-value {
+  font-family:'Plus Jakarta Sans',sans-serif; font-weight:800;
+  font-size:1.9rem; letter-spacing:-0.03em; margin-bottom:0.3rem;
+}
+.stat-card .card-label { font-size:0.82rem; color:var(--text2); font-weight:500; }
+.stat-card .card-change {
+  display:inline-flex; align-items:center; gap:0.25rem;
+  font-size:0.75rem; font-weight:600; margin-top:0.6rem;
+  padding:0.2rem 0.5rem; border-radius:6px;
+}
+.change-up { background:rgba(16,185,129,0.1); color:var(--emerald); }
+.change-down { background:rgba(239,68,68,0.08); color:var(--red); }
+
+/* ── SECTION CARD ── */
+.section-card {
+  background:white; border-radius:16px; border:1px solid var(--border);
+  overflow:hidden;
+}
+.section-header {
+  padding:1.25rem 1.5rem; border-bottom:1px solid var(--border);
+  display:flex; align-items:center; justify-content:space-between;
+}
+.section-title { font-family:'Plus Jakarta Sans',sans-serif; font-weight:700; font-size:0.95rem; }
+.section-sub { font-size:0.78rem; color:var(--text2); margin-top:0.15rem; }
+
+/* ── TABLE ── */
+.data-table { width:100%; border-collapse:collapse; }
+.data-table th {
+  padding:0.7rem 1rem; text-align:left; font-size:0.72rem;
+  font-weight:700; letter-spacing:0.06em; text-transform:uppercase;
+  color:var(--text2); background:#f8fafc; border-bottom:1px solid var(--border);
+}
+.data-table td { padding:0.9rem 1rem; border-bottom:1px solid #f1f5f9; font-size:0.85rem; vertical-align:middle; }
+.data-table tbody tr { transition:background 0.15s; animation:rowIn 0.3s ease both; }
+.data-table tbody tr:hover { background:#fafafa; }
+@keyframes rowIn { from{opacity:0;transform:translateX(-4px);}to{opacity:1;transform:translateX(0);} }
+.data-table tbody tr:nth-child(1){animation-delay:0.05s;}
+.data-table tbody tr:nth-child(2){animation-delay:0.1s;}
+.data-table tbody tr:nth-child(3){animation-delay:0.15s;}
+.data-table tbody tr:nth-child(4){animation-delay:0.2s;}
+.data-table tbody tr:nth-child(5){animation-delay:0.25s;}
+.data-table tbody tr:last-child td{border-bottom:none;}
+
+/* ── BADGES ── */
+.badge {
+  display:inline-flex; align-items:center; gap:0.3rem;
+  padding:0.25rem 0.65rem; border-radius:20px;
+  font-size:0.72rem; font-weight:600;
+}
+.badge-green { background:rgba(16,185,129,0.1); color:var(--emerald); }
+.badge-red { background:rgba(239,68,68,0.1); color:var(--red); }
+.badge-gold { background:rgba(245,158,11,0.1); color:var(--gold); }
+.badge-blue { background:rgba(59,130,246,0.1); color:var(--blue); }
+.badge-gray { background:#f1f5f9; color:var(--text2); }
+.badge-dot { width:5px; height:5px; border-radius:50%; background:currentColor; }
+
+/* ── BUTTONS ── */
+.btn {
+  display:inline-flex; align-items:center; gap:0.4rem;
+  padding:0.55rem 1.1rem; border-radius:9px; font-size:0.82rem; font-weight:600;
+  cursor:pointer; border:none; font-family:'Inter',sans-serif;
+  transition:all 0.18s ease; white-space:nowrap;
+}
+.btn:hover { transform:scale(1.02); }
+.btn-primary { background:var(--navy); color:white; }
+.btn-primary:hover { background:#1e293b; box-shadow:0 4px 16px rgba(15,23,42,0.2); }
+.btn-gold { background:linear-gradient(135deg,var(--gold),#d97706); color:var(--navy); font-weight:700; }
+.btn-gold:hover { box-shadow:0 4px 16px rgba(245,158,11,0.3); }
+.btn-emerald { background:linear-gradient(135deg,var(--emerald),#059669); color:white; }
+.btn-emerald:hover { box-shadow:0 4px 16px rgba(16,185,129,0.3); }
+.btn-red { background:rgba(239,68,68,0.1); color:var(--red); border:1px solid rgba(239,68,68,0.2); }
+.btn-red:hover { background:var(--red); color:white; }
+.btn-ghost { background:transparent; color:var(--text2); border:1px solid var(--border); }
+.btn-ghost:hover { background:var(--bg); color:var(--text); border-color:var(--navy3); }
+.btn-sm { padding:0.35rem 0.75rem; font-size:0.76rem; }
+.btn-icon { width:32px; height:32px; padding:0; justify-content:center; border-radius:8px; }
+
+/* ── FORM ELEMENTS ── */
+.form-group { margin-bottom:1.25rem; }
+.form-label { display:block; font-size:0.82rem; font-weight:600; color:var(--text); margin-bottom:0.4rem; }
+.form-input, .form-select, .form-textarea {
+  width:100%; padding:0.65rem 0.9rem;
+  border:1px solid var(--border); border-radius:10px;
+  font-family:'Inter',sans-serif; font-size:0.875rem; color:var(--text);
+  background:white; outline:none; transition:all 0.2s;
+}
+.form-input:focus, .form-select:focus, .form-textarea:focus {
+  border-color:var(--gold); box-shadow:0 0 0 3px rgba(245,158,11,0.1);
+}
+.form-hint { font-size:0.75rem; color:var(--text2); margin-top:0.35rem; }
+.input-prefix {
+  display:flex; align-items:center; gap:0; border:1px solid var(--border); border-radius:10px; overflow:hidden;
+  transition:all 0.2s;
+}
+.input-prefix:focus-within { border-color:var(--gold); box-shadow:0 0 0 3px rgba(245,158,11,0.1); }
+.input-prefix span { background:#f8fafc; padding:0.65rem 0.9rem; font-size:0.82rem; color:var(--text2); border-right:1px solid var(--border); white-space:nowrap; }
+.input-prefix input { border:none; border-radius:0; padding:0.65rem 0.9rem; flex:1; outline:none; font-size:0.875rem; }
+
+/* ── MODAL ── */
+.modal-overlay {
+  position:fixed; inset:0; background:rgba(15,23,42,0.6);
+  backdrop-filter:blur(4px); z-index:200;
+  display:none; align-items:center; justify-content:center;
+  animation:overlayIn 0.2s ease;
+}
+.modal-overlay.open { display:flex; }
+@keyframes overlayIn{from{opacity:0;}to{opacity:1;}}
+.modal-box {
+  background:white; border-radius:20px; padding:2rem;
+  width:100%; max-width:480px; position:relative;
+  animation:modalIn 0.25s ease; box-shadow:0 40px 80px rgba(0,0,0,0.2);
+  max-height:90vh; overflow-y:auto;
+}
+@keyframes modalIn{from{opacity:0;transform:scale(0.95) translateY(16px);}to{opacity:1;transform:scale(1) translateY(0);}}
+.modal-title { font-family:'Plus Jakarta Sans',sans-serif; font-weight:700; font-size:1.15rem; margin-bottom:0.4rem; }
+.modal-close {
+  position:absolute; top:1.25rem; right:1.25rem;
+  width:32px; height:32px; border-radius:8px;
+  border:1px solid var(--border); background:white; cursor:pointer;
+  display:flex; align-items:center; justify-content:center;
+  color:var(--text2); transition:all 0.18s;
+}
+.modal-close:hover { background:var(--bg); color:var(--text); }
+
+/* ── SLIDE PANEL ── */
+#slide-panel {
+  position:fixed; right:-520px; top:0; bottom:0; width:480px;
+  background:white; border-left:1px solid var(--border);
+  z-index:150; transition:right 0.35s cubic-bezier(.4,0,.2,1);
+  overflow-y:auto; box-shadow:-8px 0 40px rgba(0,0,0,0.1);
+}
+#slide-panel.open { right:0; }
+#slide-overlay {
+  position:fixed; inset:0; background:rgba(15,23,42,0.3);
+  z-index:149; display:none; backdrop-filter:blur(2px);
+}
+#slide-overlay.open { display:block; }
+
+/* ── TOAST ── */
+#toast-container { position:fixed; top:1.25rem; right:1.25rem; z-index:9999; display:flex; flex-direction:column; gap:0.6rem; }
+.toast {
+  background:white; border-radius:12px; padding:0.85rem 1.1rem;
+  display:flex; align-items:center; gap:0.75rem;
+  box-shadow:0 8px 32px rgba(0,0,0,0.12); border:1px solid var(--border);
+  min-width:280px; animation:toastIn 0.3s ease; font-size:0.875rem;
+}
+@keyframes toastIn{from{opacity:0;transform:translateX(20px);}to{opacity:1;transform:translateX(0);}}
+.toast-out { animation:toastOut 0.3s ease forwards; }
+@keyframes toastOut{to{opacity:0;transform:translateX(20px);}}
+.toast-icon { width:32px; height:32px; border-radius:9px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+.toast-success .toast-icon { background:rgba(16,185,129,0.1); color:var(--emerald); }
+.toast-error .toast-icon { background:rgba(239,68,68,0.1); color:var(--red); }
+.toast-warn .toast-icon { background:rgba(245,158,11,0.1); color:var(--gold); }
+.toast-title { font-weight:600; font-size:0.85rem; }
+.toast-msg { font-size:0.78rem; color:var(--text2); }
+
+/* ── ACTIVITY FEED ── */
+.activity-item { display:flex; align-items:flex-start; gap:0.9rem; padding:0.85rem 0; }
+.activity-item:not(:last-child) { border-bottom:1px solid #f1f5f9; }
+.activity-dot { width:34px; height:34px; border-radius:10px; flex-shrink:0; display:flex; align-items:center; justify-content:center; }
+.activity-text { font-size:0.85rem; line-height:1.5; }
+.activity-time { font-size:0.72rem; color:var(--text2); margin-top:0.2rem; }
+
+/* ── PLAN CARDS ── */
+.plan-card {
+  border:2px solid var(--border); border-radius:14px; padding:1.25rem;
+  cursor:pointer; transition:all 0.2s ease;
+}
+.plan-card.selected { border-color:var(--gold); background:rgba(245,158,11,0.04); }
+.plan-card:hover { border-color:var(--gold); }
+
+/* ── STEP INDICATOR ── */
+.step-indicator { display:flex; align-items:center; gap:0; margin-bottom:2rem; }
+.step {
+  display:flex; align-items:center; gap:0.5rem;
+  font-size:0.8rem; font-weight:600; color:var(--text2);
+}
+.step.active { color:var(--gold); }
+.step.done { color:var(--emerald); }
+.step-num {
+  width:28px; height:28px; border-radius:50%;
+  display:flex; align-items:center; justify-content:center;
+  font-size:0.75rem; font-weight:700;
+  border:2px solid var(--border); background:white; color:var(--text2);
+}
+.step.active .step-num { border-color:var(--gold); background:var(--gold); color:var(--navy); }
+.step.done .step-num { border-color:var(--emerald); background:var(--emerald); color:white; }
+.step-line { flex:1; height:2px; background:var(--border); margin:0 0.5rem; }
+.step-line.done { background:var(--emerald); }
+
+/* ── SKELETON ── */
+.skeleton { background:linear-gradient(90deg,#f1f5f9 25%,#e2e8f0 50%,#f1f5f9 75%); background-size:200% 100%; animation:shimmer 1.5s infinite; border-radius:8px; }
+@keyframes shimmer{0%{background-position:200% 0;}100%{background-position:-200% 0;}}
+
+/* ── SEARCH/FILTER BAR ── */
+.filter-bar { display:flex; align-items:center; gap:0.75rem; flex-wrap:wrap; }
+.filter-input {
+  padding:0.55rem 0.9rem 0.55rem 2.2rem; border:1px solid var(--border); border-radius:9px;
+  font-size:0.85rem; font-family:'Inter',sans-serif; outline:none; background:white;
+  transition:all 0.2s; color:var(--text);
+}
+.filter-input:focus { border-color:var(--gold); box-shadow:0 0 0 3px rgba(245,158,11,0.1); }
+.filter-select {
+  padding:0.55rem 0.9rem; border:1px solid var(--border); border-radius:9px;
+  font-size:0.85rem; font-family:'Inter',sans-serif; outline:none; background:white;
+  cursor:pointer; color:var(--text); transition:border-color 0.2s;
+}
+.filter-select:focus { border-color:var(--gold); }
+
+/* ── CALENDAR ── */
+.cal-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:0.4rem; }
+.cal-day {
+  aspect-ratio:1; display:flex; align-items:center; justify-content:center;
+  border-radius:9px; font-size:0.8rem; cursor:pointer; position:relative;
+  transition:all 0.15s;
+}
+.cal-day:hover { background:var(--bg); }
+.cal-day.has-bookings { background:rgba(245,158,11,0.1); color:var(--gold); font-weight:700; }
+.cal-day.today { background:var(--navy); color:white; font-weight:700; }
+.cal-day.other-month { color:var(--border); }
+.booking-dot { width:4px; height:4px; border-radius:50%; background:var(--gold); position:absolute; bottom:4px; left:50%; transform:translateX(-50%); }
+
+/* ── CHECKBOX ── */
+.custom-check { width:16px; height:16px; border-radius:4px; border:1.5px solid var(--border); cursor:pointer; appearance:none; background:white; transition:all 0.15s; }
+.custom-check:checked { background:var(--navy); border-color:var(--navy); }
+
+/* ── HEATMAP ── */
+.heatmap-grid { display:grid; grid-template-columns:repeat(24,1fr); gap:3px; }
+.heatmap-cell {
+  height:24px; border-radius:4px; background:#f1f5f9;
+  transition:opacity 0.2s; cursor:default;
+}
+
+/* ── PAGINATION ── */
+.pagination { display:flex; align-items:center; gap:0.4rem; }
+.page-btn {
+  width:34px; height:34px; border-radius:8px; border:1px solid var(--border);
+  background:white; font-size:0.82rem; cursor:pointer; display:flex;
+  align-items:center; justify-content:center; transition:all 0.15s; color:var(--text2);
+}
+.page-btn:hover { background:var(--bg); color:var(--text); }
+.page-btn.active { background:var(--navy); color:white; border-color:var(--navy); }
+
+/* ── MISC ── */
+.divider { height:1px; background:var(--border); margin:1rem 0; }
+.empty-state { text-align:center; padding:3rem 1.5rem; color:var(--text2); }
+.empty-state .empty-icon { font-size:2.5rem; margin-bottom:1rem; }
+.tag-cloud { display:flex; flex-wrap:wrap; gap:0.4rem; }
+.tag { padding:0.2rem 0.65rem; background:#f1f5f9; border-radius:20px; font-size:0.72rem; color:var(--text2); }
+
+/* Scrollbar */
+::-webkit-scrollbar { width:5px; height:5px; }
+::-webkit-scrollbar-track { background:transparent; }
+::-webkit-scrollbar-thumb { background:#e2e8f0; border-radius:10px; }
+::-webkit-scrollbar-thumb:hover { background:#cbd5e1; }
+
+/* Responsive tweaks */
+@media(max-width:1024px){
+  :root{--sidebar-w:240px;}
+}
+</style>
+</head>
+<body>
+
+<!-- ── SIDEBAR ── -->
+<nav id="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-icon">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0f172a" stroke-width="2.5"><path d="M3 11l19-9-9 19-2-8-8-2z"/></svg>
+    </div>
+    <span class="logo-text">QuickDine</span>
+  </div>
+
+  <div style="flex:1;overflow-y:auto;overflow-x:hidden;padding:0.5rem 0;">
+    <div class="nav-section-label">Main</div>
+    <div class="nav-item active" data-page="dashboard">
+      <i data-lucide="layout-dashboard" class="nav-icon"></i>
+      <span class="nav-label">Dashboard</span>
+    </div>
+    <div class="nav-item" data-page="tenants">
+      <i data-lucide="hotel" class="nav-icon"></i>
+      <span class="nav-label">Tenants</span>
+    </div>
+    <div class="nav-item" data-page="register">
+      <i data-lucide="plus-circle" class="nav-icon"></i>
+      <span class="nav-label">Register Tenant</span>
+    </div>
+    <div class="nav-item" data-page="bookings">
+      <i data-lucide="calendar-days" class="nav-icon"></i>
+      <span class="nav-label">Bookings</span>
+    </div>
+
+    <div class="nav-section-label">Finance</div>
+    <div class="nav-item" data-page="payments">
+      <i data-lucide="credit-card" class="nav-icon"></i>
+      <span class="nav-label">Payments</span>
+    </div>
+    <div class="nav-item" data-page="locked">
+      <i data-lucide="lock" class="nav-icon"></i>
+      <span class="nav-label">Locked Tenants</span>
+      <span class="nav-badge">3</span>
+    </div>
+
+    <div class="nav-section-label">Insights</div>
+    <div class="nav-item" data-page="analytics">
+      <i data-lucide="bar-chart-3" class="nav-icon"></i>
+      <span class="nav-label">Analytics</span>
+    </div>
+
+    <div class="nav-section-label">System</div>
+    <div class="nav-item" data-page="settings">
+      <i data-lucide="settings-2" class="nav-icon"></i>
+      <span class="nav-label">Platform Settings</span>
+    </div>
+    <div class="nav-item" data-page="profile">
+      <i data-lucide="user-circle-2" class="nav-icon"></i>
+      <span class="nav-label">Admin Profile</span>
+    </div>
+  </div>
+
+  <div class="sidebar-bottom">
+    <div class="nav-item danger" onclick="showToast('warn','Logging out...','Redirecting to login page')">
+      <i data-lucide="log-out" class="nav-icon"></i>
+      <span class="nav-label">Logout</span>
+    </div>
+    <div class="sidebar-user">
+      <div class="avatar-sm">SA</div>
+      <div class="user-info" style="overflow:hidden;">
+        <div style="font-size:0.8rem;font-weight:600;color:rgba(255,255,255,0.85);white-space:nowrap;">Super Admin</div>
+        <div style="font-size:0.7rem;color:rgba(255,255,255,0.35);white-space:nowrap;">admin@quickdine.ink</div>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<!-- ── MAIN WRAPPER ── -->
+<div id="main-wrap">
+  <!-- TOPBAR -->
+  <header id="topbar">
+    <button id="toggle-sidebar">
+      <i data-lucide="menu" style="width:16px;height:16px;"></i>
+    </button>
+    <h1 id="page-title">Dashboard Overview</h1>
+    <div class="topbar-search">
+      <i data-lucide="search" class="search-icon" style="width:15px;height:15px;"></i>
+      <input type="text" placeholder="Search tenants, bookings...">
+    </div>
+    <div class="topbar-actions">
+      <button class="topbar-btn" onclick="showToast('info','3 new notifications','You have unread alerts')">
+        <i data-lucide="bell" style="width:17px;height:17px;"></i>
+        <span class="notif-badge">3</span>
+      </button>
+      <button class="topbar-btn">
+        <i data-lucide="help-circle" style="width:17px;height:17px;"></i>
+      </button>
+      <div class="avatar-lg" onclick="navigate('profile')">SA</div>
+    </div>
+  </header>
+
+  <!-- CONTENT -->
+  <div id="content">
+
+    <!-- ═══════════════════ DASHBOARD PAGE ═══════════════════ -->
+    <div class="page active" id="page-dashboard">
+      <!-- Stat Cards -->
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:1.5rem;">
+        <div class="stat-card">
+          <div class="card-icon" style="background:rgba(15,23,42,0.07);">
+            <i data-lucide="hotel" style="width:22px;height:22px;color:#0f172a;"></i>
+          </div>
+          <div class="card-value counter" data-target="47">0</div>
+          <div class="card-label">Total Tenants</div>
+          <div class="card-change change-up"><i data-lucide="trending-up" style="width:12px;height:12px;"></i> +4 this month</div>
+        </div>
+        <div class="stat-card">
+          <div class="card-icon" style="background:rgba(16,185,129,0.1);">
+            <i data-lucide="check-circle-2" style="width:22px;height:22px;color:#10b981;"></i>
+          </div>
+          <div class="card-value counter" data-target="39">0</div>
+          <div class="card-label">Active Tenants</div>
+          <div class="card-change change-up"><i data-lucide="trending-up" style="width:12px;height:12px;"></i> 82.9% active</div>
+        </div>
+        <div class="stat-card">
+          <div class="card-icon" style="background:rgba(239,68,68,0.08);">
+            <i data-lucide="lock" style="width:22px;height:22px;color:#ef4444;"></i>
+          </div>
+          <div class="card-value counter" data-target="3" style="color:#ef4444;">0</div>
+          <div class="card-label">Locked Tenants</div>
+          <div class="card-change change-down"><i data-lucide="trending-down" style="width:12px;height:12px;"></i> Needs attention</div>
+        </div>
+        <div class="stat-card">
+          <div class="card-icon" style="background:rgba(245,158,11,0.1);">
+            <i data-lucide="dollar-sign" style="width:22px;height:22px;color:#f59e0b;"></i>
+          </div>
+          <div class="card-value"><span style="font-size:1.2rem;font-weight:600;">$</span><span class="counter" data-target="24850">0</span></div>
+          <div class="card-label">Revenue This Month</div>
+          <div class="card-change change-up"><i data-lucide="trending-up" style="width:12px;height:12px;"></i> +12.4% vs last month</div>
+        </div>
+      </div>
+
+      <!-- Charts row -->
+      <div style="display:grid;grid-template-columns:2fr 1fr;gap:1rem;margin-bottom:1.5rem;">
+        <div class="section-card">
+          <div class="section-header">
+            <div>
+              <div class="section-title">Monthly Revenue</div>
+              <div class="section-sub">Platform-wide earnings over 12 months</div>
+            </div>
+            <div style="display:flex;gap:0.5rem;">
+              <button class="btn btn-ghost btn-sm">Year</button>
+              <button class="btn btn-primary btn-sm">6mo</button>
+            </div>
+          </div>
+          <div style="padding:1.25rem;">
+            <canvas id="revenueChart" style="max-height:220px;"></canvas>
+          </div>
+        </div>
+        <div class="section-card">
+          <div class="section-header">
+            <div>
+              <div class="section-title">Tenant Status</div>
+              <div class="section-sub">Distribution across states</div>
+            </div>
+          </div>
+          <div style="padding:1.25rem;display:flex;flex-direction:column;align-items:center;">
+            <canvas id="donutChart" style="max-height:180px;max-width:180px;"></canvas>
+            <div style="display:flex;flex-direction:column;gap:0.5rem;margin-top:1rem;width:100%;">
+              <div style="display:flex;align-items:center;justify-content:space-between;font-size:0.8rem;">
+                <div style="display:flex;align-items:center;gap:0.5rem;"><div style="width:10px;height:10px;border-radius:50%;background:#10b981;"></div>Active</div>
+                <strong>39</strong>
+              </div>
+              <div style="display:flex;align-items:center;justify-content:space-between;font-size:0.8rem;">
+                <div style="display:flex;align-items:center;gap:0.5rem;"><div style="width:10px;height:10px;border-radius:50%;background:#f59e0b;"></div>Trial</div>
+                <strong>5</strong>
+              </div>
+              <div style="display:flex;align-items:center;justify-content:space-between;font-size:0.8rem;">
+                <div style="display:flex;align-items:center;gap:0.5rem;"><div style="width:10px;height:10px;border-radius:50%;background:#ef4444;"></div>Locked</div>
+                <strong>3</strong>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bottom row -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+        <!-- Recent Activity -->
+        <div class="section-card">
+          <div class="section-header">
+            <div>
+              <div class="section-title">Recent Activity</div>
+              <div class="section-sub">Platform-wide events</div>
+            </div>
+            <button class="btn btn-ghost btn-sm">View all</button>
+          </div>
+          <div style="padding:0.5rem 1.25rem 1rem;">
+            <div class="activity-item">
+              <div class="activity-dot" style="background:rgba(16,185,129,0.1);color:#10b981;"><i data-lucide="user-plus" style="width:15px;height:15px;"></i></div>
+              <div><div class="activity-text"><strong>Sarova Hotels</strong> registered as new tenant</div><div class="activity-time">2 minutes ago</div></div>
+            </div>
+            <div class="activity-item">
+              <div class="activity-dot" style="background:rgba(59,130,246,0.1);color:#3b82f6;"><i data-lucide="credit-card" style="width:15px;height:15px;"></i></div>
+              <div><div class="activity-text"><strong>Kempinski Nairobi</strong> paid $299 · Pro Plan</div><div class="activity-time">18 minutes ago</div></div>
+            </div>
+            <div class="activity-item">
+              <div class="activity-dot" style="background:rgba(239,68,68,0.1);color:#ef4444;"><i data-lucide="lock" style="width:15px;height:15px;"></i></div>
+              <div><div class="activity-text"><strong>Sunset Inn</strong> was locked · Overdue payment</div><div class="activity-time">1 hour ago</div></div>
+            </div>
+            <div class="activity-item">
+              <div class="activity-dot" style="background:rgba(245,158,11,0.1);color:#f59e0b;"><i data-lucide="log-in" style="width:15px;height:15px;"></i></div>
+              <div><div class="activity-text"><strong>Jacaranda Hotel</strong> admin logged in</div><div class="activity-time">2 hours ago</div></div>
+            </div>
+            <div class="activity-item">
+              <div class="activity-dot" style="background:rgba(16,185,129,0.1);color:#10b981;"><i data-lucide="unlock" style="width:15px;height:15px;"></i></div>
+              <div><div class="activity-text"><strong>Tribe Hotel</strong> was unlocked by admin</div><div class="activity-time">3 hours ago</div></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Recent Bookings -->
+        <div class="section-card">
+          <div class="section-header">
+            <div>
+              <div class="section-title">Recent Bookings</div>
+              <div class="section-sub">Latest across all tenants</div>
+            </div>
+            <button class="btn btn-ghost btn-sm" onclick="navigate('bookings')">View all</button>
+          </div>
+          <div style="overflow:hidden;">
+            <table class="data-table">
+              <thead><tr>
+                <th>Tenant</th><th>Table</th><th>Time</th><th>Status</th>
+              </tr></thead>
+              <tbody>
+                <tr><td><div style="font-weight:600;font-size:0.82rem;">Sarova Stanley</div></td><td>#T-04</td><td>12:30 PM</td><td><span class="badge badge-green"><span class="badge-dot"></span>Seated</span></td></tr>
+                <tr><td><div style="font-weight:600;font-size:0.82rem;">Kempinski</div></td><td>#T-12</td><td>1:00 PM</td><td><span class="badge badge-gold"><span class="badge-dot"></span>Pending</span></td></tr>
+                <tr><td><div style="font-weight:600;font-size:0.82rem;">Fairmont</div></td><td>#T-07</td><td>1:15 PM</td><td><span class="badge badge-blue"><span class="badge-dot"></span>Reserved</span></td></tr>
+                <tr><td><div style="font-weight:600;font-size:0.82rem;">Tribe Hotel</div></td><td>#T-02</td><td>2:00 PM</td><td><span class="badge badge-green"><span class="badge-dot"></span>Seated</span></td></tr>
+                <tr><td><div style="font-weight:600;font-size:0.82rem;">Nairobi Serena</div></td><td>#T-09</td><td>2:30 PM</td><td><span class="badge badge-gray"><span class="badge-dot"></span>Cancelled</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════ TENANTS PAGE ═══════════════════ -->
+    <div class="page" id="page-tenants">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;">
+        <div>
+          <h2 style="font-size:1.4rem;font-weight:800;letter-spacing:-0.02em;">Hotel Tenants</h2>
+          <p style="color:var(--text2);font-size:0.85rem;margin-top:0.2rem;">Manage all registered hotel properties on the platform</p>
+        </div>
+        <button class="btn btn-gold" onclick="navigate('register')">
+          <i data-lucide="plus" style="width:15px;height:15px;"></i> Register New
+        </button>
+      </div>
+
+      <div class="section-card">
+        <div style="padding:1rem 1.25rem;border-bottom:1px solid var(--border);">
+          <div class="filter-bar">
+            <div style="position:relative;flex:1;min-width:200px;">
+              <i data-lucide="search" style="position:absolute;left:0.7rem;top:50%;transform:translateY(-50%);width:15px;height:15px;color:var(--text2);"></i>
+              <input type="text" class="filter-input" style="width:100%;" placeholder="Search hotel name, domain...">
+            </div>
+            <select class="filter-select" id="tenant-filter">
+              <option value="all">All Status</option>
+              <option value="active">Active</option>
+              <option value="locked">Locked</option>
+              <option value="trial">Trial</option>
+            </select>
+            <select class="filter-select">
+              <option>All Plans</option>
+              <option>Basic</option>
+              <option>Pro</option>
+              <option>Enterprise</option>
+            </select>
+            <select class="filter-select">
+              <option>Sort: Newest</option>
+              <option>Sort: Name A-Z</option>
+              <option>Sort: Revenue</option>
+            </select>
+            <div style="margin-left:auto;display:flex;gap:0.5rem;">
+              <button class="btn btn-ghost btn-sm" onclick="bulkAction('lock')"><i data-lucide="lock" style="width:13px;height:13px;"></i> Lock Selected</button>
+              <button class="btn btn-red btn-sm" onclick="openDeleteModal()"><i data-lucide="trash-2" style="width:13px;height:13px;"></i> Delete</button>
+            </div>
+          </div>
+        </div>
+        <div style="overflow-x:auto;">
+          <table class="data-table">
+            <thead><tr>
+              <th style="width:32px;"><input type="checkbox" class="custom-check" id="select-all" onchange="toggleSelectAll()"></th>
+              <th>Hotel</th><th>Schema</th><th>Domain</th><th>Plan</th><th>Status</th><th>Paid Until</th><th>Actions</th>
+            </tr></thead>
+            <tbody id="tenants-tbody"></tbody>
+          </table>
+        </div>
+        <div style="padding:1rem 1.25rem;display:flex;align-items:center;justify-content:space-between;border-top:1px solid var(--border);">
+          <div style="font-size:0.8rem;color:var(--text2);">Showing 1–10 of 47 tenants</div>
+          <div class="pagination">
+            <button class="page-btn active">1</button>
+            <button class="page-btn">2</button>
+            <button class="page-btn">3</button>
+            <button class="page-btn">…</button>
+            <button class="page-btn">5</button>
+            <button class="page-btn"><i data-lucide="chevron-right" style="width:14px;height:14px;"></i></button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════ REGISTER TENANT PAGE ═══════════════════ -->
+    <div class="page" id="page-register">
+      <div style="max-width:720px;margin:0 auto;">
+        <div style="margin-bottom:1.75rem;">
+          <h2 style="font-size:1.4rem;font-weight:800;letter-spacing:-0.02em;">Register New Tenant</h2>
+          <p style="color:var(--text2);font-size:0.85rem;margin-top:0.2rem;">Set up a new hotel property on the QuickDine platform</p>
+        </div>
+
+        <!-- Step Indicator -->
+        <div class="step-indicator" id="step-indicator">
+          <div class="step active" id="step-1-ind">
+            <div class="step-num">1</div>
+            <span>Hotel Details</span>
+          </div>
+          <div class="step-line" id="line-1"></div>
+          <div class="step" id="step-2-ind">
+            <div class="step-num">2</div>
+            <span>Admin Account</span>
+          </div>
+          <div class="step-line" id="line-2"></div>
+          <div class="step" id="step-3-ind">
+            <div class="step-num">3</div>
+            <span>Review & Confirm</span>
+          </div>
+        </div>
+
+        <!-- Step Forms -->
+        <div id="reg-step-1" class="section-card" style="padding:2rem;">
+          <h3 style="font-weight:700;font-size:1rem;margin-bottom:1.5rem;display:flex;align-items:center;gap:0.5rem;">
+            <i data-lucide="hotel" style="width:18px;height:18px;color:var(--gold);"></i> Hotel Information
+          </h3>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+            <div class="form-group">
+              <label class="form-label">Hotel Name *</label>
+              <input type="text" class="form-input" id="reg-hotel-name" placeholder="e.g. Sarova Stanley" oninput="generateSchema()">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Schema Name</label>
+              <input type="text" class="form-input" id="reg-schema" placeholder="Auto-generated">
+              <div class="form-hint">Unique DB schema identifier</div>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Subdomain Preview</label>
+            <div class="input-prefix">
+              <span>https://</span>
+              <input type="text" id="reg-subdomain" placeholder="hotel-name" oninput="updateSubdomain()">
+              <span style="border-left:1px solid var(--border);border-right:none;">.quickdine.ink</span>
+            </div>
+            <div class="form-hint" id="subdomain-preview" style="color:var(--emerald);">Live preview: https://sarova-stanley.quickdine.ink</div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Select Plan *</label>
+            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:0.75rem;margin-top:0.5rem;">
+              <div class="plan-card" onclick="selectPlan(this,'Basic')" id="plan-Basic">
+                <div style="font-weight:700;font-size:0.9rem;margin-bottom:0.3rem;">Basic</div>
+                <div style="font-size:1.3rem;font-weight:800;color:var(--text2);">$49<span style="font-size:0.75rem;font-weight:500;">/mo</span></div>
+                <div style="margin-top:0.75rem;display:flex;flex-direction:column;gap:0.3rem;">
+                  <div style="font-size:0.72rem;color:var(--text2);">✓ Up to 20 tables</div>
+                  <div style="font-size:0.72rem;color:var(--text2);">✓ QR ordering</div>
+                  <div style="font-size:0.72rem;color:var(--text2);">✓ Basic analytics</div>
+                </div>
+              </div>
+              <div class="plan-card selected" onclick="selectPlan(this,'Pro')" id="plan-Pro">
+                <div style="display:flex;align-items:center;gap:0.4rem;margin-bottom:0.3rem;">
+                  <span style="font-weight:700;font-size:0.9rem;">Pro</span>
+                  <span class="badge badge-gold" style="font-size:0.62rem;padding:0.1rem 0.4rem;">Popular</span>
+                </div>
+                <div style="font-size:1.3rem;font-weight:800;color:var(--gold);">$149<span style="font-size:0.75rem;font-weight:500;">/mo</span></div>
+                <div style="margin-top:0.75rem;display:flex;flex-direction:column;gap:0.3rem;">
+                  <div style="font-size:0.72rem;color:var(--text2);">✓ Unlimited tables</div>
+                  <div style="font-size:0.72rem;color:var(--text2);">✓ Chef dashboard</div>
+                  <div style="font-size:0.72rem;color:var(--text2);">✓ Advanced analytics</div>
+                </div>
+              </div>
+              <div class="plan-card" onclick="selectPlan(this,'Enterprise')" id="plan-Enterprise">
+                <div style="font-weight:700;font-size:0.9rem;margin-bottom:0.3rem;">Enterprise</div>
+                <div style="font-size:1.3rem;font-weight:800;color:var(--navy);">$299<span style="font-size:0.75rem;font-weight:500;">/mo</span></div>
+                <div style="margin-top:0.75rem;display:flex;flex-direction:column;gap:0.3rem;">
+                  <div style="font-size:0.72rem;color:var(--text2);">✓ White label</div>
+                  <div style="font-size:0.72rem;color:var(--text2);">✓ API access</div>
+                  <div style="font-size:0.72rem;color:var(--text2);">✓ SLA support</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div style="display:flex;justify-content:flex-end;margin-top:0.5rem;">
+            <button class="btn btn-gold" onclick="nextStep(2)">Next: Admin Account <i data-lucide="arrow-right" style="width:14px;height:14px;"></i></button>
+          </div>
+        </div>
+
+        <div id="reg-step-2" class="section-card" style="padding:2rem;display:none;">
+          <h3 style="font-weight:700;font-size:1rem;margin-bottom:1.5rem;display:flex;align-items:center;gap:0.5rem;">
+            <i data-lucide="user" style="width:18px;height:18px;color:var(--gold);"></i> Admin Account Details
+          </h3>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+            <div class="form-group">
+              <label class="form-label">First Name *</label>
+              <input type="text" class="form-input" id="reg-fname" placeholder="John">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Last Name *</label>
+              <input type="text" class="form-input" id="reg-lname" placeholder="Kamau">
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Email Address *</label>
+            <input type="email" class="form-input" id="reg-email" placeholder="admin@sarova.co.ke">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Phone Number</label>
+            <input type="tel" class="form-input" id="reg-phone" placeholder="+254 700 000 000">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Temporary Password *</label>
+            <input type="password" class="form-input" id="reg-pass" placeholder="Min. 8 characters">
+            <div class="form-hint">User will be prompted to change on first login</div>
+          </div>
+          <div style="display:flex;justify-content:space-between;margin-top:0.5rem;">
+            <button class="btn btn-ghost" onclick="nextStep(1)"><i data-lucide="arrow-left" style="width:14px;height:14px;"></i> Back</button>
+            <button class="btn btn-gold" onclick="nextStep(3)">Review & Confirm <i data-lucide="arrow-right" style="width:14px;height:14px;"></i></button>
+          </div>
+        </div>
+
+        <div id="reg-step-3" class="section-card" style="padding:2rem;display:none;">
+          <h3 style="font-weight:700;font-size:1rem;margin-bottom:1.5rem;display:flex;align-items:center;gap:0.5rem;">
+            <i data-lucide="check-circle-2" style="width:18px;height:18px;color:var(--emerald);"></i> Review & Confirm
+          </h3>
+          <div id="review-content" style="background:#f8fafc;border-radius:12px;padding:1.25rem;margin-bottom:1.25rem;font-size:0.875rem;line-height:1.8;border:1px solid var(--border);">
+          </div>
+          <label style="display:flex;align-items:flex-start;gap:0.6rem;cursor:pointer;margin-bottom:1.25rem;">
+            <input type="checkbox" class="custom-check" id="terms-check" style="margin-top:2px;">
+            <span style="font-size:0.82rem;color:var(--text2);">I confirm the details above are correct and agree to the <a href="#" style="color:var(--gold);">Platform Terms of Service</a>.</span>
+          </label>
+          <div style="display:flex;justify-content:space-between;">
+            <button class="btn btn-ghost" onclick="nextStep(2)"><i data-lucide="arrow-left" style="width:14px;height:14px;"></i> Back</button>
+            <button class="btn btn-emerald" onclick="submitRegistration()" id="reg-submit-btn">
+              <span id="reg-submit-text"><i data-lucide="check" style="width:14px;height:14px;"></i> Create Tenant</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════ BOOKINGS PAGE ═══════════════════ -->
+    <div class="page" id="page-bookings">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;">
+        <div>
+          <h2 style="font-size:1.4rem;font-weight:800;letter-spacing:-0.02em;">Bookings & Reservations</h2>
+          <p style="color:var(--text2);font-size:0.85rem;margin-top:0.2rem;">All reservations across the platform</p>
+        </div>
+        <div style="display:flex;gap:0.5rem;">
+          <button class="btn btn-ghost btn-sm" id="cal-view-btn" onclick="switchBookingView('calendar')"><i data-lucide="calendar" style="width:14px;height:14px;"></i> Calendar</button>
+          <button class="btn btn-primary btn-sm" id="list-view-btn" onclick="switchBookingView('list')"><i data-lucide="list" style="width:14px;height:14px;"></i> List View</button>
+        </div>
+      </div>
+
+      <!-- Calendar View -->
+      <div id="booking-calendar-view" style="display:none;">
+        <div class="section-card">
+          <div class="section-header">
+            <div style="display:flex;align-items:center;gap:1rem;">
+              <button class="btn btn-ghost btn-sm">← Prev</button>
+              <h3 style="font-weight:700;font-size:1rem;">March 2025</h3>
+              <button class="btn btn-ghost btn-sm">Next →</button>
+            </div>
+          </div>
+          <div style="padding:1.25rem;" id="calendar-container"></div>
+        </div>
+      </div>
+
+      <!-- List View -->
+      <div id="booking-list-view">
+        <div class="section-card">
+          <div style="padding:1rem 1.25rem;border-bottom:1px solid var(--border);">
+            <div class="filter-bar">
+              <div style="position:relative;">
+                <i data-lucide="search" style="position:absolute;left:0.7rem;top:50%;transform:translateY(-50%);width:15px;height:15px;color:var(--text2);"></i>
+                <input type="text" class="filter-input" placeholder="Search bookings...">
+              </div>
+              <select class="filter-select"><option>All Tenants</option><option>Sarova Stanley</option><option>Kempinski</option><option>Fairmont</option></select>
+              <input type="date" class="filter-input" style="padding-left:0.9rem;">
+              <select class="filter-select"><option>All Status</option><option>Reserved</option><option>Seated</option><option>Cancelled</option></select>
+            </div>
+          </div>
+          <div style="overflow-x:auto;">
+            <table class="data-table">
+              <thead><tr>
+                <th>Booking ID</th><th>Tenant</th><th>Guest</th><th>Table</th><th>Date/Time</th><th>Guests</th><th>Status</th><th>Actions</th>
+              </tr></thead>
+              <tbody id="bookings-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════ PAYMENTS PAGE ═══════════════════ -->
+    <div class="page" id="page-payments">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;">
+        <div>
+          <h2 style="font-size:1.4rem;font-weight:800;letter-spacing:-0.02em;">Payments & Subscriptions</h2>
+          <p style="color:var(--text2);font-size:0.85rem;margin-top:0.2rem;">Manage billing and subscription status</p>
+        </div>
+        <button class="btn btn-gold" onclick="openModal('payment-modal')">
+          <i data-lucide="plus" style="width:15px;height:15px;"></i> Record Payment
+        </button>
+      </div>
+
+      <!-- Summary cards -->
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-bottom:1.5rem;">
+        <div class="stat-card">
+          <div class="card-icon" style="background:rgba(16,185,129,0.1);">
+            <i data-lucide="check-circle" style="width:22px;height:22px;color:#10b981;"></i>
+          </div>
+          <div class="card-value counter" data-target="36">0</div>
+          <div class="card-label">Active Subscriptions</div>
+        </div>
+        <div class="stat-card">
+          <div class="card-icon" style="background:rgba(239,68,68,0.08);">
+            <i data-lucide="alert-circle" style="width:22px;height:22px;color:#ef4444;"></i>
+          </div>
+          <div class="card-value counter" data-target="4" style="color:#ef4444;">0</div>
+          <div class="card-label">Overdue Payments</div>
+        </div>
+        <div class="stat-card">
+          <div class="card-icon" style="background:rgba(245,158,11,0.1);">
+            <i data-lucide="trending-up" style="width:22px;height:22px;color:#f59e0b;"></i>
+          </div>
+          <div class="card-value"><span style="font-size:1.2rem;">$</span><span class="counter" data-target="24850">0</span></div>
+          <div class="card-label">MRR (Monthly Recurring)</div>
+        </div>
+      </div>
+
+      <div class="section-card">
+        <div class="section-header">
+          <div class="section-title">Subscription Overview</div>
+          <select class="filter-select">
+            <option>All Plans</option><option>Basic</option><option>Pro</option><option>Enterprise</option>
+          </select>
+        </div>
+        <div style="overflow-x:auto;">
+          <table class="data-table">
+            <thead><tr>
+              <th>Hotel</th><th>Plan</th><th>Amount</th><th>Last Payment</th><th>Next Due</th><th>Status</th><th>Actions</th>
+            </tr></thead>
+            <tbody id="payments-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════ LOCKED TENANTS PAGE ═══════════════════ -->
+    <div class="page" id="page-locked">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;">
+        <div>
+          <h2 style="font-size:1.4rem;font-weight:800;letter-spacing:-0.02em;">Locked Tenants</h2>
+          <p style="color:var(--text2);font-size:0.85rem;margin-top:0.2rem;">Suspended hotel accounts requiring attention</p>
+        </div>
+        <button class="btn btn-emerald btn-sm" onclick="bulkUnlock()">
+          <i data-lucide="unlock" style="width:14px;height:14px;"></i> Bulk Unlock
+        </button>
+      </div>
+
+      <div class="section-card">
+        <div style="overflow-x:auto;">
+          <table class="data-table">
+            <thead><tr>
+              <th><input type="checkbox" class="custom-check"></th>
+              <th>Hotel</th><th>Lock Reason</th><th>Locked Date</th><th>Days Locked</th><th>Last Payment</th><th>Actions</th>
+            </tr></thead>
+            <tbody id="locked-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════ ANALYTICS PAGE ═══════════════════ -->
+    <div class="page" id="page-analytics">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;">
+        <div>
+          <h2 style="font-size:1.4rem;font-weight:800;letter-spacing:-0.02em;">Analytics & Reports</h2>
+          <p style="color:var(--text2);font-size:0.85rem;margin-top:0.2rem;">Platform-wide performance insights</p>
+        </div>
+        <div style="display:flex;gap:0.5rem;">
+          <input type="date" class="filter-input" style="padding-left:0.9rem;font-size:0.82rem;" value="2025-01-01">
+          <span style="display:flex;align-items:center;color:var(--text2);font-size:0.85rem;">→</span>
+          <input type="date" class="filter-input" style="padding-left:0.9rem;font-size:0.82rem;" value="2025-03-19">
+          <button class="btn btn-ghost btn-sm"><i data-lucide="download" style="width:14px;height:14px;"></i> Export CSV</button>
+          <button class="btn btn-primary btn-sm"><i data-lucide="file-text" style="width:14px;height:14px;"></i> Export PDF</button>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:1.5rem;">
+        <div class="stat-card">
+          <div class="card-icon" style="background:rgba(59,130,246,0.1);"><i data-lucide="shopping-bag" style="width:22px;height:22px;color:#3b82f6;"></i></div>
+          <div class="card-value counter" data-target="148320">0</div>
+          <div class="card-label">Total Orders (Platform)</div>
+          <div class="card-change change-up"><i data-lucide="trending-up" style="width:12px;height:12px;"></i> +8.3% this quarter</div>
+        </div>
+        <div class="stat-card">
+          <div class="card-icon" style="background:rgba(245,158,11,0.1);"><i data-lucide="dollar-sign" style="width:22px;height:22px;color:#f59e0b;"></i></div>
+          <div class="card-value"><span style="font-size:1.2rem;">$</span><span class="counter" data-target="287450">0</span></div>
+          <div class="card-label">Total Platform Revenue</div>
+          <div class="card-change change-up"><i data-lucide="trending-up" style="width:12px;height:12px;"></i> +15.2% YoY</div>
+        </div>
+        <div class="stat-card">
+          <div class="card-icon" style="background:rgba(16,185,129,0.1);"><i data-lucide="trophy" style="width:22px;height:22px;color:#10b981;"></i></div>
+          <div class="card-value" style="font-size:1.2rem;">Kempinski</div>
+          <div class="card-label">Most Active Tenant</div>
+          <div class="card-change change-up">12,450 orders this month</div>
+        </div>
+        <div class="stat-card">
+          <div class="card-icon" style="background:rgba(99,102,241,0.1);"><i data-lucide="clock" style="width:22px;height:22px;color:#6366f1;"></i></div>
+          <div class="card-value" style="color:#6366f1;">7 PM</div>
+          <div class="card-label">Peak Order Hour</div>
+          <div class="card-change change-up">Across all tenants</div>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.5rem;">
+        <div class="section-card">
+          <div class="section-header">
+            <div class="section-title">Revenue per Tenant</div>
+          </div>
+          <div style="padding:1.25rem;"><canvas id="tenantBarChart" style="max-height:220px;"></canvas></div>
+        </div>
+        <div class="section-card">
+          <div class="section-header">
+            <div class="section-title">Orders Over Time</div>
+          </div>
+          <div style="padding:1.25rem;"><canvas id="ordersLineChart" style="max-height:220px;"></canvas></div>
+        </div>
+      </div>
+
+      <!-- Heatmap -->
+      <div class="section-card">
+        <div class="section-header">
+          <div class="section-title">Peak Hours Heatmap</div>
+          <div class="section-sub">Order volume by hour across all days</div>
+        </div>
+        <div style="padding:1.25rem;" id="heatmap-container"></div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════ SETTINGS PAGE ═══════════════════ -->
+    <div class="page" id="page-settings">
+      <div style="max-width:760px;">
+        <h2 style="font-size:1.4rem;font-weight:800;letter-spacing:-0.02em;margin-bottom:1.75rem;">Platform Settings</h2>
+
+        <div class="section-card" style="margin-bottom:1.25rem;">
+          <div class="section-header"><div class="section-title">General Settings</div></div>
+          <div style="padding:1.5rem;">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+              <div class="form-group">
+                <label class="form-label">Platform Name</label>
+                <input type="text" class="form-input" value="QuickDine">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Support Email</label>
+                <input type="email" class="form-input" value="support@quickdine.ink">
+              </div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+              <div class="form-group">
+                <label class="form-label">Default Currency</label>
+                <select class="form-select"><option>USD — US Dollar</option><option>KES — Kenyan Shilling</option><option>EUR — Euro</option></select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Default Domain Suffix</label>
+                <input type="text" class="form-input" value=".quickdine.ink">
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Platform Logo</label>
+              <div style="border:2px dashed var(--border);border-radius:12px;padding:1.5rem;text-align:center;cursor:pointer;transition:border-color 0.2s;" onmouseover="this.style.borderColor='var(--gold)'" onmouseout="this.style.borderColor='var(--border)'">
+                <i data-lucide="upload-cloud" style="width:28px;height:28px;color:var(--text2);margin:0 auto 0.5rem;display:block;"></i>
+                <div style="font-size:0.82rem;color:var(--text2);">Click to upload or drag & drop PNG, SVG</div>
+              </div>
+            </div>
+            <button class="btn btn-gold" onclick="showToast('success','Settings saved','Platform settings updated successfully')">
+              <i data-lucide="save" style="width:14px;height:14px;"></i> Save Changes
+            </button>
+          </div>
+        </div>
+
+        <div class="section-card" style="margin-bottom:1.25rem;">
+          <div class="section-header">
+            <div class="section-title">Subscription Plans</div>
+            <button class="btn btn-gold btn-sm" onclick="showToast('info','Coming soon','Plan editor opening soon')">
+              <i data-lucide="plus" style="width:13px;height:13px;"></i> Add Plan
+            </button>
+          </div>
+          <div style="padding:1.25rem;display:flex;flex-direction:column;gap:0.75rem;">
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:1rem;background:#f8fafc;border-radius:10px;border:1px solid var(--border);">
+              <div><div style="font-weight:700;font-size:0.9rem;">Basic Plan</div><div style="font-size:0.78rem;color:var(--text2);">$49/month · Up to 20 tables</div></div>
+              <div style="display:flex;gap:0.5rem;"><button class="btn btn-ghost btn-sm">Edit</button><button class="btn btn-red btn-sm">Delete</button></div>
+            </div>
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:1rem;background:#f8fafc;border-radius:10px;border:1px solid var(--border);">
+              <div><div style="font-weight:700;font-size:0.9rem;">Pro Plan <span class="badge badge-gold" style="font-size:0.6rem;">Most Popular</span></div><div style="font-size:0.78rem;color:var(--text2);">$149/month · Unlimited tables + Chef dashboard</div></div>
+              <div style="display:flex;gap:0.5rem;"><button class="btn btn-ghost btn-sm">Edit</button><button class="btn btn-red btn-sm">Delete</button></div>
+            </div>
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:1rem;background:#f8fafc;border-radius:10px;border:1px solid var(--border);">
+              <div><div style="font-weight:700;font-size:0.9rem;">Enterprise Plan</div><div style="font-size:0.78rem;color:var(--text2);">$299/month · White label + API access + SLA</div></div>
+              <div style="display:flex;gap:0.5rem;"><button class="btn btn-ghost btn-sm">Edit</button><button class="btn btn-red btn-sm">Delete</button></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="section-card" style="margin-bottom:1.25rem;">
+          <div class="section-header"><div class="section-title">Email Notifications</div></div>
+          <div style="padding:1.25rem;display:flex;flex-direction:column;gap:1rem;">
+            <div style="display:flex;align-items:center;justify-content:space-between;">
+              <div><div style="font-size:0.875rem;font-weight:600;">New tenant registrations</div><div style="font-size:0.78rem;color:var(--text2);">Get notified when a new hotel signs up</div></div>
+              <div class="toggle-switch active" onclick="toggleSwitch(this)"></div>
+            </div>
+            <div class="divider"></div>
+            <div style="display:flex;align-items:center;justify-content:space-between;">
+              <div><div style="font-size:0.875rem;font-weight:600;">Overdue payment alerts</div><div style="font-size:0.78rem;color:var(--text2);">Daily digest of overdue accounts</div></div>
+              <div class="toggle-switch active" onclick="toggleSwitch(this)"></div>
+            </div>
+            <div class="divider"></div>
+            <div style="display:flex;align-items:center;justify-content:space-between;">
+              <div><div style="font-size:0.875rem;font-weight:600;">Tenant lock/unlock events</div><div style="font-size:0.78rem;color:var(--text2);">Alerts when tenant access changes</div></div>
+              <div class="toggle-switch" onclick="toggleSwitch(this)"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Danger Zone -->
+        <div class="section-card" style="border:1.5px solid rgba(239,68,68,0.25);">
+          <div class="section-header" style="background:rgba(239,68,68,0.04);">
+            <div style="display:flex;align-items:center;gap:0.5rem;">
+              <i data-lucide="alert-triangle" style="width:16px;height:16px;color:#ef4444;"></i>
+              <div class="section-title" style="color:#ef4444;">Danger Zone</div>
+            </div>
+          </div>
+          <div style="padding:1.25rem;">
+            <div style="display:flex;align-items:center;justify-content:space-between;">
+              <div><div style="font-size:0.875rem;font-weight:600;">Reset Platform Data</div><div style="font-size:0.78rem;color:var(--text2);">Permanently delete all tenant data. This cannot be undone.</div></div>
+              <button class="btn btn-red" onclick="openDangerModal()"><i data-lucide="trash-2" style="width:14px;height:14px;"></i> Reset Platform</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════ PROFILE PAGE ═══════════════════ -->
+    <div class="page" id="page-profile">
+      <div style="max-width:640px;">
+        <h2 style="font-size:1.4rem;font-weight:800;letter-spacing:-0.02em;margin-bottom:1.75rem;">Admin Profile</h2>
+        <div class="section-card" style="margin-bottom:1.25rem;">
+          <div style="padding:2rem;display:flex;align-items:center;gap:1.5rem;border-bottom:1px solid var(--border);">
+            <div style="width:72px;height:72px;border-radius:50%;background:linear-gradient(135deg,var(--gold),#d97706);display:flex;align-items:center;justify-content:center;font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;font-size:1.6rem;color:var(--navy);">SA</div>
+            <div>
+              <h3 style="font-weight:700;font-size:1.1rem;">Super Admin</h3>
+              <p style="color:var(--text2);font-size:0.85rem;">admin@quickdine.ink</p>
+              <span class="badge badge-gold" style="margin-top:0.5rem;">Platform Administrator</span>
+            </div>
+          </div>
+          <div style="padding:1.5rem;">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+              <div class="form-group"><label class="form-label">First Name</label><input type="text" class="form-input" value="Super"></div>
+              <div class="form-group"><label class="form-label">Last Name</label><input type="text" class="form-input" value="Admin"></div>
+            </div>
+            <div class="form-group"><label class="form-label">Email</label><input type="email" class="form-input" value="admin@quickdine.ink"></div>
+            <div class="form-group"><label class="form-label">Phone</label><input type="tel" class="form-input" value="+254 700 000 000"></div>
+            <button class="btn btn-gold" onclick="showToast('success','Profile updated','Your profile has been saved')">
+              <i data-lucide="save" style="width:14px;height:14px;"></i> Save Profile
+            </button>
+          </div>
+        </div>
+        <div class="section-card">
+          <div class="section-header"><div class="section-title">Change Password</div></div>
+          <div style="padding:1.5rem;">
+            <div class="form-group"><label class="form-label">Current Password</label><input type="password" class="form-input" placeholder="Enter current password"></div>
+            <div class="form-group"><label class="form-label">New Password</label><input type="password" class="form-input" placeholder="Min. 8 characters"></div>
+            <div class="form-group"><label class="form-label">Confirm New Password</label><input type="password" class="form-input" placeholder="Repeat new password"></div>
+            <button class="btn btn-primary" onclick="showToast('success','Password changed','Your password has been updated')">
+              <i data-lucide="key" style="width:14px;height:14px;"></i> Update Password
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /main-wrap -->
+
+<!-- ── TOAST CONTAINER ── -->
+<div id="toast-container"></div>
+
+<!-- ── SLIDE PANEL ── -->
+<div id="slide-overlay" onclick="closeSlidePanel()"></div>
+<div id="slide-panel">
+  <div style="padding:1.5rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;">
+    <h3 style="font-weight:700;font-size:1rem;" id="panel-title">Tenant Details</h3>
+    <button onclick="closeSlidePanel()" class="modal-close" style="position:relative;top:auto;right:auto;">
+      <i data-lucide="x" style="width:14px;height:14px;"></i>
+    </button>
+  </div>
+  <div id="panel-content" style="padding:1.5rem;"></div>
+</div>
+
+<!-- ── MODALS ── -->
+<!-- Confirm Delete -->
+<div class="modal-overlay" id="delete-modal">
+  <div class="modal-box" style="max-width:420px;">
+    <button class="modal-close" onclick="closeModal('delete-modal')"><i data-lucide="x" style="width:14px;height:14px;"></i></button>
+    <div style="text-align:center;margin-bottom:1.5rem;">
+      <div style="width:56px;height:56px;border-radius:50%;background:rgba(239,68,68,0.1);display:flex;align-items:center;justify-content:center;margin:0 auto 1rem;">
+        <i data-lucide="trash-2" style="width:24px;height:24px;color:#ef4444;"></i>
+      </div>
+      <h3 class="modal-title">Delete Selected Tenants?</h3>
+      <p style="color:var(--text2);font-size:0.85rem;line-height:1.6;">This action is permanent and cannot be undone. All associated data including orders, bookings, and settings will be deleted.</p>
+    </div>
+    <div style="display:flex;gap:0.75rem;">
+      <button class="btn btn-ghost" style="flex:1;" onclick="closeModal('delete-modal')">Cancel</button>
+      <button class="btn" style="flex:1;background:#ef4444;color:white;" onclick="confirmDelete()">Delete Forever</button>
+    </div>
+  </div>
+</div>
+
+<!-- Confirm Danger Reset -->
+<div class="modal-overlay" id="danger-modal">
+  <div class="modal-box" style="max-width:420px;">
+    <button class="modal-close" onclick="closeModal('danger-modal')"><i data-lucide="x" style="width:14px;height:14px;"></i></button>
+    <div style="text-align:center;margin-bottom:1.5rem;">
+      <div style="width:56px;height:56px;border-radius:50%;background:rgba(239,68,68,0.1);display:flex;align-items:center;justify-content:center;margin:0 auto 1rem;">
+        <i data-lucide="alert-triangle" style="width:24px;height:24px;color:#ef4444;"></i>
+      </div>
+      <h3 class="modal-title" style="color:#ef4444;">⚠️ Reset Platform Data</h3>
+      <p style="color:var(--text2);font-size:0.85rem;line-height:1.6;margin-bottom:1rem;">This will permanently delete <strong>ALL</strong> tenant data, orders, bookings, and settings from the platform. Type <strong>RESET</strong> to confirm.</p>
+      <input type="text" class="form-input" id="danger-confirm-input" placeholder="Type RESET here" style="text-align:center;border-color:#ef4444;">
+    </div>
+    <div style="display:flex;gap:0.75rem;">
+      <button class="btn btn-ghost" style="flex:1;" onclick="closeModal('danger-modal')">Cancel</button>
+      <button class="btn" style="flex:1;background:#ef4444;color:white;" onclick="confirmDanger()">Reset Everything</button>
+    </div>
+  </div>
+</div>
+
+<!-- Lock Tenant -->
+<div class="modal-overlay" id="lock-modal">
+  <div class="modal-box" style="max-width:420px;">
+    <button class="modal-close" onclick="closeModal('lock-modal')"><i data-lucide="x" style="width:14px;height:14px;"></i></button>
+    <h3 class="modal-title" style="margin-bottom:0.4rem;">Lock Tenant Account</h3>
+    <p style="color:var(--text2);font-size:0.85rem;margin-bottom:1.25rem;" id="lock-tenant-name">Locking: <strong>Sunset Inn</strong></p>
+    <div class="form-group">
+      <label class="form-label">Reason for Locking *</label>
+      <select class="form-select" id="lock-reason">
+        <option>Overdue payment</option>
+        <option>Policy violation</option>
+        <option>Account review</option>
+        <option>Fraudulent activity</option>
+        <option>Custom reason</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Additional Notes</label>
+      <textarea class="form-textarea" rows="3" placeholder="Optional details..."></textarea>
+    </div>
+    <div style="display:flex;gap:0.75rem;">
+      <button class="btn btn-ghost" style="flex:1;" onclick="closeModal('lock-modal')">Cancel</button>
+      <button class="btn btn-red" style="flex:1;" onclick="confirmLock()"><i data-lucide="lock" style="width:14px;height:14px;"></i> Lock Tenant</button>
+    </div>
+  </div>
+</div>
+
+<!-- Booking Detail -->
+<div class="modal-overlay" id="booking-modal">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeModal('booking-modal')"><i data-lucide="x" style="width:14px;height:14px;"></i></button>
+    <h3 class="modal-title">Booking Details</h3>
+    <div id="booking-detail-content" style="margin-top:1rem;"></div>
+  </div>
+</div>
+
+<!-- Record Payment -->
+<div class="modal-overlay" id="payment-modal">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeModal('payment-modal')"><i data-lucide="x" style="width:14px;height:14px;"></i></button>
+    <h3 class="modal-title">Record Manual Payment</h3>
+    <p style="color:var(--text2);font-size:0.85rem;margin-bottom:1.25rem;">Log a payment received outside the automated billing system</p>
+    <div class="form-group">
+      <label class="form-label">Select Tenant</label>
+      <select class="form-select"><option>Sarova Stanley</option><option>Kempinski Nairobi</option><option>Fairmont Norfolk</option></select>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+      <div class="form-group">
+        <label class="form-label">Amount (USD)</label>
+        <input type="number" class="form-input" placeholder="149.00">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Payment Date</label>
+        <input type="date" class="form-input">
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Reference Number</label>
+      <input type="text" class="form-input" placeholder="e.g. TXN-20250319-001">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Notes</label>
+      <textarea class="form-textarea" rows="2" placeholder="Optional payment notes..."></textarea>
+    </div>
+    <div style="display:flex;gap:0.75rem;">
+      <button class="btn btn-ghost" style="flex:1;" onclick="closeModal('payment-modal')">Cancel</button>
+      <button class="btn btn-emerald" style="flex:1;" onclick="recordPayment()"><i data-lucide="check" style="width:14px;height:14px;"></i> Record Payment</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toggle Switch Style -->
+<style>
+.toggle-switch {
+  width:44px; height:24px; border-radius:12px; background:#e2e8f0;
+  position:relative; cursor:pointer; transition:background 0.2s; flex-shrink:0;
+}
+.toggle-switch::after {
+  content:''; position:absolute; width:18px; height:18px; border-radius:50%;
+  background:white; top:3px; left:3px; transition:left 0.2s;
+  box-shadow:0 1px 4px rgba(0,0,0,0.15);
+}
+.toggle-switch.active { background:var(--emerald); }
+.toggle-switch.active::after { left:23px; }
+</style>
+
+<script>
+// ═══════════════════════════════════════════════
+// DATA
+// ═══════════════════════════════════════════════
+const TENANTS = [
+  {id:1,name:'Sarova Stanley',schema:'sarova_stanley',domain:'sarova-stanley.quickdine.ink',plan:'Enterprise',status:'active',paidUntil:'2025-06-30',revenue:12450,orders:1240,initials:'SS'},
+  {id:2,name:'Kempinski Nairobi',schema:'kempinski_nbi',domain:'kempinski-nbi.quickdine.ink',plan:'Enterprise',status:'active',paidUntil:'2025-05-31',revenue:11200,orders:980,initials:'KN'},
+  {id:3,name:'Fairmont Norfolk',schema:'fairmont_norfolk',domain:'fairmont-norfolk.quickdine.ink',plan:'Pro',status:'active',paidUntil:'2025-04-30',revenue:8340,orders:720,initials:'FN'},
+  {id:4,name:'Tribe Hotel',schema:'tribe_hotel',domain:'tribe-hotel.quickdine.ink',plan:'Pro',status:'active',paidUntil:'2025-04-15',revenue:6200,orders:540,initials:'TH'},
+  {id:5,name:'Nairobi Serena',schema:'nbi_serena',domain:'nbi-serena.quickdine.ink',plan:'Pro',status:'active',paidUntil:'2025-05-01',revenue:7800,orders:680,initials:'NS'},
+  {id:6,name:'Sunset Inn',schema:'sunset_inn',domain:'sunset-inn.quickdine.ink',plan:'Basic',status:'locked',paidUntil:'2025-02-28',revenue:1200,orders:120,initials:'SI'},
+  {id:7,name:'Jacaranda Hotel',schema:'jacaranda',domain:'jacaranda.quickdine.ink',plan:'Basic',status:'trial',paidUntil:'2025-03-31',revenue:400,orders:45,initials:'JH'},
+  {id:8,name:'Windsor Golf Hotel',schema:'windsor_golf',domain:'windsor-golf.quickdine.ink',plan:'Pro',status:'active',paidUntil:'2025-05-15',revenue:5600,orders:490,initials:'WG'},
+  {id:9,name:'Ole Sereni',schema:'ole_sereni',domain:'ole-sereni.quickdine.ink',plan:'Basic',status:'locked',paidUntil:'2025-01-31',revenue:900,orders:80,initials:'OS'},
+  {id:10,name:'Hemingways Nairobi',schema:'hemingways',domain:'hemingways.quickdine.ink',plan:'Enterprise',status:'active',paidUntil:'2025-07-01',revenue:9800,orders:850,initials:'HN'},
+];
+
+const BOOKINGS = [
+  {id:'BK-001',tenant:'Sarova Stanley',guest:'Alice Mwangi',table:'T-04',datetime:'2025-03-19 12:30',guests:2,status:'seated'},
+  {id:'BK-002',tenant:'Kempinski',guest:'Bob Oduya',table:'T-12',datetime:'2025-03-19 13:00',guests:4,status:'pending'},
+  {id:'BK-003',tenant:'Fairmont Norfolk',guest:'Carol Njiru',table:'T-07',datetime:'2025-03-19 13:15',guests:3,status:'reserved'},
+  {id:'BK-004',tenant:'Tribe Hotel',guest:'David Kamau',table:'T-02',datetime:'2025-03-19 14:00',guests:2,status:'seated'},
+  {id:'BK-005',tenant:'Nairobi Serena',guest:'Eve Wanjiru',table:'T-09',datetime:'2025-03-19 14:30',guests:5,status:'cancelled'},
+  {id:'BK-006',tenant:'Windsor Golf',guest:'Frank Otieno',table:'T-01',datetime:'2025-03-19 19:00',guests:6,status:'reserved'},
+  {id:'BK-007',tenant:'Hemingways',guest:'Grace Achieng',table:'T-05',datetime:'2025-03-19 20:00',guests:2,status:'seated'},
+];
+
+// ═══════════════════════════════════════════════
+// NAVIGATION
+// ═══════════════════════════════════════════════
+const pageTitles = {
+  dashboard:'Dashboard Overview',tenants:'Tenants Management',register:'Register New Tenant',
+  bookings:'Bookings & Reservations',payments:'Payments & Subscriptions',locked:'Locked Tenants',
+  analytics:'Analytics & Reports',settings:'Platform Settings',profile:'Admin Profile'
+};
+
+function navigate(page) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  const pageEl = document.getElementById('page-' + page);
+  if (pageEl) {
+    pageEl.classList.add('active');
+    // Re-init counters on page change
+    initCounters(pageEl);
+    // Re-render charts
+    if (page === 'analytics') setTimeout(initAnalyticsCharts, 50);
+  }
+  document.querySelector(`[data-page="${page}"]`)?.classList.add('active');
+  document.getElementById('page-title').textContent = pageTitles[page] || 'Dashboard';
+}
+
+document.querySelectorAll('.nav-item[data-page]').forEach(item => {
+  item.addEventListener('click', () => navigate(item.dataset.page));
+});
+
+// ═══════════════════════════════════════════════
+// SIDEBAR TOGGLE
+// ═══════════════════════════════════════════════
+document.getElementById('toggle-sidebar').addEventListener('click', () => {
+  const sidebar = document.getElementById('sidebar');
+  const main = document.getElementById('main-wrap');
+  sidebar.classList.toggle('collapsed');
+  main.classList.toggle('expanded');
+});
+
+// ═══════════════════════════════════════════════
+// COUNTERS
+// ═══════════════════════════════════════════════
+function animateCounter(el) {
+  const target = parseInt(el.dataset.target);
+  const duration = 1200;
+  const start = performance.now();
+  const ease = t => 1 - Math.pow(1-t, 3);
+  function step(now) {
+    const p = Math.min((now - start) / duration, 1);
+    const val = Math.floor(ease(p) * target);
+    if (target >= 100000) el.textContent = (val/1000).toFixed(0)+'K';
+    else el.textContent = val.toLocaleString();
+    if (p < 1) requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+}
+function initCounters(container) {
+  container.querySelectorAll('.counter').forEach(el => {
+    el.textContent = '0';
+    animateCounter(el);
+  });
+}
+// init on load
+setTimeout(() => initCounters(document.getElementById('page-dashboard')), 100);
+
+// ═══════════════════════════════════════════════
+// CHARTS — DASHBOARD
+// ═══════════════════════════════════════════════
+function initDashboardCharts() {
+  // Revenue Line Chart
+  const rCtx = document.getElementById('revenueChart');
+  if (rCtx && !rCtx._chartInit) {
+    rCtx._chartInit = true;
+    new Chart(rCtx, {
+      type:'line',
+      data:{
+        labels:['Oct','Nov','Dec','Jan','Feb','Mar'],
+        datasets:[{
+          label:'Revenue',
+          data:[16200,18400,22100,19800,22300,24850],
+          borderColor:'#f59e0b',
+          backgroundColor:'rgba(245,158,11,0.07)',
+          fill:true, tension:0.4,
+          pointBackgroundColor:'#f59e0b', pointRadius:4, borderWidth:2.5,
+        }]
+      },
+      options:{
+        responsive:true, maintainAspectRatio:true,
+        plugins:{legend:{display:false}},
+        scales:{
+          x:{grid:{display:false},ticks:{color:'#94a3b8',font:{size:11}}},
+          y:{grid:{color:'#f1f5f9'},ticks:{color:'#94a3b8',font:{size:11},callback:v=>'$'+(v/1000).toFixed(0)+'k'}}
+        }
+      }
+    });
+  }
+
+  // Donut Chart
+  const dCtx = document.getElementById('donutChart');
+  if (dCtx && !dCtx._chartInit) {
+    dCtx._chartInit = true;
+    new Chart(dCtx, {
+      type:'doughnut',
+      data:{
+        labels:['Active','Trial','Locked'],
+        datasets:[{data:[39,5,3],backgroundColor:['#10b981','#f59e0b','#ef4444'],borderWidth:0,hoverOffset:4}]
+      },
+      options:{
+        responsive:true, maintainAspectRatio:true, cutout:'70%',
+        plugins:{legend:{display:false}}
+      }
+    });
+  }
+}
+setTimeout(initDashboardCharts, 100);
+
+// ═══════════════════════════════════════════════
+// TENANTS TABLE
+// ═══════════════════════════════════════════════
+function renderTenantsTable() {
+  const tbody = document.getElementById('tenants-tbody');
+  if (!tbody) return;
+  tbody.innerHTML = TENANTS.map((t, i) => `
+    <tr style="animation-delay:${(i+1)*0.05}s">
+      <td><input type="checkbox" class="custom-check tenant-check" data-id="${t.id}"></td>
+      <td>
+        <div style="display:flex;align-items:center;gap:0.6rem;">
+          <div style="width:34px;height:34px;border-radius:9px;background:linear-gradient(135deg,${getColor(t.id)});display:flex;align-items:center;justify-content:center;font-size:0.65rem;font-weight:700;color:white;flex-shrink:0;">${t.initials}</div>
+          <div><div style="font-weight:600;font-size:0.875rem;">${t.name}</div><div style="font-size:0.72rem;color:var(--text2);">${t.orders} orders</div></div>
+        </div>
+      </td>
+      <td><code style="background:#f1f5f9;padding:0.2rem 0.5rem;border-radius:5px;font-size:0.75rem;">${t.schema}</code></td>
+      <td><a href="#" style="color:var(--blue);font-size:0.8rem;text-decoration:none;">${t.domain}</a></td>
+      <td><span class="badge ${t.plan==='Enterprise'?'badge-gold':t.plan==='Pro'?'badge-blue':'badge-gray'}">${t.plan}</span></td>
+      <td><span class="badge ${t.status==='active'?'badge-green':t.status==='locked'?'badge-red':'badge-gold'}"><span class="badge-dot"></span>${cap(t.status)}</span></td>
+      <td style="font-size:0.82rem;color:var(--text2);">${t.paidUntil}</td>
+      <td>
+        <div style="display:flex;gap:0.3rem;">
+          <button class="btn btn-ghost btn-sm btn-icon" onclick="openSlidePanel(${t.id})" title="View Details"><i data-lucide="eye" style="width:13px;height:13px;"></i></button>
+          <button class="btn btn-ghost btn-sm btn-icon" onclick="showToast('info','Edit mode','Opening tenant editor')" title="Edit"><i data-lucide="pencil" style="width:13px;height:13px;"></i></button>
+          <button class="btn ${t.status==='locked'?'btn-emerald':'btn-ghost'} btn-sm btn-icon" onclick="toggleLock(${t.id})" title="${t.status==='locked'?'Unlock':'Lock'}">
+            <i data-lucide="${t.status==='locked'?'unlock':'lock'}" style="width:13px;height:13px;"></i>
+          </button>
+          <button class="btn btn-ghost btn-sm btn-icon" style="color:var(--red);" onclick="openDeleteModal()" title="Delete"><i data-lucide="trash-2" style="width:13px;height:13px;"></i></button>
+        </div>
+      </td>
+    </tr>`).join('');
+  lucide.createIcons();
+}
+
+function getColor(id) {
+  const colors = ['#0f172a,#334155','#f59e0b,#d97706','#10b981,#059669','#3b82f6,#2563eb','#6366f1,#4f46e5','#ef4444,#dc2626','#8b5cf6,#7c3aed','#06b6d4,#0891b2','#f97316,#ea580c','#84cc16,#65a30d'];
+  return colors[(id-1)%colors.length];
+}
+function cap(s) { return s.charAt(0).toUpperCase()+s.slice(1); }
+
+// ═══════════════════════════════════════════════
+// BOOKINGS TABLE
+// ═══════════════════════════════════════════════
+function renderBookingsTable() {
+  const tbody = document.getElementById('bookings-tbody');
+  if (!tbody) return;
+  tbody.innerHTML = BOOKINGS.map((b,i) => `
+    <tr style="animation-delay:${(i+1)*0.05}s">
+      <td><span style="font-size:0.78rem;font-weight:600;color:var(--text2);">${b.id}</span></td>
+      <td><div style="font-weight:600;font-size:0.85rem;">${b.tenant}</div></td>
+      <td>${b.guest}</td>
+      <td><span style="background:#f1f5f9;padding:0.2rem 0.5rem;border-radius:5px;font-size:0.78rem;font-weight:600;">#${b.table}</span></td>
+      <td style="font-size:0.82rem;">${b.datetime}</td>
+      <td style="font-size:0.82rem;">${b.guests}</td>
+      <td><span class="badge ${b.status==='seated'?'badge-green':b.status==='reserved'?'badge-blue':b.status==='pending'?'badge-gold':'badge-gray'}"><span class="badge-dot"></span>${cap(b.status)}</span></td>
+      <td><button class="btn btn-ghost btn-sm" onclick="openBookingModal(${b.id.replace('BK-','')})"><i data-lucide="eye" style="width:13px;height:13px;"></i> View</button></td>
+    </tr>`).join('');
+  lucide.createIcons();
+}
+
+// ═══════════════════════════════════════════════
+// PAYMENTS TABLE
+// ═══════════════════════════════════════════════
+function renderPaymentsTable() {
+  const tbody = document.getElementById('payments-tbody');
+  if (!tbody) return;
+  const data = [
+    {name:'Sarova Stanley',plan:'Enterprise',amount:299,last:'2025-03-01',next:'2025-04-01',status:'active'},
+    {name:'Kempinski',plan:'Enterprise',amount:299,last:'2025-02-28',next:'2025-03-28',status:'overdue'},
+    {name:'Fairmont Norfolk',plan:'Pro',amount:149,last:'2025-03-05',next:'2025-04-05',status:'active'},
+    {name:'Tribe Hotel',plan:'Pro',amount:149,last:'2025-03-10',next:'2025-04-10',status:'active'},
+    {name:'Sunset Inn',plan:'Basic',amount:49,last:'2025-01-15',next:'2025-02-15',status:'overdue'},
+    {name:'Windsor Golf',plan:'Pro',amount:149,last:'2025-03-08',next:'2025-04-08',status:'active'},
+  ];
+  tbody.innerHTML = data.map((p,i) => `
+    <tr style="${p.status==='overdue'?'background:rgba(239,68,68,0.03);':''} animation-delay:${(i+1)*0.05}s">
+      <td><div style="font-weight:600;font-size:0.875rem;">${p.name}</div></td>
+      <td><span class="badge ${p.plan==='Enterprise'?'badge-gold':p.plan==='Pro'?'badge-blue':'badge-gray'}">${p.plan}</span></td>
+      <td><strong>$${p.amount}</strong><span style="font-size:0.72rem;color:var(--text2);">/mo</span></td>
+      <td style="font-size:0.82rem;">${p.last}</td>
+      <td style="font-size:0.82rem;${p.status==='overdue'?'color:#ef4444;font-weight:600;':''}">${p.next}</td>
+      <td><span class="badge ${p.status==='active'?'badge-green':'badge-red'}"><span class="badge-dot"></span>${cap(p.status)}</span></td>
+      <td>
+        ${p.status==='overdue'?`<button class="btn btn-red btn-sm" onclick="showToast('warn','Reminder sent','Payment reminder sent to ${p.name}')"><i data-lucide="mail" style="width:13px;height:13px;"></i> Send Reminder</button>`:`<button class="btn btn-ghost btn-sm" onclick="showToast('info','History','Showing payment history')">History</button>`}
+      </td>
+    </tr>`).join('');
+  lucide.createIcons();
+}
+
+// ═══════════════════════════════════════════════
+// LOCKED TABLE
+// ═══════════════════════════════════════════════
+function renderLockedTable() {
+  const tbody = document.getElementById('locked-tbody');
+  if (!tbody) return;
+  const locked = TENANTS.filter(t => t.status === 'locked');
+  tbody.innerHTML = locked.map((t,i) => `
+    <tr style="animation-delay:${(i+1)*0.05}s">
+      <td><input type="checkbox" class="custom-check"></td>
+      <td>
+        <div style="display:flex;align-items:center;gap:0.6rem;">
+          <div style="width:34px;height:34px;border-radius:9px;background:rgba(239,68,68,0.1);display:flex;align-items:center;justify-content:center;font-size:0.65rem;font-weight:700;color:#ef4444;">${t.initials}</div>
+          <div style="font-weight:600;font-size:0.875rem;">${t.name}</div>
+        </div>
+      </td>
+      <td><span class="badge badge-red">Overdue payment</span></td>
+      <td style="font-size:0.82rem;">2025-02-15</td>
+      <td>
+        <span style="background:rgba(239,68,68,0.1);color:#ef4444;padding:0.25rem 0.6rem;border-radius:6px;font-size:0.78rem;font-weight:700;">32 days</span>
+      </td>
+      <td style="font-size:0.82rem;color:#ef4444;font-weight:600;">${t.paidUntil}</td>
+      <td>
+        <div style="display:flex;gap:0.4rem;">
+          <button class="btn btn-emerald btn-sm" onclick="unlockTenant(${t.id})"><i data-lucide="unlock" style="width:13px;height:13px;"></i> Unlock</button>
+          <button class="btn btn-ghost btn-sm" onclick="openSlidePanel(${t.id})"><i data-lucide="eye" style="width:13px;height:13px;"></i></button>
+        </div>
+      </td>
+    </tr>`).join('');
+  lucide.createIcons();
+}
+
+// ═══════════════════════════════════════════════
+// SLIDE PANEL
+// ═══════════════════════════════════════════════
+function openSlidePanel(id) {
+  const t = TENANTS.find(x => x.id === id);
+  if (!t) return;
+  document.getElementById('panel-title').textContent = t.name;
+  document.getElementById('panel-content').innerHTML = `
+    <div style="display:flex;align-items:center;gap:1rem;margin-bottom:1.5rem;">
+      <div style="width:56px;height:56px;border-radius:14px;background:linear-gradient(135deg,${getColor(t.id)});display:flex;align-items:center;justify-content:center;font-size:1rem;font-weight:700;color:white;">${t.initials}</div>
+      <div>
+        <h4 style="font-weight:700;">${t.name}</h4>
+        <span class="badge ${t.status==='active'?'badge-green':t.status==='locked'?'badge-red':'badge-gold'}" style="margin-top:0.3rem;"><span class="badge-dot"></span>${cap(t.status)}</span>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;margin-bottom:1.5rem;">
+      <div style="background:#f8fafc;border-radius:10px;padding:1rem;border:1px solid var(--border);">
+        <div style="font-size:0.72rem;color:var(--text2);margin-bottom:0.3rem;">Total Revenue</div>
+        <div style="font-weight:800;font-size:1.2rem;font-family:'Plus Jakarta Sans',sans-serif;">$${t.revenue.toLocaleString()}</div>
+      </div>
+      <div style="background:#f8fafc;border-radius:10px;padding:1rem;border:1px solid var(--border);">
+        <div style="font-size:0.72rem;color:var(--text2);margin-bottom:0.3rem;">Total Orders</div>
+        <div style="font-weight:800;font-size:1.2rem;font-family:'Plus Jakarta Sans',sans-serif;">${t.orders.toLocaleString()}</div>
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:0.75rem;margin-bottom:1.5rem;">
+      <div style="display:flex;justify-content:space-between;padding:0.7rem 0;border-bottom:1px solid #f1f5f9;">
+        <span style="font-size:0.82rem;color:var(--text2);">Schema</span>
+        <code style="font-size:0.78rem;background:#f1f5f9;padding:0.15rem 0.5rem;border-radius:5px;">${t.schema}</code>
+      </div>
+      <div style="display:flex;justify-content:space-between;padding:0.7rem 0;border-bottom:1px solid #f1f5f9;">
+        <span style="font-size:0.82rem;color:var(--text2);">Domain</span>
+        <a href="#" style="font-size:0.78rem;color:var(--blue);">${t.domain}</a>
+      </div>
+      <div style="display:flex;justify-content:space-between;padding:0.7rem 0;border-bottom:1px solid #f1f5f9;">
+        <span style="font-size:0.82rem;color:var(--text2);">Plan</span>
+        <span class="badge ${t.plan==='Enterprise'?'badge-gold':t.plan==='Pro'?'badge-blue':'badge-gray'}">${t.plan}</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;padding:0.7rem 0;">
+        <span style="font-size:0.82rem;color:var(--text2);">Paid Until</span>
+        <span style="font-size:0.82rem;font-weight:600;">${t.paidUntil}</span>
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:0.6rem;">
+      <button class="btn btn-primary" style="justify-content:center;" onclick="showToast('info','Opening editor','Loading tenant management')">
+        <i data-lucide="external-link" style="width:14px;height:14px;"></i> Manage Tenant
+      </button>
+      ${t.status==='locked'?`<button class="btn btn-emerald" style="justify-content:center;" onclick="unlockTenant(${t.id});closeSlidePanel()"><i data-lucide="unlock" style="width:14px;height:14px;"></i> Unlock Account</button>`:`<button class="btn btn-red" style="justify-content:center;" onclick="openLockModal('${t.name}');"><i data-lucide="lock" style="width:14px;height:14px;"></i> Lock Account</button>`}
+    </div>`;
+  document.getElementById('slide-panel').classList.add('open');
+  document.getElementById('slide-overlay').classList.add('open');
+  lucide.createIcons();
+}
+
+function closeSlidePanel() {
+  document.getElementById('slide-panel').classList.remove('open');
+  document.getElementById('slide-overlay').classList.remove('open');
+}
+
+// ═══════════════════════════════════════════════
+// MODALS
+// ═══════════════════════════════════════════════
+function openModal(id) {
+  document.getElementById(id).classList.add('open');
+}
+function closeModal(id) {
+  document.getElementById(id).classList.remove('open');
+}
+function openDeleteModal() { openModal('delete-modal'); }
+function openDangerModal() { openModal('danger-modal'); }
+function openLockModal(name) {
+  document.getElementById('lock-tenant-name').innerHTML = `Locking: <strong>${name}</strong>`;
+  openModal('lock-modal');
+}
+function confirmDelete() {
+  closeModal('delete-modal');
+  showToast('success','Deleted','Selected tenants have been removed');
+}
+function confirmDanger() {
+  const val = document.getElementById('danger-confirm-input').value;
+  if (val !== 'RESET') { showToast('error','Incorrect','Type RESET to confirm'); return; }
+  closeModal('danger-modal');
+  showToast('warn','Platform Reset','All data has been purged');
+}
+function confirmLock() {
+  closeModal('lock-modal');
+  showToast('warn','Tenant Locked','Account access has been suspended');
+}
+function recordPayment() {
+  closeModal('payment-modal');
+  showToast('success','Payment recorded','Manual payment has been logged');
+}
+function unlockTenant(id) {
+  const t = TENANTS.find(x => x.id===id);
+  if (t) { t.status='active'; renderTenantsTable(); renderLockedTable(); }
+  showToast('success','Tenant Unlocked',`${t?.name||'Tenant'} access has been restored`);
+}
+function toggleLock(id) {
+  const t = TENANTS.find(x => x.id===id);
+  if (!t) return;
+  if (t.status==='locked') { unlockTenant(id); }
+  else { openLockModal(t.name); }
+}
+
+function openBookingModal(num) {
+  const b = BOOKINGS[num-1] || BOOKINGS[0];
+  document.getElementById('booking-detail-content').innerHTML = `
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;">
+      <div style="background:#f8fafc;border-radius:10px;padding:1rem;border:1px solid var(--border);">
+        <div style="font-size:0.72rem;color:var(--text2);">Booking ID</div>
+        <div style="font-weight:700;margin-top:0.25rem;">${b.id}</div>
+      </div>
+      <div style="background:#f8fafc;border-radius:10px;padding:1rem;border:1px solid var(--border);">
+        <div style="font-size:0.72rem;color:var(--text2);">Status</div>
+        <div style="margin-top:0.25rem;"><span class="badge ${b.status==='seated'?'badge-green':b.status==='reserved'?'badge-blue':b.status==='pending'?'badge-gold':'badge-gray'}"><span class="badge-dot"></span>${cap(b.status)}</span></div>
+      </div>
+      <div style="background:#f8fafc;border-radius:10px;padding:1rem;border:1px solid var(--border);">
+        <div style="font-size:0.72rem;color:var(--text2);">Guest Name</div>
+        <div style="font-weight:700;margin-top:0.25rem;">${b.guest}</div>
+      </div>
+      <div style="background:#f8fafc;border-radius:10px;padding:1rem;border:1px solid var(--border);">
+        <div style="font-size:0.72rem;color:var(--text2);">Table</div>
+        <div style="font-weight:700;margin-top:0.25rem;">#${b.table}</div>
+      </div>
+      <div style="background:#f8fafc;border-radius:10px;padding:1rem;border:1px solid var(--border);">
+        <div style="font-size:0.72rem;color:var(--text2);">Date & Time</div>
+        <div style="font-weight:700;margin-top:0.25rem;">${b.datetime}</div>
+      </div>
+      <div style="background:#f8fafc;border-radius:10px;padding:1rem;border:1px solid var(--border);">
+        <div style="font-size:0.72rem;color:var(--text2);">Guests</div>
+        <div style="font-weight:700;margin-top:0.25rem;">${b.guests} people</div>
+      </div>
+    </div>
+    <div style="margin-top:1rem;padding:1rem;background:#f8fafc;border-radius:10px;border:1px solid var(--border);">
+      <div style="font-size:0.72rem;color:var(--text2);">Tenant</div>
+      <div style="font-weight:700;margin-top:0.25rem;">${b.tenant}</div>
+    </div>`;
+  openModal('booking-modal');
+  lucide.createIcons();
+}
+
+// ═══════════════════════════════════════════════
+// TOASTS
+// ═══════════════════════════════════════════════
+function showToast(type, title, msg) {
+  const icons = {success:'check-circle',error:'x-circle',warn:'alert-triangle',info:'info'};
+  const div = document.createElement('div');
+  div.className = `toast toast-${type==='warn'?'warn':type==='error'?'error':'success'}`;
+  if (type==='info') div.className = 'toast';
+  div.innerHTML = `
+    <div class="toast-icon"><i data-lucide="${icons[type]||'info'}" style="width:16px;height:16px;"></i></div>
+    <div><div class="toast-title">${title}</div><div class="toast-msg">${msg}</div></div>
+    <button onclick="this.parentElement.remove()" style="margin-left:auto;background:none;border:none;cursor:pointer;color:var(--text2);padding:0 0 0 0.5rem;"><i data-lucide="x" style="width:13px;height:13px;"></i></button>`;
+  document.getElementById('toast-container').appendChild(div);
+  lucide.createIcons(div);
+  setTimeout(()=>{ div.classList.add('toast-out'); setTimeout(()=>div.remove(),300); }, 4000);
+}
+
+// ═══════════════════════════════════════════════
+// REGISTER STEPS
+// ═══════════════════════════════════════════════
+let currentStep = 1;
+let selectedPlan = 'Pro';
+
+function nextStep(step) {
+  document.getElementById('reg-step-' + currentStep).style.display = 'none';
+  document.getElementById('reg-step-' + step).style.display = 'block';
+  // Update indicators
+  for (let i=1;i<=3;i++) {
+    const el = document.getElementById('step-'+i+'-ind');
+    el.className = 'step ' + (i < step ? 'done' : i===step ? 'active' : '');
+  }
+  document.getElementById('line-1').className = 'step-line'+(step>1?' done':'');
+  document.getElementById('line-2').className = 'step-line'+(step>2?' done':'');
+  if (step===3) buildReview();
+  currentStep = step;
+}
+
+function selectPlan(el, plan) {
+  document.querySelectorAll('.plan-card').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+  selectedPlan = plan;
+}
+
+function generateSchema() {
+  const name = document.getElementById('reg-hotel-name').value;
+  const schema = name.toLowerCase().replace(/[^a-z0-9]/g,'_').replace(/_+/g,'_');
+  document.getElementById('reg-schema').value = schema;
+  const sub = name.toLowerCase().replace(/[^a-z0-9]/g,'-').replace(/-+/g,'-').replace(/^-|-$/g,'');
+  document.getElementById('reg-subdomain').value = sub;
+  document.getElementById('subdomain-preview').textContent = `Live preview: https://${sub||'your-hotel'}.quickdine.ink`;
+}
+function updateSubdomain() {
+  const val = document.getElementById('reg-subdomain').value;
+  document.getElementById('subdomain-preview').textContent = `Live preview: https://${val||'your-hotel'}.quickdine.ink`;
+}
+
+function buildReview() {
+  const name = document.getElementById('reg-hotel-name').value||'—';
+  const schema = document.getElementById('reg-schema').value||'—';
+  const sub = document.getElementById('reg-subdomain').value||'—';
+  const fname = document.getElementById('reg-fname').value||'—';
+  const lname = document.getElementById('reg-lname').value||'—';
+  const email = document.getElementById('reg-email').value||'—';
+  const phone = document.getElementById('reg-phone').value||'—';
+  document.getElementById('review-content').innerHTML = `
+    <div style="display:flex;flex-direction:column;gap:0.5rem;">
+      <div style="font-size:0.75rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--text2);margin-bottom:0.25rem;">Hotel Details</div>
+      ${row('Hotel Name', name)}${row('Schema', schema)}${row('Domain', sub+'.quickdine.ink')}${row('Plan', selectedPlan)}
+      <div style="font-size:0.75rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--text2);margin:0.75rem 0 0.25rem;">Admin Account</div>
+      ${row('Name', fname+' '+lname)}${row('Email', email)}${row('Phone', phone)}
+    </div>`;
+}
+function row(label, val) {
+  return `<div style="display:flex;justify-content:space-between;padding:0.3rem 0;"><span style="color:var(--text2);font-size:0.82rem;">${label}</span><strong style="font-size:0.82rem;">${val}</strong></div>`;
+}
+
+function submitRegistration() {
+  if (!document.getElementById('terms-check').checked) {
+    showToast('error','Terms required','Please accept the terms to continue'); return;
+  }
+  const btn = document.getElementById('reg-submit-btn');
+  btn.innerHTML = `<span style="display:inline-block;width:16px;height:16px;border:2px solid rgba(255,255,255,0.4);border-top-color:white;border-radius:50%;animation:spin 0.6s linear infinite;"></span> Creating...`;
+  btn.disabled = true;
+  setTimeout(()=>{
+    btn.innerHTML = `<i data-lucide="check" style="width:14px;height:14px;"></i> <span id="reg-submit-text">Create Tenant</span>`;
+    btn.disabled = false;
+    showToast('success','Tenant Created!','New hotel has been registered on QuickDine');
+    nextStep(1);
+    navigate('tenants');
+  }, 2000);
+}
+</script>
+
+<script>
+// ═══════════════════════════════════════════════
+// BOOKINGS
+// ═══════════════════════════════════════════════
+function initCalendar() {
+  const container = document.getElementById('calendar-container');
+  if (!container || container.querySelector('.cal-grid')) return;
+  const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const bookyDays = [3,7,12,15,18,19,22,25,28];
+  let html = `<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:0.4rem;margin-bottom:0.75rem;">
+    ${days.map(d=>`<div style="text-align:center;font-size:0.72rem;font-weight:600;color:var(--text2);padding:0.4rem;">${d}</div>`).join('')}
+  </div><div class="cal-grid">`;
+  // Offset for March 2025 (Saturday start=6)
+  for(let i=0;i<6;i++) html+=`<div class="cal-day other-month">${23+i}</div>`;
+  for(let d=1;d<=31;d++) {
+    const isToday = d===19;
+    const hasBook = bookyDays.includes(d);
+    html+=`<div class="cal-day ${isToday?'today':hasBook?'has-bookings':''}" onclick="showToast('info','${d} March','${hasBook?Math.floor(Math.random()*8+1)+' bookings':'No bookings'} on this day')">
+      ${d}${hasBook&&!isToday?'<span class="booking-dot"></span>':''}
+    </div>`;
+  }
+  for(let i=1;i<=5;i++) html+=`<div class="cal-day other-month">${i}</div>`;
+  html+='</div>';
+  container.innerHTML=html;
+}
+
+function switchBookingView(view) {
+  if(view==='calendar') {
+    document.getElementById('booking-calendar-view').style.display='block';
+    document.getElementById('booking-list-view').style.display='none';
+    document.getElementById('cal-view-btn').className='btn btn-primary btn-sm';
+    document.getElementById('list-view-btn').className='btn btn-ghost btn-sm';
+    initCalendar();
+  } else {
+    document.getElementById('booking-calendar-view').style.display='none';
+    document.getElementById('booking-list-view').style.display='block';
+    document.getElementById('cal-view-btn').className='btn btn-ghost btn-sm';
+    document.getElementById('list-view-btn').className='btn btn-primary btn-sm';
+  }
+}
+
+// ═══════════════════════════════════════════════
+// ANALYTICS CHARTS
+// ═══════════════════════════════════════════════
+function initAnalyticsCharts() {
+  const bc = document.getElementById('tenantBarChart');
+  if (bc && !bc._init) {
+    bc._init = true;
+    new Chart(bc, {
+      type:'bar',
+      data:{
+        labels:['Sarova','Kempinski','Fairmont','Tribe','Serena','Windsor','Hemingways'],
+        datasets:[{
+          label:'Revenue $',
+          data:[12450,11200,8340,6200,7800,5600,9800],
+          backgroundColor:['rgba(245,158,11,0.8)','rgba(16,185,129,0.7)','rgba(59,130,246,0.7)','rgba(99,102,241,0.7)','rgba(245,158,11,0.6)','rgba(16,185,129,0.5)','rgba(239,68,68,0.7)'],
+          borderRadius:6,
+        }]
+      },
+      options:{
+        responsive:true,maintainAspectRatio:true,
+        plugins:{legend:{display:false}},
+        scales:{
+          x:{grid:{display:false},ticks:{color:'#94a3b8',font:{size:10}}},
+          y:{grid:{color:'#f1f5f9'},ticks:{color:'#94a3b8',font:{size:10},callback:v=>'$'+(v/1000).toFixed(0)+'k'}}
+        }
+      }
+    });
+  }
+  const lc = document.getElementById('ordersLineChart');
+  if (lc && !lc._init) {
+    lc._init = true;
+    new Chart(lc, {
+      type:'line',
+      data:{
+        labels:['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],
+        datasets:[{
+          label:'Orders',
+          data:[9800,11200,13400,12800,14500,16200,15800,17400,18200,16900,19800,21400],
+          borderColor:'#10b981',
+          backgroundColor:'rgba(16,185,129,0.07)',
+          fill:true, tension:0.4, pointBackgroundColor:'#10b981', pointRadius:3, borderWidth:2,
+        }]
+      },
+      options:{
+        responsive:true,maintainAspectRatio:true,
+        plugins:{legend:{display:false}},
+        scales:{
+          x:{grid:{display:false},ticks:{color:'#94a3b8',font:{size:10}}},
+          y:{grid:{color:'#f1f5f9'},ticks:{color:'#94a3b8',font:{size:10}}}
+        }
+      }
+    });
+  }
+  initHeatmap();
+}
+
+function initHeatmap() {
+  const container = document.getElementById('heatmap-container');
+  if (!container || container.querySelector('.heatmap-grid')) return;
+  const hours = Array.from({length:24},(_,i)=>i);
+  const intensity = [0.05,0.03,0.02,0.02,0.03,0.08,0.15,0.3,0.45,0.5,0.55,0.65,0.7,0.6,0.55,0.5,0.55,0.75,0.9,1,0.85,0.7,0.5,0.25];
+  let html = `<div style="display:flex;align-items:center;gap:0.75rem;margin-bottom:0.75rem;">
+    <div style="font-size:0.72rem;color:var(--text2);width:32px;">Hour</div>
+    <div style="display:grid;grid-template-columns:repeat(24,1fr);gap:3px;flex:1;">
+    ${hours.map(h=>`<div style="text-align:center;font-size:0.6rem;color:var(--text2);">${h}</div>`).join('')}
+    </div></div>
+  <div style="display:flex;align-items:center;gap:0.75rem;">
+    <div style="font-size:0.72rem;color:var(--text2);width:32px;">All</div>
+    <div class="heatmap-grid" style="flex:1;">
+    ${intensity.map((v,i)=>`<div class="heatmap-cell" title="${i}:00 — ${Math.round(v*100)}% activity" style="background:rgba(245,158,11,${v});"></div>`).join('')}
+    </div></div>`;
+  container.innerHTML = html;
+}
+
+// ═══════════════════════════════════════════════
+// MISC
+// ═══════════════════════════════════════════════
+function bulkAction(action) {
+  const checked = document.querySelectorAll('.tenant-check:checked');
+  if (!checked.length) { showToast('warn','No selection','Select at least one tenant'); return; }
+  if (action==='lock') { showToast('warn', `${checked.length} tenants locked`, 'Bulk lock applied'); }
+}
+function bulkUnlock() {
+  showToast('success','All locked tenants unlocked','Access restored for 3 tenants');
+}
+function toggleSelectAll() {
+  const all = document.getElementById('select-all');
+  document.querySelectorAll('.tenant-check').forEach(c => c.checked = all.checked);
+}
+function toggleSwitch(el) { el.classList.toggle('active'); }
+
+// ═══════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════
+window.addEventListener('load', () => {
+  lucide.createIcons();
+  renderTenantsTable();
+  renderBookingsTable();
+  renderPaymentsTable();
+  renderLockedTable();
+  setTimeout(initCalendar, 100);
+});
+
+// Re-init lucide icons after dynamic renders
+const origNavigate = navigate;
+</script>
+<style>
+@keyframes spin{to{transform:rotate(360deg);}}
+</style>
+</body>
+</html>
