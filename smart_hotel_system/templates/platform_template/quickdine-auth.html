@@ -8,6 +8,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
 <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+{% csrf_token %}
 <style>
 /* ─── RESET & VARS ─── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -704,35 +705,33 @@ html, body {
 
       <!-- ══ LOGIN FORM ══ -->
       <div class="form-panel visible" id="panel-login">
-        <h2 class="form-heading">Welcome Back</h2>
-        <p class="form-sub">Sign in to your admin account</p>
-
-        <div class="field-wrap">
-          <label class="field-label" id="lbl-email">Email Address</label>
-          <div class="input-box">
-            <input type="email" id="login-email" placeholder="admin@quickdine.ink"
-              oninput="validateEmail(this, 'login-email-err')"
-              onfocus="focusLabel('lbl-email')" onblur="blurLabel('lbl-email')">
-            <span class="input-icon" id="login-email-icon">
-              <i data-lucide="mail" style="width:15px;height:15px;"></i>
-            </span>
+          <h2 class="form-heading">Welcome Back</h2>
+          <p class="form-sub">Sign in to your admin account</p>
+          <div class="field-wrap">
+            <label class="field-label" id="lbl-email">Email Address</label>
+            <div class="input-box">
+              <input type="email" id="login-email" placeholder="admin@quickdine.ink"
+                oninput="validateEmail(this, 'login-email-err')"
+                onfocus="focusLabel('lbl-email')" onblur="blurLabel('lbl-email')">
+              <span class="input-icon" id="login-email-icon">
+                <i data-lucide="mail" style="width:15px;height:15px;"></i>
+              </span>
+            </div>
+            <div class="field-error" id="login-email-err">Please enter a valid email address.</div>
           </div>
-          <div class="field-error" id="login-email-err">Please enter a valid email address.</div>
-        </div>
 
-        <div class="field-wrap">
-          <label class="field-label" id="lbl-pass">Password</label>
-          <div class="input-box">
-            <input type="password" id="login-pass" placeholder="Enter your password"
-              onfocus="focusLabel('lbl-pass')" onblur="blurLabel('lbl-pass')"
-              onkeydown="if(event.key==='Enter')submitLogin()">
-            <span class="input-icon clickable" onclick="togglePwd('login-pass', this)">
-              <i data-lucide="eye" style="width:15px;height:15px;"></i>
-            </span>
+          <div class="field-wrap">
+            <label class="field-label" id="lbl-pass">Password</label>
+            <div class="input-box">
+              <input type="password" id="login-pass" placeholder="Enter your password"
+                onfocus="focusLabel('lbl-pass')" onblur="blurLabel('lbl-pass')"
+                onkeydown="if(event.key==='Enter')submitLogin()">
+              <span class="input-icon clickable" onclick="togglePwd('login-pass', this)">
+                <i data-lucide="eye" style="width:15px;height:15px;"></i>
+              </span>
+            </div>
+            <div class="field-error" id="login-pass-err">Password is required.</div>
           </div>
-          <div class="field-error" id="login-pass-err">Password is required.</div>
-        </div>
-
         <!-- Forgot password inline -->
         <div class="forgot-section" id="forgot-section">
           <div class="forgot-section-title">Reset your password</div>
@@ -1160,31 +1159,78 @@ function submitLogin() {
     requestAnimationFrame(() => { card.style.animation = 'shake 0.4s ease'; });
     return;
   }
-  // Simulate loading
+  // Show spinner
   const btn = document.getElementById('login-btn');
   const spinner = document.getElementById('login-spinner');
   const text = document.getElementById('login-btn-text');
   btn.disabled = true;
   spinner.style.display = 'block';
   text.style.display = 'none';
-  setTimeout(() => {
+
+  // Send to Django
+  fetch('/super-admin/login/', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRFToken': getCookie('csrftoken')
+    },
+    body: JSON.stringify({
+      email: email.value,
+      password: pass.value
+    })
+  })
+  .then(res => res.json())
+  .then(data => {
     spinner.style.display = 'none';
     text.style.display = 'flex';
-    text.innerHTML = '<i data-lucide="check" style="width:16px;height:16px;"></i> Welcome Back!';
-    btn.style.background = 'linear-gradient(135deg, #10b981, #059669)';
-    btn.style.color = 'white';
-    btn.style.boxShadow = '0 4px 20px rgba(16,185,129,0.3)';
-    lucide.createIcons(btn);
-    setTimeout(() => {
-      text.innerHTML = '<i data-lucide="log-in" style="width:16px;height:16px;"></i> Sign In';
-      btn.style.background = '';
-      btn.style.color = '';
-      btn.style.boxShadow = '';
-      btn.disabled = false;
+
+    if (data.success) {
+      // Show success state
+      text.innerHTML = '<i data-lucide="check" style="width:16px;height:16px;"></i> Welcome Back!';
+      btn.style.background = 'linear-gradient(135deg, #10b981, #059669)';
+      btn.style.color = 'white';
       lucide.createIcons(btn);
-    }, 2000);
-  }, 1800);
+      setTimeout(() => { window.location.href = '/admin/'; }, 1500);
+
+    } else {
+      // Show error message
+      btn.disabled = false;
+      text.innerHTML = '<i data-lucide="log-in" style="width:16px;height:16px;"></i> Sign In';
+      lucide.createIcons(btn);
+
+      // Show error under password field
+      const errEl = document.getElementById('login-pass-err');
+      errEl.textContent = data.error;
+      errEl.classList.add('show');
+      pass.classList.add('invalid');
+
+      // Shake card
+      const card = document.querySelector('.form-card');
+      card.style.animation = 'none';
+      requestAnimationFrame(() => { card.style.animation = 'shake 0.4s ease'; });
+
+      // If blocked redirect
+      if (data.error.includes('blocked')) {
+        setTimeout(() => { window.location.href = '/blocked/'; }, 1500);
+      }
+    }
+  })
+  .catch(() => {
+    spinner.style.display = 'none';
+    text.style.display = 'flex';
+    btn.disabled = false;
+    document.getElementById('login-pass-err').textContent = 'Something went wrong. Try again.';
+    document.getElementById('login-pass-err').classList.add('show');
+  });
 }
+
+// CSRF helper — add this somewhere in your script
+function getCookie(name) {
+  const cookie = document.cookie.split(';').find(c => c.trim().startsWith(name + '='));
+  return cookie ? cookie.split('=')[1] : '';
+}
+
+          
 
 // ── SUBMIT SIGNUP ──
 function submitSignup() {
@@ -1218,24 +1264,64 @@ function submitSignup() {
   spinner.style.display = 'block';
   text.style.display = 'none';
 
-  setTimeout(() => {
-    // Show success
+ fetch('/super-admin/signup/', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRFToken': getCookie('csrftoken')
+    },
+    body: JSON.stringify({
+      first_name: document.getElementById('su-fname').value,
+      last_name: document.getElementById('su-lname').value,
+      email: document.getElementById('su-email').value,
+      phone: document.getElementById('country-dial').textContent + document.getElementById('su-phone').value,
+      password: document.getElementById('su-pass').value,
+      platform_name: document.getElementById('su-platform').value,
+      invite_code: document.getElementById('su-invite').value,
+    })
+  })
+  .then(res => res.json())
+  .then(data => {
     spinner.style.display = 'none';
     text.style.display = 'flex';
-    const formInner = document.getElementById('signup-form-inner');
-    const success = document.getElementById('signup-success');
-    formInner.style.transition = 'opacity 0.4s ease';
-    formInner.style.opacity = '0';
-    setTimeout(() => {
-      formInner.style.display = 'none';
-      success.classList.add('show');
-      lucide.createIcons(success);
-      // Start progress bar
+
+    if (data.success) {
+      // show your existing success state (already in your code)
+      const formInner = document.getElementById('signup-form-inner');
+      const success = document.getElementById('signup-success');
+      formInner.style.transition = 'opacity 0.4s ease';
+      formInner.style.opacity = '0';
       setTimeout(() => {
-        document.getElementById('redirect-bar').style.width = '100%';
-      }, 50);
-    }, 400);
-  }, 2200);
+        formInner.style.display = 'none';
+        success.classList.add('show');
+        lucide.createIcons(success);
+        setTimeout(() => {
+          document.getElementById('redirect-bar').style.width = '100%';
+        }, 50);
+        setTimeout(() => { window.location.href = '/admin/'; }, 3000);
+      }, 400);
+
+    } else {
+      // show error
+      btn.disabled = false;
+      const card = document.querySelector('.form-card');
+      card.style.animation = 'none';
+      requestAnimationFrame(() => { card.style.animation = 'shake 0.4s ease'; });
+
+      // show error under email field
+      const errEl = document.getElementById('su-email-err');
+      errEl.textContent = data.error;
+      errEl.classList.add('show');
+    }
+  })
+  .catch(() => {
+    spinner.style.display = 'none';
+    text.style.display = 'flex';
+    btn.disabled = false;
+    const errEl = document.getElementById('su-email-err');
+    errEl.textContent = 'Something went wrong. Try again.';
+    errEl.classList.add('show');
+  });
 }
 </script>
 </body>

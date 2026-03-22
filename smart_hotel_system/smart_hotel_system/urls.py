@@ -29,7 +29,6 @@ urlpatterns = [
     # Public/global routes - inline to ensure availability on all schemas
     path('', root_view, name='root'),
     path('health/', health_check, name='health'),
-    path('admin/', admin.site.urls),
 
     # Tenant-specific routes
     path('platform/', include(('apps.platform_admin_flow.urls', 'platform_admin_flow'), namespace='platform_admin_flow')),
