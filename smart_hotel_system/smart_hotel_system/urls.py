@@ -27,6 +27,7 @@ urlpatterns = [
     re_path(r'^\.well-known/appspecific/com\.chrome\.devtools\.json$', lambda req: JsonResponse({}, status=200)),
 
     # Public/global routes - inline to ensure availability on all schemas
+    path('',include('smart_hotel_system.public_urls')),
     path('', root_view, name='root'),
     path('health/', health_check, name='health'),
 
