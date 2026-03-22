@@ -1,10 +1,12 @@
 from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
 from .decorators import admin_login_required
 from django.shortcuts import render, redirect
 from apps.platform_admin_flow.models import SuperAdminProfile
 from django.contrib.auth.hashers import make_password, check_password
 import json
 
+@csrf_exempt
 @admin_login_required
 def admin_view(request):
     """Admin endpoint - for demonstration purposes"""
@@ -12,6 +14,7 @@ def admin_view(request):
 
 # Render the signup/login page for super admins
 # Actual authentication logic for super admins
+@csrf_exempt
 def super_admin_signup(request):
     if request.method == 'POST':
         data = json.loads(request.body)
@@ -28,13 +31,12 @@ def super_admin_signup(request):
             return JsonResponse({'error': 'An account with this email already exists.'}, status=400)
 
         SuperAdminProfile.objects.create(
-            first_name=data.get('first_name'),
-            last_name=data.get('last_name'),
+            fName=data.get('first_name'),
+            lName=data.get('last_name'),
             email=email,
-            phone=data.get('phone'),
+            telephone=data.get('phone'),
             password=make_password(password),
-            platform_name=data.get('platform_name'),
-            invite_code=data.get('invite_code'),
+            platformName=data.get('platform_name'),
         )
 
         return JsonResponse({'success': True})
@@ -42,6 +44,7 @@ def super_admin_signup(request):
     return render(request, 'platform_template/quickdine-auth.html')
         
 # Handle login for super admins
+@csrf_exempt
 def super_admin_login(request):
     if request.method == 'POST':
         data = json.loads(request.body)
