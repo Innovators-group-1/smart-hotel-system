@@ -17,7 +17,7 @@
           {% if table.qr_code %}
           <div class="text-center">
             <img src="{{ table.qr_code.url }}" alt="QR Code for Table {{ table.number }}" class="w-16 h-16 mx-auto mb-1">
-            <button onclick="downloadQR('{{ table.qr_code.url }}', 'table_{{ table.number }}_qrcode.png')" class="text-xs text-blue-600 hover:text-blue-800">Download</button>
+            <a href="{{ table.qr_code.url }}" download="table_{{ table.number }}_qrcode.png" class="text-xs text-blue-600 hover:text-blue-800">Download</a>
           </div>
           {% endif %}
         </div>
